@@ -1,0 +1,16 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Passport",
+  "sourceName": "contracts/Passport.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea2646970667358221220c78265cb368a968231dfac8ece2bbdf82985a6ed8193f3e3d821b209d18bf5e564736f6c63430008040033",
+  "deployedBytecode": "0x6080604052600080fdfea2646970667358221220c78265cb368a968231dfac8ece2bbdf82985a6ed8193f3e3d821b209d18bf5e564736f6c63430008040033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

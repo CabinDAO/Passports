@@ -1,0 +1,13 @@
+{
+  "name": "passports",
+  "version": "0.0.1",
+  "description": "Composable NFT-based membership",
+  "repository": "https://github.com/CabinDAO/Passports",
+  "author": "0xZakk <https://twitter.com/0xZakk>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/contracts",
+    "packages/landing-page"
+  ]
+}
