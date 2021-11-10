@@ -38,6 +38,8 @@ describe("FactoryFactory", async function() {
       const passportFactory = contract.connect(dao1).create();
       expect(await passportFactory.owner).to.equal(dao1?.getAddress())
     })
+
+    // - set owner of the passport factory to the dao
   })
 })
 
