@@ -295,3 +295,4 @@ $RECYCLE.BIN/
 # .pnp.*
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,solidity,node,yarn,macos,windows,linux
+.vercel
