@@ -8,9 +8,18 @@ import "./PassportFactory.sol";
  * The FactoryFactory contract
  */
 contract FactoryFactory is Ownable {
+  uint public factoryId = 0;
+  mapping(uint => PassportFactory) public factories;
+
   constructor() public {}
 
-  function create () public returns (PassportFactory passportFactory) {
-    passportFactory = new PassportFactory(msg.sender);
+  event FactoryDeployed(
+    uint id
+  );
+
+  function create() public returns (PassportFactory passportFactory) {
+    uint index = factoryId++;
+    factories[index] = new PassportFactory(msg.sender);
+    emit FactoryDeployed(factoryId); 
   }
 }

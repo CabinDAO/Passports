@@ -22,12 +22,19 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface FactoryFactoryInterface extends ethers.utils.Interface {
   functions: {
     "create()": FunctionFragment;
+    "factories(uint256)": FunctionFragment;
+    "factoryId()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "create", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "factories",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(functionFragment: "factoryId", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -39,6 +46,8 @@ interface FactoryFactoryInterface extends ethers.utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "create", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "factories", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "factoryId", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -50,11 +59,15 @@ interface FactoryFactoryInterface extends ethers.utils.Interface {
   ): Result;
 
   events: {
+    "FactoryDeployed(uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "FactoryDeployed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
+
+export type FactoryDeployedEvent = TypedEvent<[BigNumber] & { id: BigNumber }>;
 
 export type OwnershipTransferredEvent = TypedEvent<
   [string, string] & { previousOwner: string; newOwner: string }
@@ -108,6 +121,10 @@ export class FactoryFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    factories(arg0: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
+
+    factoryId(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     renounceOwnership(
@@ -124,6 +141,10 @@ export class FactoryFactory extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  factories(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
+
+  factoryId(overrides?: CallOverrides): Promise<BigNumber>;
+
   owner(overrides?: CallOverrides): Promise<string>;
 
   renounceOwnership(
@@ -138,6 +159,10 @@ export class FactoryFactory extends BaseContract {
   callStatic: {
     create(overrides?: CallOverrides): Promise<string>;
 
+    factories(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
+
+    factoryId(overrides?: CallOverrides): Promise<BigNumber>;
+
     owner(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
@@ -149,6 +174,14 @@ export class FactoryFactory extends BaseContract {
   };
 
   filters: {
+    "FactoryDeployed(uint256)"(
+      id?: null
+    ): TypedEventFilter<[BigNumber], { id: BigNumber }>;
+
+    FactoryDeployed(
+      id?: null
+    ): TypedEventFilter<[BigNumber], { id: BigNumber }>;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
       newOwner?: string | null
@@ -171,6 +204,13 @@ export class FactoryFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    factories(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    factoryId(overrides?: CallOverrides): Promise<BigNumber>;
+
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
@@ -187,6 +227,13 @@ export class FactoryFactory extends BaseContract {
     create(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    factories(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    factoryId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
