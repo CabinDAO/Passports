@@ -11,8 +11,10 @@ import React, {
   useState,
 } from "react";
 import Web3 from "web3";
+import { AbiType, StateMutabilityType } from "web3-utils";
 import { Modal, Input, Button } from "@cabindao/topo";
 import { styled } from "../stitches.config";
+import passportFactoryJson from "../../contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -35,6 +37,22 @@ const MembershipTabContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const address = useAddress();
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [price, setPrice] = useState("");
+  const web3 = useWeb3();
+  const contractInstance = useMemo(() => {
+    const contract = new web3.eth.Contract(
+      passportFactoryJson.abi.map((a) => ({
+        ...a,
+        stateMutability: a.stateMutability as StateMutabilityType,
+        type: a.type as AbiType,
+      }))
+    );
+    contract.options.address = ""; // how to get address based on chainId?
+    return contract;
+  }, [web3]);
   return (
     <>
       <h1>Memberships</h1>
@@ -46,9 +64,33 @@ const MembershipTabContent = () => {
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           title="New Membership Type"
+          onConfirm={() => {
+            contractInstance.methods.create
+              .send
+              // Allocate space for ${quantity} NFTS to be minted/bought at ${price}
+              ();
+          }}
         >
-          <ModalInput label={"Name"} />
-          <ModalInput label={"Description"} />
+          <ModalInput
+            label={"Name"}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <ModalInput
+            label={"Description"}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <ModalInput
+            label={"Quantity"}
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
+          <ModalInput
+            label={"Price"}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
         </Modal>
       </div>
     </>
