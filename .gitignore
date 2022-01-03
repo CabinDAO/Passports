@@ -296,3 +296,8 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,solidity,node,yarn,macos,windows,linux
 .vercel
+
+# contracts/
+packages/contracts/artifacts
+packages/contracts/cache
+packages/contracts/typechain

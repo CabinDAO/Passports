@@ -2,169 +2,95 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Web3 from "web3";
+import { AbiType, StateMutabilityType } from "web3-utils";
+import { Modal, Input, Button } from "@cabindao/topo";
+import { styled } from "../stitches.config";
+import passportFactoryJson from "../../contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
 
+const TabContainer = styled("div", {
+  minHeight: 64,
+  padding: 20,
+  cursor: "pointer",
+});
+
 const Tab: React.FC<{ to: string }> = ({ children, to }) => {
   const router = useRouter();
   const onClick = useCallback(() => router.push(`#${to}`), [router, to]);
-  return (
-    <div
-      style={{ minHeight: 64, padding: 20, cursor: "pointer" }}
-      onClick={onClick}
-    >
-      {children}
-    </div>
-  );
+  return <TabContainer onClick={onClick}>{children}</TabContainer>;
 };
 
-const Portal: React.FC = ({ children }) => <>{children}</>; // Replace with react-portal in TOPO
-
-const Modal: React.FC<{
-  title: string;
-  isOpen: boolean;
-  setIsOpen: (b: boolean) => void;
-  confirmText?: string;
-  onConfirm?: () => void | Promise<void>;
-}> = ({
-  title,
-  isOpen,
-  setIsOpen,
-  children,
-  confirmText = "Submit",
-  onConfirm,
-}) => {
-  // TODO migrate to TOPO
-  const close = useCallback(() => setIsOpen(false), [setIsOpen]);
-  const onContainerKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        close();
-      }
-    },
-    [close]
-  );
-  const onConfirmClick = useCallback(() => {
-    const result = onConfirm?.();
-    if (result) {
-      result.then(close);
-    } else {
-      close();
-    }
-  }, [onConfirm, close]);
-  return isOpen ? (
-    <Portal>
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          backgroundColor: "#32484180", // Forest, 50% opacity
-          zIndex: -1,
-          inset: 0,
-        }}
-        onClick={close}
-      ></div>
-      <div
-        style={{
-          height: "100%",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-        onKeyDown={onContainerKeyDown}
-        tabIndex={-1}
-      >
-        <div
-          style={{
-            maxWidth: 600,
-            minWidth: 400,
-            margin: 32,
-            boxShadow: "0px 12px 50px -24px rgba(0, 0, 0, 0.24);",
-            background: "#FDF3E7", // sand
-          }}
-        >
-          <div
-            style={{
-              height: 56,
-              backgroundColor: "#324841", // forest
-              paddingTop: 12,
-              paddingLeft: 40,
-              paddingRight: 16,
-              paddingBottom: 12,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span
-              style={{
-                fontSize: 18,
-                fontWeight: 600,
-                fontFamily: "IBM Flex Mono",
-                color: "#FDF3E7", // sand
-              }}
-            >
-              {title}
-            </span>
-            <button
-              style={{
-                width: 32,
-                height: 32,
-                backgroundColor: "#FDC67B", // wheat
-              }}
-              onClick={close}
-            >
-              X {/*replace with icon*/}
-            </button>
-          </div>
-          <div style={{ padding: 40 }}>
-            {children}
-            <div style={{ display: "flex", justifyContent: "right" }}>
-              <button // Replace with TOPO button
-                onClick={close}
-              >
-                Cancel
-              </button>
-              <button // Replace with TOPO button
-                onClick={onConfirmClick}
-                style={{ marginLeft: 32 }}
-              >
-                {confirmText}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Portal>
-  ) : null;
-};
+const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
 
 const MembershipTabContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
+  const address = useAddress();
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [price, setPrice] = useState("");
+  const web3 = useWeb3();
+  const contractInstance = useMemo(() => {
+    const contract = new web3.eth.Contract(
+      passportFactoryJson.abi.map((a) => ({
+        ...a,
+        stateMutability: a.stateMutability as StateMutabilityType,
+        type: a.type as AbiType,
+      }))
+    );
+    contract.options.address = ""; // how to get address based on chainId?
+    return contract;
+  }, [web3]);
   return (
     <>
       <h1>Memberships</h1>
       <div>
-        <button style={{ padding: 8 }} onClick={open}>
+        <Button onClick={open} type="primary" disabled={!address}>
           Create New Membership Type
-        </button>
+        </Button>
         <Modal
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           title="New Membership Type"
+          onConfirm={() => {
+            contractInstance.methods.create
+              .send
+              // Allocate space for ${quantity} NFTS to be minted/bought at ${price}
+              ();
+          }}
         >
-          <div style={{ paddingLeft: 8, marginBottom: 32 }}>
-            <input
-              name={"Name"} // TODO Create INPUT component in TOPO
-            />
-          </div>
-          <div style={{ paddingLeft: 8, marginBottom: 32 }}>
-            <input name={"Description"} />
-          </div>
+          <ModalInput
+            label={"Name"}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <ModalInput
+            label={"Description"}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <ModalInput
+            label={"Quantity"}
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
+          <ModalInput
+            label={"Price"}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
         </Modal>
       </div>
     </>
@@ -189,28 +115,52 @@ const SettingsTabContent = () => {
   );
 };
 
+const Web3Context = React.createContext({
+  address: "",
+  web3: { current: undefined } as { current?: Web3 },
+});
+const useAddress = () => useContext(Web3Context).address;
+const useWeb3 = () => useContext(Web3Context).web3.current!;
+
 const Home: NextPage = () => {
   const router = useRouter();
   const tab = useMemo(() => router.asPath.replace(/^\/#?/, ""), [router]);
   const [address, setAddress] = useState("");
+  const [chainId, setChainId] = useState(0);
   const web3 = useRef<Web3>(
     new Web3(Web3.givenProvider || "ws://localhost:8545")
   );
-  const assignAddress = useCallback(
+  const getWeb3Info = useCallback(
     () =>
-      web3.current.eth.getAccounts().then((s) => {
-        setAddress(s[0]);
+      Promise.all([
+        web3.current.eth.getAccounts(),
+        web3.current.eth.getChainId(),
+      ]).then(([addresses, chain]) => {
+        setAddress(addresses[0]);
+        setChainId(chain);
       }),
-    [setAddress]
+    [setAddress, setChainId]
   );
   const connectWallet = useCallback(() => {
-    (web3.current.givenProvider.enable() as Promise<void>).then(assignAddress);
-  }, [assignAddress, web3]);
+    (web3.current.givenProvider.enable() as Promise<void>).then(getWeb3Info);
+  }, [getWeb3Info, web3]);
   useEffect(() => {
     if (web3.current.givenProvider.isConnected()) {
-      assignAddress();
+      getWeb3Info();
     }
-  }, [assignAddress, web3]);
+
+    web3.current.eth.givenProvider.on(
+      "accountsChanged",
+      (accounts: string[]) => {
+        setAddress(accounts[0]);
+      }
+    );
+
+    // Subscribe to chainId change
+    web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
+      setChainId(chainId);
+    });
+  }, [getWeb3Info, web3, setChainId, setAddress]);
   return (
     <div
       style={{
@@ -234,16 +184,20 @@ const Home: NextPage = () => {
         }}
       >
         {address ? (
-          <button style={{ padding: 8 }}>
-            {address.slice(0, 6)}...{address.slice(-4)}
-          </button>
+          <>
+            {chainId && (
+              <span style={{ marginRight: 16 }}>ChainId: {chainId}</span>
+            )}
+            <Button>
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </Button>
+          </>
         ) : (
-          <button // TODO replace with TOPO button
+          <Button // TODO replace with TOPO button
             onClick={connectWallet}
-            style={{ padding: 8 }}
           >
             Connect Wallet
-          </button>
+          </Button>
         )}
       </header>
       <div
@@ -281,20 +235,22 @@ const Home: NextPage = () => {
           <Tab to={"settings"}>Settings</Tab>
         </div>
       </div>
-      <main
-        style={{
-          height: `calc(100vh - ${HEADER_HEIGHT}px)`,
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          marginLeft: DRAWER_WIDTH,
-          width: `calc(100% - 255px)`,
-        }}
-      >
-        {tab === "memberships" && <MembershipTabContent />}
-        {tab === "users" && <UsersTabContent />}
-        {tab === "settings" && <SettingsTabContent />}
-      </main>
+      <Web3Context.Provider value={{ address, web3 }}>
+        <main
+          style={{
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: DRAWER_WIDTH,
+            width: `calc(100% - 255px)`,
+          }}
+        >
+          {tab === "memberships" && <MembershipTabContent />}
+          {tab === "users" && <UsersTabContent />}
+          {tab === "settings" && <SettingsTabContent />}
+        </main>
+      </Web3Context.Provider>
     </div>
   );
 };
