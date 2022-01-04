@@ -11,11 +11,19 @@ import React, {
   useState,
 } from "react";
 import Web3 from "web3";
+import { Contract } from "web3-eth-contract";
+import { TransactionReceipt } from "web3-core";
 import { AbiType, StateMutabilityType } from "web3-utils";
 import { Modal, Input, Button } from "@cabindao/topo";
 import { styled } from "../stitches.config";
+import BN from "bn.js";
 import passportFactoryJson from "../../contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 
+const contractAddressesByNetworkId: {
+  [id: number]: { passportFactory: string };
+} = {
+  0x7a69: { passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
+};
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
 
@@ -23,6 +31,13 @@ const TabContainer = styled("div", {
   minHeight: 64,
   padding: 20,
   cursor: "pointer",
+});
+
+const MembershipCard = styled("div", {
+  background: "$sand",
+  width: 300,
+  height: 200,
+  padding: 16,
 });
 
 const Tab: React.FC<{ to: string }> = ({ children, to }) => {
@@ -36,13 +51,17 @@ const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
 const MembershipTabContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
+  const [memberships, setMemberships] = useState<
+    { id: number; name: string; supply: number; price: number }[]
+  >([]);
   const address = useAddress();
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [symbol, setSymbol] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const web3 = useWeb3();
-  const contractInstance = useMemo(() => {
+  const chainId = useChainId();
+  const contractInstance = useMemo<Contract>(() => {
     const contract = new web3.eth.Contract(
       passportFactoryJson.abi.map((a) => ({
         ...a,
@@ -50,9 +69,10 @@ const MembershipTabContent = () => {
         type: a.type as AbiType,
       }))
     );
-    contract.options.address = ""; // how to get address based on chainId?
+    contract.options.address =
+      contractAddressesByNetworkId[chainId]?.passportFactory || "";
     return contract;
-  }, [web3]);
+  }, [web3, chainId]);
   return (
     <>
       <h1>Memberships</h1>
@@ -65,10 +85,35 @@ const MembershipTabContent = () => {
           setIsOpen={setIsOpen}
           title="New Membership Type"
           onConfirm={() => {
-            contractInstance.methods.create
-              .send
-              // Allocate space for ${quantity} NFTS to be minted/bought at ${price}
-              ();
+            return new Promise((resolve, reject) =>
+              contractInstance.methods
+                .create(
+                  name,
+                  symbol,
+                  Array(Number(quantity))
+                    .fill(null)
+                    .map(
+                      () =>
+                        new BN(
+                          web3.utils.randomHex(32).replace(/^0x/, ""),
+                          "hex"
+                        )
+                    ),
+                  web3.utils.toWei(new BN(Number(price)), "ether")
+                )
+                .send({ from: address })
+                .on("receipt", (receipt: TransactionReceipt) => {
+                  const id =
+                    (receipt.events?.["PassportDeployed"]?.returnValues
+                      ?.id as number) || 0;
+                  setMemberships([
+                    ...memberships,
+                    { id, name, supply: Number(quantity), price: Number(price) },
+                  ]);
+                  resolve();
+                })
+                .on("error", reject)
+            );
           }}
         >
           <ModalInput
@@ -77,9 +122,9 @@ const MembershipTabContent = () => {
             onChange={(e) => setName(e.target.value)}
           />
           <ModalInput
-            label={"Description"}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            label={"Symbol"}
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value)}
           />
           <ModalInput
             label={"Quantity"}
@@ -92,6 +137,19 @@ const MembershipTabContent = () => {
             onChange={(e) => setPrice(e.target.value)}
           />
         </Modal>
+      </div>
+      <div>
+        {memberships.map((m) => (
+          <MembershipCard key={m.id}>
+            <h2>{m.name}</h2>
+            <p>
+              <b>Supply:</b> {m.supply}
+            </p>
+            <p>
+              <b>Price:</b> {m.price} ETH
+            </p>
+          </MembershipCard>
+        ))}
       </div>
     </>
   );
@@ -118,9 +176,11 @@ const SettingsTabContent = () => {
 const Web3Context = React.createContext({
   address: "",
   web3: { current: undefined } as { current?: Web3 },
+  chainId: -1,
 });
 const useAddress = () => useContext(Web3Context).address;
 const useWeb3 = () => useContext(Web3Context).web3.current!;
+const useChainId = () => useContext(Web3Context).chainId;
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -159,6 +219,7 @@ const Home: NextPage = () => {
     // Subscribe to chainId change
     web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
       setChainId(chainId);
+      console.log(chainId);
     });
   }, [getWeb3Info, web3, setChainId, setAddress]);
   return (
@@ -235,7 +296,7 @@ const Home: NextPage = () => {
           <Tab to={"settings"}>Settings</Tab>
         </div>
       </div>
-      <Web3Context.Provider value={{ address, web3 }}>
+      <Web3Context.Provider value={{ address, web3, chainId }}>
         <main
           style={{
             height: `calc(100vh - ${HEADER_HEIGHT}px)`,

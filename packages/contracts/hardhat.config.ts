@@ -14,7 +14,6 @@ dotenv.config();
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
-  console.log(hre.network.config.chainId)
 
   for (const account of accounts) {
     console.log(account.address);

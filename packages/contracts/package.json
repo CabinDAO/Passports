@@ -8,6 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "hardhat compile",
+    "dev": "hardhat node",
     "test": "hardhat test",
     "test:watch": "nodemon -x 'npx hardhat test' -w contracts -w test -e ts,sol"
   },

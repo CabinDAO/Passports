@@ -17,9 +17,11 @@ contract PassportFactory is Ownable {
     uint id
   );
 
-  function create() public {
+  function create(string memory name_, string memory symbol_, uint256[] memory tokenIds, uint256 price) public {
+    require(tokenIds.length <= 100, "Could only mint max 100 passports");
+    require(tokenIds.length > 0, "Required to mint at least 1 passport");
     uint index = passportId++;
-    passports[index] = new Passport();
+    passports[index] = new Passport(name_, symbol_, tokenIds, price);
     emit PassportDeployed(passportId); 
   }
 }
