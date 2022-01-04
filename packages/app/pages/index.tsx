@@ -219,7 +219,6 @@ const Home: NextPage = () => {
     // Subscribe to chainId change
     web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
       setChainId(chainId);
-      console.log(chainId);
     });
   }, [getWeb3Info, web3, setChainId, setAddress]);
   return (
