@@ -61,16 +61,12 @@ const MembershipContainer = styled("div", {
   padding: "16px 0",
 });
 
-const MembershipCard = ({
-  contract,
-  ...props
-}: {
+const MembershipCard = (props: {
   address: string;
   name: string;
   symbol: string;
   supply: number;
   price: string;
-  contract: Contract;
 }) => {
   const [passport, setPassport] = useState(props);
   const address = useAddress();
@@ -82,7 +78,6 @@ const MembershipCard = ({
       (contract.methods.get() as ContractSendMethod)
         .call({ from: address })
         .then((p) => {
-          console.log(p);
           setPassport({
             address: passport.address,
             name: p[0],
@@ -119,7 +114,7 @@ const MembershipTabContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [memberships, setMemberships] = useState<
-    Omit<Parameters<typeof MembershipCard>[0], "contract">[]
+    (Parameters<typeof MembershipCard>[0])[]
   >([]);
   const address = useAddress();
   const [name, setName] = useState("");
@@ -230,7 +225,7 @@ const MembershipTabContent = () => {
       </div>
       <MembershipContainer>
         {memberships.map((m) => (
-          <MembershipCard key={m.address} {...m} contract={contractInstance} />
+          <MembershipCard key={m.address} {...m} />
         ))}
       </MembershipContainer>
     </>
