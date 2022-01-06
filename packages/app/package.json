@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "cd ../contracts && npm install && npm run build",
+    "prebuild": "cd ../contracts && npm run build:ci",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

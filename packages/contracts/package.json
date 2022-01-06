@@ -8,8 +8,11 @@
   "license": "MIT",
   "scripts": {
     "build": "hardhat compile",
+    "prebuild:ci": "npm install",
+    "build:ci": "npm run build",
     "dev": "hardhat node",
     "migrate:local": "hardhat run --network localhost scripts/deploy.ts",
+    "migrate:kovan": "hardhat run --network kovan scripts/deploy.ts",
     "test": "hardhat test",
     "test:watch": "nodemon -x 'npx hardhat test' -w contracts -w test -e ts,sol"
   },
