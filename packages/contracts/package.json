@@ -1,5 +1,5 @@
 {
-  "name": "nft-passport-contracts",
+  "name": "@cabindao/nft-passport-contracts",
   "version": "0.0.1",
   "description": "Smart contracts powering Cabin's NFT Passports product",
   "main": "index.js",
@@ -52,5 +52,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
     "@typechain/hardhat": "^2.3.1"
-  }
+  },
+  "files": [
+    "./artifacts/contracts"
+  ]
 }
