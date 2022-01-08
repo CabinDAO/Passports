@@ -1,0 +1,26 @@
+name: Publish Topo
+on:
+  push:
+    branches: main
+    paths:
+      - "packages/contracts/package.json"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+      - name: install
+        run: npm install
+      - name: yarn
+        run: yarn
+      - name: build
+        run: yarn workspace @cabindao/nft-passport-contracts build
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: "public"
+          check-version: false
+          package: ./packages/components/package.json

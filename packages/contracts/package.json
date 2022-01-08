@@ -1,5 +1,5 @@
 {
-  "name": "nft-passport-contracts",
+  "name": "@cabindao/nft-passport-contracts",
   "version": "0.0.1",
   "description": "Smart contracts powering Cabin's NFT Passports product",
   "main": "index.js",
@@ -8,7 +8,11 @@
   "license": "MIT",
   "scripts": {
     "build": "hardhat compile",
+    "prebuild:ci": "npm install",
+    "build:ci": "npm run build",
     "dev": "hardhat node",
+    "migrate:local": "hardhat run --network localhost scripts/deploy.ts",
+    "migrate:kovan": "hardhat run --network kovan scripts/deploy.ts",
     "test": "hardhat test",
     "test:watch": "nodemon -x 'npx hardhat test' -w contracts -w test -e ts,sol"
   },
@@ -48,5 +52,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
     "@typechain/hardhat": "^2.3.1"
-  }
+  },
+  "files": [
+    "./artifacts/contracts"
+  ]
 }
