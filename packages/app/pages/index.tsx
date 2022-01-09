@@ -17,14 +17,19 @@ import { AbiType, StateMutabilityType, AbiItem } from "web3-utils";
 import { Modal, Input, Button } from "@cabindao/topo";
 import { styled } from "../stitches.config";
 import BN from "bn.js";
-import passportFactoryJson from "../../contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
-import passportJson from "../../contracts/artifacts/contracts/Passport.sol/Passport.json";
+import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
+import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
+
+const KOVAN_NETWORK_ID = 0x2a;
+const ROPSTEN_NETWORK_ID = 0x3;
+const LOCALHOST_NETWORK_ID = 0x7a69;
 
 const contractAddressesByNetworkId: {
   [id: number]: { passportFactory: string };
 } = {
-  0x7a69: { passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
-  0x2a: { passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
+  [LOCALHOST_NETWORK_ID]: { passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
+  [KOVAN_NETWORK_ID]: { passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC" },
+  [ROPSTEN_NETWORK_ID]: { passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC" },
 };
 
 const getAbiFromJson = (json: {
