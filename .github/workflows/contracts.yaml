@@ -15,10 +15,10 @@ jobs:
         uses: actions/setup-node@v1
       - name: install
         run: npm install
-      - name: yarn
-        run: yarn
+        working-directory: packages/contracts
       - name: build
-        run: yarn workspace @cabindao/nft-passport-contracts build
+        run: npm run build
+        working-directory: packages/contracts
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
