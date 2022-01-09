@@ -27,9 +27,15 @@ const LOCALHOST_NETWORK_ID = 0x7a69;
 const contractAddressesByNetworkId: {
   [id: number]: { passportFactory: string };
 } = {
-  [LOCALHOST_NETWORK_ID]: { passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
-  [KOVAN_NETWORK_ID]: { passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC" },
-  [ROPSTEN_NETWORK_ID]: { passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC" },
+  [LOCALHOST_NETWORK_ID]: {
+    passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  },
+  [KOVAN_NETWORK_ID]: {
+    passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC",
+  },
+  [ROPSTEN_NETWORK_ID]: {
+    passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC",
+  },
 };
 
 const getAbiFromJson = (json: {
@@ -120,7 +126,7 @@ const MembershipTabContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [memberships, setMemberships] = useState<
-    (Parameters<typeof MembershipCard>[0])[]
+    Parameters<typeof MembershipCard>[0][]
   >([]);
   const address = useAddress();
   const [name, setName] = useState("");
@@ -148,7 +154,7 @@ const MembershipTabContent = () => {
               name: "",
               symbol: "",
               supply: 0,
-              price: '0',
+              price: "0",
             }))
           );
         })
@@ -301,7 +307,7 @@ const Home: NextPage = () => {
 
     // Subscribe to chainId change
     web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
-      setChainId(chainId);
+      setChainId(Number(chainId));
     });
   }, [getWeb3Info, web3, setChainId, setAddress]);
   return (
