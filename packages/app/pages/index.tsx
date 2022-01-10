@@ -237,7 +237,7 @@ const MembershipTabContent = () => {
       </div>
       <MembershipContainer>
         {memberships.map((m) => (
-          <MembershipCard key={m.address} {...m} />
+          <MembershipCard key={`${chainId}-${m.address}`} {...m} />
         ))}
       </MembershipContainer>
     </>
