@@ -17,14 +17,25 @@ import { AbiType, StateMutabilityType, AbiItem } from "web3-utils";
 import { Modal, Input, Button } from "@cabindao/topo";
 import { styled } from "../stitches.config";
 import BN from "bn.js";
-import passportFactoryJson from "../../contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
-import passportJson from "../../contracts/artifacts/contracts/Passport.sol/Passport.json";
+import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
+import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
+
+const KOVAN_NETWORK_ID = 0x2a;
+const ROPSTEN_NETWORK_ID = 0x3;
+const LOCALHOST_NETWORK_ID = 0x7a69;
 
 const contractAddressesByNetworkId: {
   [id: number]: { passportFactory: string };
 } = {
-  0x7a69: { passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
-  0x2a: { passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
+  [LOCALHOST_NETWORK_ID]: {
+    passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  },
+  [KOVAN_NETWORK_ID]: {
+    passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC",
+  },
+  [ROPSTEN_NETWORK_ID]: {
+    passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC",
+  },
 };
 
 const getAbiFromJson = (json: {
@@ -115,7 +126,7 @@ const MembershipTabContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [memberships, setMemberships] = useState<
-    (Parameters<typeof MembershipCard>[0])[]
+    Parameters<typeof MembershipCard>[0][]
   >([]);
   const address = useAddress();
   const [name, setName] = useState("");
@@ -143,7 +154,7 @@ const MembershipTabContent = () => {
               name: "",
               symbol: "",
               supply: 0,
-              price: '0',
+              price: "0",
             }))
           );
         })
@@ -226,7 +237,7 @@ const MembershipTabContent = () => {
       </div>
       <MembershipContainer>
         {memberships.map((m) => (
-          <MembershipCard key={m.address} {...m} />
+          <MembershipCard key={`${chainId}-${m.address}`} {...m} />
         ))}
       </MembershipContainer>
     </>
@@ -296,7 +307,7 @@ const Home: NextPage = () => {
 
     // Subscribe to chainId change
     web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
-      setChainId(chainId);
+      setChainId(Number(chainId));
     });
   }, [getWeb3Info, web3, setChainId, setAddress]);
   return (
