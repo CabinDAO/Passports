@@ -28,7 +28,7 @@ const contractAddressesByNetworkId: {
   [id: number]: { passportFactory: string };
 } = {
   [LOCALHOST_NETWORK_ID]: {
-    passportFactory: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    passportFactory: process.env.NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS || '',
   },
   [KOVAN_NETWORK_ID]: {
     passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC",
