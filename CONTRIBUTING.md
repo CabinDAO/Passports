@@ -29,9 +29,9 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
 1. Create a local `packages/app/.env` file and add `NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS=0x12341234` to the top of the file. Replace `0x12341234` with the address that you copied
 1. Run the webapp locally by running `npm run dev` from the `packages/app` directory.
 1. Once on the browser, add the new network to your wallet. In Metamask, you could do this by going to Settings > Networks > Add Network and fill out the following data:
-  - Network Name: Localhost
-  - New RPC URL: http://localhost:8545
-  - ChainId: 31337
+    - Network Name: Localhost
+    - New RPC URL: http://localhost:8545
+    - ChainId: 31337
 1. You can now connect to and interact with your local network
 
 Note that every time you change the smart contracts, you will need to rebuild and redeploy it to your local network in order to see the changes. Most of the times this will require copying a new contract addres to your `packages/app/.env` file. If you update that file, you will then need to reboot the frontend.
