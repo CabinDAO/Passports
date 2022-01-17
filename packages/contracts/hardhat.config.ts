@@ -33,11 +33,11 @@ const config: HardhatUserConfig = {
   solidity: "0.8.4",
   networks: {
     ropsten: {
-      url: process.env.ROPSTEN_URL || "",
+      url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: getAccountsFromEnv('ROPSTEN_PRIVATE_KEY'),
     },
     kovan: {
-      url: process.env.KOVAN_URL || "",
+      url: `https://eth-kovan.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: getAccountsFromEnv('KOVAN_PRIVATE_KEY'),
     },
     localhost: {

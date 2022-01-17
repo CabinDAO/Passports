@@ -8,7 +8,9 @@ import "./Passport.sol";
  * The PassportFactory contract
  */
 contract PassportFactory is Ownable {
-  mapping(address => address[]) public passportsByOwner;
+  mapping(uint256 => address[]) public passportsByOwner;
+  mapping(address => uint256) public ownerIdByAddress;
+  uint256 public ownerId = 1;
 
   constructor() {}
 
@@ -21,11 +23,16 @@ contract PassportFactory is Ownable {
     require(tokenIds.length > 0, "Required to mint at least 1 passport");
     Passport passport = new Passport(name_, symbol_, tokenIds, price);
     address _addr = address(passport);
-    passportsByOwner[msg.sender].push(_addr);
+    if (ownerIdByAddress[msg.sender] == 0) {
+      ownerIdByAddress[msg.sender] = ownerId;
+      ownerId++;
+    }
+    passportsByOwner[ownerIdByAddress[msg.sender]].push(_addr);
+    
     emit PassportDeployed(address(passport)); 
   }
 
   function getMemberships() public view returns(address[] memory) {
-    return passportsByOwner[msg.sender];
+    return passportsByOwner[ownerIdByAddress[msg.sender]];
   }
 }
