@@ -213,52 +213,59 @@ const getWeb3 = (networkName: string) =>
 
 export const getStaticPaths: GetStaticPaths<QueryParams> = () => {
   return Promise.all(
-    Object.entries(networkNameById).map(([id, name]) => {
-      const web3 = getWeb3(name);
-      const contract = new web3.eth.Contract(
-        getAbiFromJson(passportFactoryJson),
-        contractAddressesByNetworkId[Number(id)].passportFactory
-      );
-      return (contract.methods.ownerId() as ContractSendMethod)
-        .call()
-        .catch((e) => {
-          console.error("Failed to get owner id for network", name);
-          console.error(e);
-          return 0;
-        })
-        .then((maxOwnerId) =>
-          Promise.all(
-            maxOwnerId
-              ? Array(maxOwnerId - 1)
-                  .fill(null)
-                  .map((_, ownerId) =>
-                    (
-                      contract.methods.getPassportsByOwner(
-                        ownerId + 1
-                      ) as ContractSendMethod
-                    )
-                      .call()
-                      .catch((e) => {
-                        console.error(
-                          "Failed to get passports for owner",
-                          ownerId,
-                          "on network",
-                          name
-                        );
-                        console.error(e);
-                        return [];
-                      })
-                  )
-              : []
-          )
-        )
-        .then((passportAddresses) =>
-          passportAddresses.flatMap((a) => a as string)
-        )
-        .then((addresses) =>
-          addresses.map((address) => ({ params: { network: name, address } }))
+    Object.entries(networkNameById)
+      .map(([id, name]) => ({
+        id,
+        name,
+        address: contractAddressesByNetworkId[Number(id)].passportFactory,
+      }))
+      .filter(({ address }) => !!address)
+      .map(({ id, name, address }) => {
+        const web3 = getWeb3(name);
+        const contract = new web3.eth.Contract(
+          getAbiFromJson(passportFactoryJson),
+          address
         );
-    })
+        return (contract.methods.ownerId() as ContractSendMethod)
+          .call()
+          .catch((e) => {
+            console.error("Failed to get owner id for network", name);
+            console.error(e);
+            return 0;
+          })
+          .then((maxOwnerId) =>
+            Promise.all(
+              maxOwnerId
+                ? Array(maxOwnerId - 1)
+                    .fill(null)
+                    .map((_, ownerId) =>
+                      (
+                        contract.methods.getPassportsByOwner(
+                          ownerId + 1
+                        ) as ContractSendMethod
+                      )
+                        .call()
+                        .catch((e) => {
+                          console.error(
+                            "Failed to get passports for owner",
+                            ownerId,
+                            "on network",
+                            name
+                          );
+                          console.error(e);
+                          return [];
+                        })
+                    )
+                : []
+            )
+          )
+          .then((passportAddresses) =>
+            passportAddresses.flatMap((a) => a as string)
+          )
+          .then((addresses) =>
+            addresses.map((address) => ({ params: { network: name, address } }))
+          );
+      })
   ).then((paths) => {
     return { paths: paths.flat(), fallback: true };
   });
