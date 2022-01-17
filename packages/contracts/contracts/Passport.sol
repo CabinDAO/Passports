@@ -16,11 +16,10 @@ contract Passport is ERC721, Ownable {
   event Purchase(address owner, uint256 price, uint256 id, string uri);
   constructor(string memory name_, string memory symbol_, uint256[] memory _tokenIds, uint256 _price) ERC721(name_, symbol_) {
     _owner = payable(msg.sender);
-    uint quantity = tokenIds.length;
     price = _price;
     supply = _tokenIds.length;
     tokenIds = _tokenIds;
-    for (uint i = 0; i < quantity; i++) {
+    for (uint i = 0; i < supply; i++) {
       uint256 _tokenId = _tokenIds[i];
       _mint(address(this), _tokenId);
       tokenURI(_tokenId);
