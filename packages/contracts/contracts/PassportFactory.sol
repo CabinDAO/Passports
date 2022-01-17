@@ -39,4 +39,9 @@ contract PassportFactory is Ownable {
   function getPassportsByOwner(uint256 id) public view returns(address[] memory) {
     return passportsByOwner[id];
   }
+
+  event Received(address, uint);
+  receive() external payable {
+      emit Received(msg.sender, msg.value);
+  }
 }
