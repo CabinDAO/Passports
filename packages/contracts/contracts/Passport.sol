@@ -18,7 +18,7 @@ contract Passport is ERC721, Ownable {
     _owner = payable(msg.sender);
     uint quantity = tokenIds.length;
     price = _price;
-    supply = tokenIds.length;
+    supply = _tokenIds.length;
     tokenIds = _tokenIds;
     for (uint i = 0; i < quantity; i++) {
       uint256 _tokenId = _tokenIds[i];
