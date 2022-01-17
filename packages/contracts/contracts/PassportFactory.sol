@@ -35,4 +35,8 @@ contract PassportFactory is Ownable {
   function getMemberships() public view returns(address[] memory) {
     return passportsByOwner[ownerIdByAddress[msg.sender]];
   }
+
+  function getPassportsByOwner(uint256 id) public view returns(address[] memory) {
+    return passportsByOwner[id];
+  }
 }
