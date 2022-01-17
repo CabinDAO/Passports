@@ -12,20 +12,24 @@ contract Passport is ERC721, Ownable {
   mapping(uint256 => bool) public sold;
   uint256 public price;
   uint256 public supply;
+  uint256[] public tokenIds;
   event Purchase(address owner, uint256 price, uint256 id, string uri);
-  constructor(string memory name_, string memory symbol_, uint256[] memory tokenIds, uint256 _price) ERC721(name_, symbol_) {
+  constructor(string memory name_, string memory symbol_, uint256[] memory _tokenIds, uint256 _price) ERC721(name_, symbol_) {
     _owner = payable(msg.sender);
     uint quantity = tokenIds.length;
     price = _price;
     supply = tokenIds.length;
+    tokenIds = _tokenIds;
     for (uint i = 0; i < quantity; i++) {
-      uint256 _tokenId = tokenIds[i];
+      uint256 _tokenId = _tokenIds[i];
       _mint(address(this), _tokenId);
       tokenURI(_tokenId);
     }
   }
 
-  function buy(uint256 _id) external payable {
+  function buy() external payable {
+    require(supply > 0, "Error, no more supply of this membership");
+    uint256 _id = tokenIds[supply - 1];
     _validate(_id); 
     _trade(_id);
     emit Purchase(msg.sender, price, _id, tokenURI(_id));
