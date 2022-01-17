@@ -48,4 +48,9 @@ contract Passport is ERC721, Ownable {
   function get() public view returns(string memory, string memory, uint256, uint256) {
     return (name(), symbol(), supply, price);
   }
+
+  event Received(address, uint);
+  receive() external payable {
+      emit Received(msg.sender, msg.value);
+  }
 }
