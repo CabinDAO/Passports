@@ -13,42 +13,17 @@ import React, {
 import Web3 from "web3";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
-import { AbiType, StateMutabilityType, AbiItem } from "web3-utils";
 import { Modal, Input, Button } from "@cabindao/topo";
 import { styled } from "../stitches.config";
 import BN from "bn.js";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
-
-const KOVAN_NETWORK_ID = 0x2a;
-const ROPSTEN_NETWORK_ID = 0x3;
-const LOCALHOST_NETWORK_ID = 0x7a69;
-
-const contractAddressesByNetworkId: {
-  [id: number]: { passportFactory: string };
-} = {
-  [LOCALHOST_NETWORK_ID]: {
-    passportFactory: process.env.NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS || '',
-  },
-  [KOVAN_NETWORK_ID]: {
-    passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC",
-  },
-  [ROPSTEN_NETWORK_ID]: {
-    passportFactory: "0x992597c58Bb82e1B40523ea809480f79A3C918EC",
-  },
-};
-
-const getAbiFromJson = (json: {
-  abi: (Omit<AbiItem, "stateMutability" | "type"> & {
-    stateMutability?: string;
-    type?: string;
-  })[];
-}) =>
-  json.abi.map((a) => ({
-    ...a,
-    stateMutability: a.stateMutability as StateMutabilityType,
-    type: a.type as AbiType,
-  }));
+import {
+  contractAddressesByNetworkId,
+  getAbiFromJson,
+  networkNameById,
+} from "../components/constants";
+import { Link1Icon } from "@radix-ui/react-icons";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -62,7 +37,7 @@ const TabContainer = styled("div", {
 const MembershipCardContainer = styled("div", {
   background: "$sand",
   width: 300,
-  height: 200,
+  height: 256,
   padding: 16,
   display: "inline-block",
   marginRight: "8px",
@@ -73,6 +48,12 @@ const MembershipContainer = styled("div", {
   padding: "16px 0",
 });
 
+const MembershipHeader = styled("h2", {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
+
 const MembershipCard = (props: {
   address: string;
   name: string;
@@ -81,28 +62,38 @@ const MembershipCard = (props: {
   price: string;
 }) => {
   const [passport, setPassport] = useState(props);
-  const address = useAddress();
   const web3 = useWeb3();
+  const networkId = useChainId();
   useEffect(() => {
     if (!passport.name) {
       const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
       contract.options.address = passport.address;
-      (contract.methods.get() as ContractSendMethod)
-        .call({ from: address })
-        .then((p) => {
-          setPassport({
-            address: passport.address,
-            name: p[0],
-            symbol: p[1],
-            supply: p[2],
-            price: web3.utils.fromWei(p[3], "ether"),
-          });
+      (contract.methods.get() as ContractSendMethod).call().then((p) => {
+        setPassport({
+          address: passport.address,
+          name: p[0],
+          symbol: p[1],
+          supply: p[2],
+          price: web3.utils.fromWei(p[3], "ether"),
         });
+      });
     }
-  }, [setPassport, passport, web3, address]);
+  }, [setPassport, passport, web3]);
   return (
     <MembershipCardContainer>
-      <h2>{passport.name}</h2>
+      <MembershipHeader>
+        <span>{passport.name}</span>
+        <Button
+          leftIcon={<Link1Icon />}
+          onClick={() =>
+            window.navigator.clipboard.writeText(
+              `${window.location.origin}/checkout/${
+                networkNameById[Number(networkId)]
+              }/${passport.address}`
+            )
+          }
+        />
+      </MembershipHeader>
       <h6>{passport.symbol}</h6>
       <p>
         <b>Supply:</b> {passport.supply}
