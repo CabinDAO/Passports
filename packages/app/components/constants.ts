@@ -26,7 +26,7 @@ export const contractAddressesByNetworkId: {
     passportFactory: "0x46EB9406108e68842E619a786A23BE5D6ec417E7",
   },
   [ROPSTEN_NETWORK_ID]: {
-    passportFactory: "0x46EB9406108e68842E619a786A23BE5D6ec417E7",
+    passportFactory: "0x41ac1E78812525f53e01E94b9b06c17fE73A64aF",
   },
 };
 

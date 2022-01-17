@@ -215,12 +215,11 @@ export const getStaticPaths: GetStaticPaths<QueryParams> = () => {
   return Promise.all(
     Object.entries(networkNameById)
       .map(([id, name]) => ({
-        id,
         name,
         address: contractAddressesByNetworkId[Number(id)].passportFactory,
       }))
       .filter(({ address }) => !!address)
-      .map(({ id, name, address }) => {
+      .map(({ name, address }) => {
         const web3 = getWeb3(name);
         const contract = new web3.eth.Contract(
           getAbiFromJson(passportFactoryJson),
