@@ -10,12 +10,12 @@
 
 - [🐞 Report a Bug](https://github.com/CabinDAO/Passports/issues/new)
 - [❓ Ask a question](https://github.com/CabinDAO/Passports/discussions)
-- [🙋 Start contributing](https://github.com/CabinDAO/Passports/blob/main/CONTRIBUTING.md)
+- [🙋 Start contributing](#CONTRIBUTING.md)
 
 
 ## Background: Why NFTs for Membership?
 
-Every community in the Web 3 space has it's own way of implementing membership.
+Every community in the Web3 space has it's own way of implementing membership.
 Social DAOs like FWB use a fungible token (ERC-20) to token-gate their community
 while NFT projects like Bored Ape Yacht Club do so with their ERC-721,
 non-fungible token. As we outlined in our article, *[Unbundling social token
@@ -32,21 +32,57 @@ this kind of token-gating.
 
 ## Contributing
 
-This project is open source and we would love for you to contribute to it. In
-the CabinDAO discord server, there is a channel dedicated to discussing this
-product. Progress, milestones, and on-going initiatives are tracked [here in
-GitHub](https://github.com/CabinDAO/Passports/projects). There is also
-a [discussion board](https://github.com/CabinDAO/Passports/discussions) here on GitHub that acts as a good public-interface to the
-development of this product.
+CabinDAO operates under a Bounty system for its products, including Passports. Each Bounty is specced as a task in Clarity, which you could view the full board of tasks [here](https://app.clarity.so/cabin/view/3039c279-2ee2-4da2-a604-dc1c23d5010c). On each task, you could comment to ask questions to gain more context on what needs to be done. Once you understand a task well enough and are interested, you could begin tackling the task.
 
-If you would like to contribute, start by reading the [Contribution
-Guide](./CONTRIBUTING.md) and the [ Code of Conduct ](CONDUCT.md). Open issues
-can be found on this repository.
+1. Assign yourself to the task on Clarity and mark the task as "In Progress".
+1. Make changes locally to a new branch
+1. Push and create a pull request against the main repo
+1. Tag the relevant maintainers for review
+1. Once approved, merge your pull request and delete the branch
+
+In the ethos Web3, this project operates on permissionless contribution. Please read through this README to get setup and start contributing. If only after reading through this documentation that you are hitting roadblocks, feel free to DM @dvargas92495 on Discord.
 
 ## Setup
 
-To get the application up and running locally, consult the [Setup
-Guide](./SETUP.md).
+The project is mostly located in the `/packages` directory. Within that directory, there are two packages that are under active development:
+1. `/app` - This hosts the source code for the user-facing web app
+1. `/contracts` - This hosts the smart contract source code for passports, published as an NPM package
+
+### Web App Setup
+
+Please follow the steps below to set up the web app locally:
+
+1. Fork the repo to your account
+1. Clone the repo from your github to your local machine
+1. Navigate to the App's directory with `cd packages/app`
+1. Install dependencies with `npm install`
+1. Run the app with `npm run dev`
+
+This should open the app in your browser pointed to `localhost:3000`. You could connect to whichever live Ethereum network through your wallet, and the user interface should respond accordingly.
+
+### Contracts Setup
+
+If you are looking to make changes to the smart contracts, it helps to run a local network for the app to interact with.
+
+1. Navigate to the Contracts directory with `cd packages/contracts`
+1. Install dependencies with `npm install`
+1. Run a local blockchain with `npm run dev`
+1. Notice that a bunch of accounts with addresses were printed. Copy the private key of one of them.
+1. Create a local `packages/contracts/.env` file and add `PRIVATE_KEY=0x12341234` to the top of the file. Replace `0x12341234` with the private key that you pasted.
+1. Open another terminal tab and build the contracts with `npm run build`
+1. Deploy the newly build contracts to your local network with `npm run migrate:local`. Copy the address that the PassportFactory was deployed to.
+1. Navigate to the `packages/app` directory.
+1. Create a local `packages/app/.env` file and add `NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS=0x12341234` to the top of the file. Replace `0x12341234` with the address that you copied
+1. Run the webapp locally by running `npm run dev` from the `packages/app` directory.
+1. Once on the browser, add the new network to your wallet. In Metamask, you could do this by going to Settings > Networks > Add Network and fill out the following data:
+    - Network Name: Localhost
+    - New RPC URL: http://localhost:8545
+    - ChainId: 31337
+1. You can now connect to and interact with your local network
+
+Note that every time you change the smart contracts, you will need to rebuild and redeploy it to your local network in order to see the changes. Most of the times this will require copying a new contract addres to your `packages/app/.env` file. If you update that file, you will then need to reboot the frontend.
+
+The contract artifacts are deployed as an `npm` package called `@cabindao/nft-passport-contracts`, which is one of the web app's dependencies. To see your changes in production version of the app, we will need to first publish the artifacts to npm, then install the latest version of the package to the web app.
 
 ## Cabin
 
@@ -54,5 +90,5 @@ Guide](./SETUP.md).
 called a DAO) building a decentralized city by creators, for creators.  You can
 learn more about us by [visiting our website](https://www.creatorcabins.com) or
 [joining our Discord server](https://discord.gg/4G6XjsCjM3). Please consult our
-[Brand Guidelines](https://github.com/CabinDAO/Visual-Identity) on how to work
+[Brand Guidelines](https://github.com/CabinDAO/topo) on how to work
 within our visual identity.
