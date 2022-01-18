@@ -8,20 +8,20 @@
 
 ## Quick Links
 
+- [🎤 Staging Environment](https://passports-app.vercel.app/)
 - [🙋 Start contributing](#Contributing)
 - [🎯 View Bounties](https://app.clarity.so/cabin/view/3039c279-2ee2-4da2-a604-dc1c23d5010c)
 - [🐞 Report a Bug](https://github.com/CabinDAO/Passports/issues/new)
 - [❓ Ask a question](https://github.com/CabinDAO/Passports/discussions)
-
 
 ## Background: Why NFTs for Membership?
 
 Every community in the Web3 space has it's own way of implementing membership.
 Social DAOs like FWB use a fungible token (ERC-20) to token-gate their community
 while NFT projects like Bored Ape Yacht Club do so with their ERC-721,
-non-fungible token. As we outlined in our article, *[Unbundling social token
+non-fungible token. As we outlined in our article, _[Unbundling social token
 economics, governance, and
-access](https://creators.mirror.xyz/V7Ucba89-3qV9yFxj7Spj7YxjKAhc6TOd8nUcCp9n6k)*,
+access](https://creators.mirror.xyz/V7Ucba89-3qV9yFxj7Spj7YxjKAhc6TOd8nUcCp9n6k)_,
 we believe that every DAO and Web 3 community needs to decide how fungible their
 membership is and make the appropriate technical decision to implement it as an
 ERC-20 or an ERC-721.
@@ -43,9 +43,19 @@ CabinDAO operates under a Bounty system for its products, including Passports. E
 
 In the ethos Web3, this project operates on permissionless contribution. Please read through this README to get setup and start contributing. If only after reading through this documentation that you are hitting roadblocks, feel free to DM @dvargas92495 on Discord.
 
+## Environments
+
+The setup below outlines how to connect to the local network. Passports are additionally deployed to the following networks:
+
+- Kovan
+- Ropsten
+
+You could access the app on staging at [https://passports-app.vercel.app](https://passports-app.vercel.app/). Everytime you open a pull request against the main repository, a branch specific environment is also deployed to test your live changes before merging with main.
+
 ## Setup
 
 The project is mostly located in the `/packages` directory. Within that directory, there are two packages that are under active development:
+
 1. `/app` - This hosts the source code for the user-facing web app
 1. `/contracts` - This hosts the smart contract source code for passports, published as an NPM package
 
@@ -76,9 +86,9 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
 1. Create a local `packages/app/.env` file and add `NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS=0x12341234` to the top of the file. Replace `0x12341234` with the address that you copied
 1. Run the webapp locally by running `npm run dev` from the `packages/app` directory.
 1. Once on the browser, add the new network to your wallet. In Metamask, you could do this by going to Settings > Networks > Add Network and fill out the following data:
-    - Network Name: Localhost
-    - New RPC URL: http://localhost:8545
-    - ChainId: 31337
+   - Network Name: Localhost
+   - New RPC URL: http://localhost:8545
+   - ChainId: 31337
 1. You can now connect to and interact with your local network
 
 Note that every time you change the smart contracts, you will need to rebuild and redeploy it to your local network in order to see the changes. Most of the times this will require copying a new contract addres to your `packages/app/.env` file. If you update that file, you will then need to reboot the frontend.
@@ -88,7 +98,7 @@ The contract artifacts are deployed as an `npm` package called `@cabindao/nft-pa
 ## Cabin
 
 [Cabin](https://www.creatorcabins.com) is a digitally-native organization (often
-called a DAO) building a decentralized city by creators, for creators.  You can
+called a DAO) building a decentralized city by creators, for creators. You can
 learn more about us by [visiting our website](https://www.creatorcabins.com) or
 [joining our Discord server](https://discord.gg/4G6XjsCjM3). Please consult our
 [Brand Guidelines](https://github.com/CabinDAO/topo) on how to work
