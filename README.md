@@ -8,9 +8,10 @@
 
 ## Quick Links
 
+- [🙋 Start contributing](#Contributing)
+- [🎯 View Bounties](https://app.clarity.so/cabin/view/3039c279-2ee2-4da2-a604-dc1c23d5010c)
 - [🐞 Report a Bug](https://github.com/CabinDAO/Passports/issues/new)
 - [❓ Ask a question](https://github.com/CabinDAO/Passports/discussions)
-- [🙋 Start contributing](#CONTRIBUTING.md)
 
 
 ## Background: Why NFTs for Membership?
