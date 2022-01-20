@@ -29,6 +29,10 @@ async function main() {
         contract.address
       }";\n`
     );
+    fs.appendFileSync(
+      "artifacts/addresses.d.ts",
+      `export declare const ${network.name.toUpperCase()}_PASSPORT_FACTORY_ADDRESS: string;\n`
+    );
   }
 }
 
