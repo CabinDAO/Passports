@@ -8,7 +8,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@cabindao/nft-passport-contracts": "^0.3.1",
+    "@cabindao/nft-passport-contracts": "^0.3.3",
     "@cabindao/topo": "^0.2.2",
     "@cabindao/topo-theme": "^0.1.0",
     "next": "^12.0.7",

@@ -1,4 +1,8 @@
 import { AbiType, StateMutabilityType, AbiItem } from "web3-utils";
+import {
+  KOVAN_PASSPORT_FACTORY_ADDRESS,
+  ROPSTEN_PASSPORT_FACTORY_ADDRESS,
+} from "@cabindao/nft-passport-contracts/artifacts/addresses";
 
 const KOVAN_NETWORK_ID = 0x2a;
 const ROPSTEN_NETWORK_ID = 0x3;
@@ -23,10 +27,10 @@ export const contractAddressesByNetworkId: {
     passportFactory: process.env.NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS || "",
   },
   [KOVAN_NETWORK_ID]: {
-    passportFactory: "0xd799120D85Fef68Cb98E216c3bCc65ac030b3e50",
+    passportFactory: KOVAN_PASSPORT_FACTORY_ADDRESS,
   },
   [ROPSTEN_NETWORK_ID]: {
-    passportFactory: "0xC79C2a027d88f5ec6c82fC9b17491E8C761E2C19",
+    passportFactory: ROPSTEN_PASSPORT_FACTORY_ADDRESS,
   },
 };
 

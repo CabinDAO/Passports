@@ -83,7 +83,7 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
 1. Open another terminal tab and build the contracts with `npm run build`
 1. Deploy the newly build contracts to your local network with `npm run migrate:local`. Copy the address that the PassportFactory was deployed to.
 1. Navigate to the `packages/app` directory.
-1. Create a local `packages/app/.env` file and add `NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS=0x12341234` to the top of the file. Replace `0x12341234` with the address that you copied
+1. A local `packages/app/.env` file should already be generated with the address you copied above. If not, create one and add `NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS=0x12341234` to the top of the file. Replace `0x12341234` with the address that you copied.
 1. Run the webapp locally by running `npm run dev` from the `packages/app` directory.
 1. Once on the browser, add the new network to your wallet. In Metamask, you could do this by going to Settings > Networks > Add Network and fill out the following data:
    - Network Name: Localhost
@@ -91,9 +91,9 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
    - ChainId: 31337
 1. You can now connect to and interact with your local network
 
-Note that every time you change the smart contracts, you will need to rebuild and redeploy it to your local network in order to see the changes. Most of the times this will require copying a new contract addres to your `packages/app/.env` file. If you update that file, you will then need to reboot the frontend.
+Note that every time you change the smart contracts, you will need to rebuild and redeploy it to your local network in order to see the changes. Most of the times this will copying the new contract address to your `packages/app/.env` file for you. You will then need to reboot the frontend.
 
-The contract artifacts are deployed as an `npm` package called `@cabindao/nft-passport-contracts`, which is one of the web app's dependencies. To see your changes in production version of the app, we will need to first publish the artifacts to npm, then install the latest version of the package to the web app.
+The contract artifacts are deployed as an `npm` package called `@cabindao/nft-passport-contracts`, which is one of the web app's dependencies. The contract artifacts are deployed to the test networks listed above and their contract addresses are also included in the package. To see your changes in production version of the app, we will need to first publish the artifacts to npm, then install the latest version of the package to the web app. Locally, Next resolves the npm package to your local contracts directory, so it will always be running the latest contracts.
 
 ## Cabin
 
