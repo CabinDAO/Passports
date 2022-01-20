@@ -12,6 +12,7 @@ import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/P
 import { styled } from "../../../stitches.config";
 import { Button } from "@cabindao/topo";
 import { useCallback, useRef, useState } from "react";
+import BN from "bn.js";
 
 type QueryParams = {
   network: string;
@@ -155,7 +156,11 @@ const CheckoutPage = ({
           getAbiFromJson(passportJson),
           address
         );
-        (contract.methods.buy() as ContractSendMethod)
+        (
+          contract.methods.buy(
+            new BN(web3.current.utils.randomHex(32).replace(/^0x/, ""), "hex")
+          ) as ContractSendMethod
+        )
           .send({
             from: accounts[0],
             value: web3.current.utils.toWei(price, "ether"),

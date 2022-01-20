@@ -23,10 +23,10 @@ export const contractAddressesByNetworkId: {
     passportFactory: process.env.NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS || "",
   },
   [KOVAN_NETWORK_ID]: {
-    passportFactory: "0x46EB9406108e68842E619a786A23BE5D6ec417E7",
+    passportFactory: "0x0707DD02fCabE1466848a6A2Eb5bc610C3976873",
   },
   [ROPSTEN_NETWORK_ID]: {
-    passportFactory: "0x41ac1E78812525f53e01E94b9b06c17fE73A64aF",
+    passportFactory: "0x87d6B2888D7830c69de98D6497716C3e2eFA400e",
   },
 };
 

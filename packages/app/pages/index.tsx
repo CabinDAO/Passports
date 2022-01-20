@@ -15,7 +15,6 @@ import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import { Modal, Input, Button } from "@cabindao/topo";
 import { styled } from "../stitches.config";
-import BN from "bn.js";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import {
@@ -167,20 +166,7 @@ const MembershipTabContent = () => {
             const weiPrice = web3.utils.toWei(price, "ether");
             return new Promise((resolve, reject) =>
               contractInstance.methods
-                .create(
-                  name,
-                  symbol,
-                  Array(Number(quantity))
-                    .fill(null)
-                    .map(
-                      () =>
-                        new BN(
-                          web3.utils.randomHex(32).replace(/^0x/, ""),
-                          "hex"
-                        )
-                    ),
-                  weiPrice
-                )
+                .create(name, symbol, quantity, weiPrice)
                 .send({ from: address })
                 .on("receipt", (receipt: TransactionReceipt) => {
                   const address =
