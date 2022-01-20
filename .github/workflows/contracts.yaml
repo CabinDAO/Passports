@@ -5,6 +5,7 @@ on:
     branches: main
     paths:
       - "packages/contracts/package.json"
+      - ".github/workflows/contracts.yaml"
 
 env:
   ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
@@ -26,8 +27,10 @@ jobs:
         working-directory: packages/contracts
       - name: Deploy to Kovan
         run: npm run migrate:kovan
+        working-directory: packages/contracts
       - name: Deploy to Ropsten
         run: npm run migrate:ropsten
+        working-directory: packages/contracts
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}

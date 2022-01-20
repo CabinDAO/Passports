@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * The Passport contract does this and that...
@@ -28,11 +27,10 @@ contract Passport is ERC721, Ownable {
     require(!sold[_id], "Error, Token is sold");
 
     uint256 ownerPayment = msg.value * 39 / 40;
-    uint256 cabinPayment = msg.value / 40;
-    // Address.sendValue(_owner, ownerPayment);
-    // Address.sendValue(_cabindao, cabinPayment);
     (bool success1, ) = _owner.call{value: ownerPayment}("");
     require(success1, "Address: unable to send value, recipient may have reverted");
+
+    uint256 cabinPayment = msg.value / 40;
     (bool success2, ) = _cabindao.call{value: cabinPayment}("");
     require(success2, "Address: unable to send value, recipient may have reverted");
     
