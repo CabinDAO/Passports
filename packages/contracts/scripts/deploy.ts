@@ -1,4 +1,6 @@
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
+import fs from "fs";
+import path from "path";
 
 async function main() {
   const FactoryContract = await ethers.getContractFactory("PassportFactory");
@@ -6,7 +8,28 @@ async function main() {
 
   await contract.deployed();
 
-  console.log("PassportFactory deployed to:", contract.address);
+  console.log("PassportFactory deployed", contract.address, "to", network.name);
+  if (network.name === "localhost") {
+    const ENV_FILE_LOCATION = path.resolve(__dirname, "../../app/.env");
+    const env = fs.readFileSync(ENV_FILE_LOCATION).toString();
+    const localKey = "NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS";
+    const newEnv = env.includes(localKey)
+      ? env
+          .split(/\n/)
+          .map((s) =>
+            s.startsWith(localKey) ? `${localKey}=${contract.address}` : s
+          )
+          .join("\n")
+      : `${env.trim()}\n${localKey}=${contract.address}\n`;
+    fs.writeFileSync(ENV_FILE_LOCATION, newEnv);
+  } else {
+    fs.appendFileSync(
+      "artifacts/addresses.js",
+      `export const ${network.name.toUpperCase()}_PASSPORT_FACTORY_ADDRESS = "${
+        contract.address
+      }";\n`
+    );
+  }
 }
 
 main().catch((error) => {
