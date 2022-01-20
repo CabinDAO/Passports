@@ -6,6 +6,11 @@ on:
     paths:
       - "packages/contracts/package.json"
 
+env:
+  ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+  ROPSTEN_PRIVATE_KEY: ${{ secrets.ROPSTEN_PRIVATE_KEY }}
+  KOVAN_PRIVATE_KEY: ${{ secrets.KOVAN_PRIVATE_KEY }}
+
 jobs:
   deploy:
     runs-on: ubuntu-20.04
@@ -19,6 +24,10 @@ jobs:
       - name: build
         run: npm run build
         working-directory: packages/contracts
+      - name: Deploy to Kovan
+        run: npm run migrate:kovan
+      - name: Deploy to Ropsten
+        run: npm run migrate:ropsten
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}

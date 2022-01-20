@@ -12,6 +12,7 @@ describe("PassportFactory", async function () {
   const wallets = await ethers.getSigners();
   const owner = wallets.pop();
   const dao1 = wallets.pop();
+  console.log('yo');
 
   beforeEach(async function () {
     const factoryContract = await ethers.getContractFactory(
@@ -33,9 +34,7 @@ describe("PassportFactory", async function () {
       const passport = await contract.connect(dao1?.address || "").create(
         "test",
         "TES",
-        Array(10)
-          .fill(null)
-          .map((_, i) => i.toString()),
+        15,
         utils.parseEther("0.75")
       );
       console.log(passport);

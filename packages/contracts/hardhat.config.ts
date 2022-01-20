@@ -24,25 +24,25 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
-const getAccountsFromEnv= (key: string): string[]  => {
+const getAccountsFromEnv = (key: string): string[] => {
   const account = process.env[key];
   return account ? [account] : [];
-}
+};
 
 const config: HardhatUserConfig = {
   solidity: "0.8.4",
   networks: {
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: getAccountsFromEnv('ROPSTEN_PRIVATE_KEY'),
+      accounts: getAccountsFromEnv("ROPSTEN_PRIVATE_KEY"),
     },
     kovan: {
       url: `https://eth-kovan.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: getAccountsFromEnv('KOVAN_PRIVATE_KEY'),
+      accounts: getAccountsFromEnv("KOVAN_PRIVATE_KEY"),
     },
     localhost: {
       url: "http://localhost:8545",
-      accounts: getAccountsFromEnv('PRIVATE_KEY')
+      accounts: getAccountsFromEnv("PRIVATE_KEY"),
     },
   },
   gasReporter: {
