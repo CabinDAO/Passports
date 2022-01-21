@@ -11,7 +11,6 @@ contract PassportFactory is Ownable {
   address[] public allPassports;
   mapping(address => address[]) public passportsByAddress;
   mapping(address => mapping(address => bool)) public passportOwned;
-  uint256 public ownerId = 1;
 
   constructor() {}
 
@@ -23,10 +22,9 @@ contract PassportFactory is Ownable {
     require(supply > 0, "Required to mint at least 1 passport");
     Passport passport = new Passport(msg.sender, name_, symbol_, supply, price);
     address _addr = address(passport);
-    allPassports[ownerId] = _addr;
+    allPassports.push(_addr);
     passportsByAddress[msg.sender].push(_addr);
     passportOwned[msg.sender][_addr] = true;
-    ownerId++;
     
     emit PassportDeployed(address(passport)); 
   }
