@@ -93,7 +93,7 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
 
 Note that every time you change the smart contracts, you will need to rebuild and redeploy it to your local network in order to see the changes. Most of the times this will copying the new contract address to your `packages/app/.env` file for you. You will then need to reboot the frontend.
 
-The contract artifacts are deployed as an `npm` package called `@cabindao/nft-passport-contracts`, which is one of the web app's dependencies. The contract artifacts are deployed to the test networks listed above and their contract addresses are also included in the package. To see your changes in production version of the app, we will need to first publish the artifacts to npm, then install the latest version of the package to the web app. Locally, Next resolves the npm package to your local contracts directory, so it will always be running the latest contracts.
+The contract artifacts are deployed as an `npm` package called `@cabindao/nft-passport-contracts`, which is one of the web app's dependencies. The contract artifacts are deployed to the test networks listed above and their contract addresses are also included in the package. To see your changes in production version of the app, we will need to first publish the artifacts to npm, then install the latest version of the package to the web app. Locally, you can have Next resolve the npm package to your local contracts directory by adding `USE_LOCAL_CONTRACTS=true` to your `.env` file.
 
 ## Cabin
 

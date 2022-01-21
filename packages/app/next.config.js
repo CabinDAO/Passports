@@ -7,13 +7,13 @@ module.exports = (phase) => {
     reactStrictMode: true,
   };
 
-  if (phase === PHASE_DEVELOPMENT_SERVER) {
+  if (phase === PHASE_DEVELOPMENT_SERVER && process.env.USE_LOCAL_CONTRACTS) {
     return {
       ...baseConfig,
       webpack: (config) => {
-        config.resolve.alias["@cabindao/nft-passport-contracts"] = path.resolve(
+        config.resolve.alias["@cabindao/nft-passport-contracts/artifacts/contracts"] = path.resolve(
           __dirname,
-          "../contracts"
+          "../contracts/artifacts/contracts"
         );
         return config;
       },

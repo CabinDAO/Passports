@@ -8,8 +8,9 @@ import "./Passport.sol";
  * The PassportFactory contract
  */
 contract PassportFactory is Ownable {
-  mapping(uint256 => address[]) public passportsByOwner;
-  mapping(address => uint256) public ownerIdByAddress;
+  address[] public allPassports;
+  mapping(address => address[]) public passportsByAddress;
+  mapping(address => mapping(address => bool)) public passportOwned;
   uint256 public ownerId = 1;
 
   constructor() {}
@@ -22,21 +23,26 @@ contract PassportFactory is Ownable {
     require(supply > 0, "Required to mint at least 1 passport");
     Passport passport = new Passport(msg.sender, name_, symbol_, supply, price);
     address _addr = address(passport);
-    if (ownerIdByAddress[msg.sender] == 0) {
-      ownerIdByAddress[msg.sender] = ownerId;
-      ownerId++;
-    }
-    passportsByOwner[ownerIdByAddress[msg.sender]].push(_addr);
+    allPassports[ownerId] = _addr;
+    passportsByAddress[msg.sender].push(_addr);
+    passportOwned[msg.sender][_addr] = true;
+    ownerId++;
     
     emit PassportDeployed(address(passport)); 
   }
 
   function getMemberships() public view returns(address[] memory) {
-    return passportsByOwner[ownerIdByAddress[msg.sender]];
+    return passportsByAddress[msg.sender];
   }
 
-  function getPassportsByOwner(uint256 id) public view returns(address[] memory) {
-    return passportsByOwner[id];
+  function getPassports() public view returns(address[] memory) {
+    return allPassports;
+  }
+
+  function grantPassport(address passport, address admin) public {
+    require(!passportOwned[admin][passport], "User already has access to Passport");
+    passportOwned[admin][passport] = true;
+    passportsByAddress[admin].push(passport);
   }
 
   event Received(address, uint);

@@ -25,7 +25,7 @@ async function main() {
   } else {
     fs.appendFileSync(
       "artifacts/addresses.js",
-      `export const ${network.name.toUpperCase()}_PASSPORT_FACTORY_ADDRESS = "${
+      `module.exports.${network.name.toUpperCase()}_PASSPORT_FACTORY_ADDRESS = "${
         contract.address
       }";\n`
     );
