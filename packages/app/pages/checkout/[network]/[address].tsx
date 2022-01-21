@@ -230,43 +230,9 @@ export const getStaticPaths: GetStaticPaths<QueryParams> = () => {
           getAbiFromJson(passportFactoryJson),
           address
         );
-        return (contract.methods.ownerId() as ContractSendMethod)
+        return (contract.methods.getPassports() as ContractSendMethod)
           .call()
-          .catch((e) => {
-            console.error("Failed to get owner id for network", name);
-            console.error(e);
-            return 0;
-          })
-          .then((maxOwnerId) =>
-            Promise.all(
-              maxOwnerId
-                ? Array(maxOwnerId - 1)
-                    .fill(null)
-                    .map((_, ownerId) =>
-                      (
-                        contract.methods.getPassportsByOwner(
-                          ownerId + 1
-                        ) as ContractSendMethod
-                      )
-                        .call()
-                        .catch((e) => {
-                          console.error(
-                            "Failed to get passports for owner",
-                            ownerId,
-                            "on network",
-                            name
-                          );
-                          console.error(e);
-                          return [];
-                        })
-                    )
-                : []
-            )
-          )
-          .then((passportAddresses) =>
-            passportAddresses.flatMap((a) => a as string)
-          )
-          .then((addresses) =>
+          .then((addresses: string[]) =>
             addresses.map((address) => ({ params: { network: name, address } }))
           );
       })
