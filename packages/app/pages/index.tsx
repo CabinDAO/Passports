@@ -312,21 +312,23 @@ const Home: NextPage = () => {
     (web3.current.givenProvider.enable() as Promise<void>).then(getWeb3Info);
   }, [getWeb3Info, web3]);
   useEffect(() => {
-    if (web3.current.givenProvider.isConnected()) {
+    if (web3.current.givenProvider?.isConnected?.()) {
       getWeb3Info();
     }
 
-    web3.current.eth.givenProvider.on(
-      "accountsChanged",
-      (accounts: string[]) => {
-        setAddress(accounts[0]);
-      }
-    );
+    if (web3.current?.eth?.givenProvider) {
+      web3.current.eth.givenProvider.on(
+        "accountsChanged",
+        (accounts: string[]) => {
+          setAddress(accounts[0]);
+        }
+      );
 
-    // Subscribe to chainId change
-    web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
-      setChainId(Number(chainId));
-    });
+      // Subscribe to chainId change
+      web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
+        setChainId(Number(chainId));
+      });
+    }
   }, [getWeb3Info, web3, setChainId, setAddress]);
   return (
     <div
@@ -360,7 +362,7 @@ const Home: NextPage = () => {
             </Button>
           </>
         ) : (
-          <Button // TODO replace with TOPO button
+          <Button
             onClick={connectWallet}
           >
             Connect Wallet
