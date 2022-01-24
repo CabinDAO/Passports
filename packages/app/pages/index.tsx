@@ -23,6 +23,7 @@ import {
   networkNameById,
 } from "../components/constants";
 import { Link1Icon } from "@radix-ui/react-icons";
+import { Share1Icon } from "@radix-ui/react-icons";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -51,6 +52,9 @@ const MembershipHeader = styled("h2", {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
+  "& button": {
+    marginLeft: "4px",
+  },
 });
 
 const MembershipCard = (props: {
@@ -62,7 +66,10 @@ const MembershipCard = (props: {
 }) => {
   const [passport, setPassport] = useState(props);
   const web3 = useWeb3();
+  const address = useAddress();
   const networkId = useChainId();
+  const [shareIsOpen, setShareIsOpen] = useState(false);
+  const [userAddress, setUserAddress] = useState("");
   useEffect(() => {
     if (!passport.name) {
       const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
@@ -82,16 +89,50 @@ const MembershipCard = (props: {
     <MembershipCardContainer>
       <MembershipHeader>
         <span>{passport.name}</span>
-        <Button
-          leftIcon={<Link1Icon />}
-          onClick={() =>
-            window.navigator.clipboard.writeText(
-              `${window.location.origin}/checkout/${
-                networkNameById[Number(networkId)]
-              }/${passport.address}`
-            )
-          }
-        />
+        <div>
+          <Button
+            leftIcon={<Link1Icon />}
+            onClick={() =>
+              window.navigator.clipboard.writeText(
+                `${window.location.origin}/checkout/${
+                  networkNameById[Number(networkId)]
+                }/${passport.address}`
+              )
+            }
+          />
+          <Button
+            leftIcon={<Share1Icon />}
+            onClick={() => setShareIsOpen(true)}
+          />
+          <Modal
+            isOpen={shareIsOpen}
+            setIsOpen={setShareIsOpen}
+            title="Grant Access to Membership"
+            onConfirm={() => {
+              const contract = new web3.eth.Contract(
+                getAbiFromJson(passportFactoryJson)
+              );
+              contract.options.address =
+                contractAddressesByNetworkId[networkId]?.passportFactory || "";
+              return new Promise((resolve, reject) =>
+                contract.methods
+                  .grantPassport(passport.address, userAddress)
+                  .send({ from: address })
+                  .on("receipt", () => {
+                    setUserAddress("");
+                    resolve();
+                  })
+                  .on("error", reject)
+              );
+            }}
+          >
+            <ModalInput
+              label={"Address"}
+              value={userAddress}
+              onChange={(e) => setUserAddress(e.target.value)}
+            />
+          </Modal>
+        </div>
       </MembershipHeader>
       <h6>{passport.symbol}</h6>
       <p>
