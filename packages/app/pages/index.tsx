@@ -337,7 +337,7 @@ const HomeContent = () => {
             display: "flex",
             flexDirection: "column",
             flex: "1 0 auto",
-            zIndex: 1200,
+            zIndex: 2,
             position: "fixed",
             top: 0,
             outline: 0,
