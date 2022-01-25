@@ -2,10 +2,11 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
+import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
-import { Modal, Input, Button } from "@cabindao/topo";
+import { Modal, Input, Button, Label } from "@cabindao/topo";
 import { styled } from "../stitches.config";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
@@ -54,11 +55,12 @@ const MembershipHeader = styled("h2", {
   alignItems: "center",
   "& button": {
     marginLeft: "4px",
-    marginTop: "4px"
+    marginTop: "4px",
   },
 });
 
 const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
+type Membership = Parameters<typeof MembershipCard>[0];
 
 const ModalLabel = styled(`h2`, { marginBottom: 32 });
 
@@ -70,8 +72,8 @@ interface IMembershipProps {
   price: string;
 }
 
-interface IMembershipCardProps extends IMembershipProps{
-  redirect_url: string | undefined
+interface IMembershipCardProps extends IMembershipProps {
+  redirect_url: string | undefined;
 }
 
 const MembershipCard = (props: IMembershipCardProps) => {
@@ -80,7 +82,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
     name: props.name,
     symbol: props.symbol,
     supply: props.supply,
-    price: props.price
+    price: props.price,
   });
   const web3 = useWeb3();
   const address = useAddress();
@@ -127,17 +129,14 @@ const MembershipCard = (props: IMembershipCardProps) => {
             leftIcon={<Share1Icon />}
             onClick={() => setShareIsOpen(true)}
           />
-          <Button
-            leftIcon={<Pencil2Icon />}
-            onClick={open}
-          />
+          <Button leftIcon={<Pencil2Icon />} onClick={open} />
           <Modal
             isOpen={isOpen}
             setIsOpen={setIsOpen}
             title="Edit Membership Type"
             onConfirm={() => {
               let upsertData: {
-                [key: string]: string | undefined,
+                [key: string]: string | undefined;
               } = {};
               upsertData["redirect_url"] = url;
               upsertData["contractAddr"] = passport.address
@@ -148,9 +147,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
               .catch(() => console.log("Insert error toast here"));
             }}
           >
-            <ModalLabel>
-              {`${passport.name} (${passport.symbol})`}
-            </ModalLabel>
+            <ModalLabel>{`${passport.name} (${passport.symbol})`}</ModalLabel>
             <ModalInput
               label={"Redirect URL"}
               value={url}
@@ -185,7 +182,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
               onChange={(e) => setUserAddress(e.target.value)}
             />
           </Modal>
-        </div>   
+        </div>
       </MembershipHeader>
       <h6>{passport.symbol}</h6>
       <p>
@@ -204,23 +201,173 @@ const Tab: React.FC<{ to: string }> = ({ children, to }) => {
   return <TabContainer onClick={onClick}>{children}</TabContainer>;
 };
 
-const MembershipTabContent = () => {
+const IpfsImage = ({ cid }: { cid: string }) => {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    axios
+      .get(cid)
+      .then((r: { data: { buffer: string } }) =>
+        URL.createObjectURL(
+          new Blob([r.data.buffer], { type: "image/png" } /* (1) */)
+        )
+      )
+      .then(setSrc);
+  }, [setSrc, cid]);
+  return <Image src={src} alt={"thumbnail"} />;
+};
+
+const CreateMembershipModal = ({
+  contractInstance,
+  onSuccess,
+}: {
+  contractInstance: Contract;
+  onSuccess: (m: Membership) => void;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
-  const [memberships, setMemberships] = useState<IMembershipProps[]>([]);
-  const address = useAddress();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
-  const [redirectionUrls, setRedirectionUrls] = useState<{
-    [key: string]: string | undefined,
-   }>({});
+  const address = useAddress();
+  const web3 = useWeb3();
+  const [stage, setStage] = useState(0);
+  const onFinalConfirm = useCallback(() => {
+    const weiPrice = web3.utils.toWei(price, "ether");
+    return new Promise<void>((resolve, reject) =>
+      contractInstance.methods
+        .create(name, symbol, quantity, weiPrice)
+        .send({ from: address })
+        .on("receipt", (receipt: TransactionReceipt) => {
+          const address =
+            (receipt.events?.["PassportDeployed"]?.returnValues
+              ?.passport as string) || "";
+          onSuccess({
+            address,
+            symbol,
+            name,
+            supply: Number(quantity),
+            price,
+            redirect_url: "",
+          });
+          resolve();
+        })
+        .on("error", reject)
+    );
+  }, [
+    symbol,
+    name,
+    quantity,
+    price,
+    contractInstance,
+    web3,
+    address,
+    onSuccess,
+  ]);
+  const stageConfirms = [() => true, () => true, onFinalConfirm];
+  const [fileLoading, setFileLoading] = useState(false);
+  const [cid, setCid] = useState("");
+  return (
+    <>
+      <Button onClick={open} type="primary" disabled={!address}>
+        Create New Membership Type
+      </Button>
+      <Modal
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        title="New Membership Type"
+        onConfirm={stageConfirms[stage]}
+        confirmText={stage === 2 ? "Create" : "Next"}
+      >
+        {stage === 0 && (
+          <>
+            <ModalInput
+              label={"Name"}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <ModalInput
+              label={"Symbol"}
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+            />
+            <ModalInput
+              label={"Quantity"}
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              type={"number"}
+            />
+            <ModalInput
+              label={"Price"}
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              type={"number"}
+            />
+          </>
+        )}
+        {stage === 1 && (
+          <>
+            <Label label={"Upload Thumbnail"}>
+              <input
+                type={"file"}
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setFileLoading(true);
+                    e.target.files[0]
+                      .arrayBuffer()
+                      .then((data) =>
+                        axios.post("https://ipfs.infura.io:5001/api/v0/add", {
+                          files: [data],
+                        })
+                      )
+                      .then((r: { data: { Hash: string } }) =>
+                        setCid(r.data.Hash)
+                      )
+                      .finally(() => setFileLoading(false));
+                  }
+                }}
+              />
+            </Label>
+            {fileLoading && "Loading..."}
+          </>
+        )}
+        {stage === 2 && (
+          <>
+            <h2>Details</h2>
+            <p>
+              <b>Name:</b> {name}
+            </p>
+            <p>
+              <b>Symbol:</b> {symbol}
+            </p>
+            <p>
+              <b>Quantity:</b> {quantity}
+            </p>
+            <p>
+              <b>Price:</b> {price} ETH
+            </p>
+            <p>
+              <b>Thumbnail:</b>
+            </p>
+            <IpfsImage cid={cid} />
+          </>
+        )}
+      </Modal>
+    </>
+  );
+};
+
+const MembershipTabContent = () => {
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
+  const [redirectionUrls, setRedirectionUrls] = useState<{
+    [key: string]: string | undefined;
+  }>({});
   useEffect(() => {
     // Fetch the relevant redirection URLs on page load.
-    const membershipAddrs = memberships.map(m => m.address);
+    const membershipAddrs = memberships.map((m) => m.address);
     if (memberships.length > 0) {
       axios.post("/api/redirectionUrls", {
         addresses: membershipAddrs
@@ -251,6 +398,7 @@ const MembershipTabContent = () => {
               symbol: "",
               supply: 0,
               price: "0",
+              redirect_url: "",
             }))
           );
         })
@@ -261,67 +409,15 @@ const MembershipTabContent = () => {
     <>
       <h1>Memberships</h1>
       <div>
-        <Button onClick={open} type="primary" disabled={!address}>
-          Create New Membership Type
-        </Button>
-        <Modal
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          title="New Membership Type"
-          onConfirm={() => {
-            const weiPrice = web3.utils.toWei(price, "ether");
-            return new Promise<void>((resolve, reject) =>
-              contractInstance.methods
-                .create(name, symbol, quantity, weiPrice)
-                .send({ from: address })
-                .on("receipt", (receipt: TransactionReceipt) => {
-                  const address =
-                    (receipt.events?.["PassportDeployed"]?.returnValues
-                      ?.passport as string) || "";
-                  setMemberships([
-                    ...memberships,
-                    {
-                      address,
-                      symbol,
-                      name,
-                      supply: Number(quantity),
-                      price,
-                    },
-                  ]);
-                  resolve();
-                })
-                .on("error", reject)
-            );
-          }}
-        >
-          <ModalInput
-            label={"Name"}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <ModalInput
-            label={"Symbol"}
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
-          />
-          <ModalInput
-            label={"Quantity"}
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            type={"number"}
-          />
-          <ModalInput
-            label={"Price"}
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            type={"number"}
-          />
-        </Modal>
+        <CreateMembershipModal
+          contractInstance={contractInstance}
+          onSuccess={(m) => setMemberships([...memberships, m])}
+        />
       </div>
       <MembershipContainer>
         {memberships.map((m) => (
-          <MembershipCard 
-            key={`${chainId}-${m.address}`} 
+          <MembershipCard
+            key={`${chainId}-${m.address}`}
             {...m}
             redirect_url={redirectionUrls[m.address]}
           />
