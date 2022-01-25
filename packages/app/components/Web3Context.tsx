@@ -41,7 +41,7 @@ export const Web3Provider: React.FC = ({ children }) => {
   const web3Modal = useRef<Web3Modal>();
 
   const connectWallet = useCallback(() => {
-    if (!web3Modal.current) return;
+    if (!web3Modal.current) return Promise.resolve();
     return web3Modal.current
       .connect()
       .then(async (provider) => {
