@@ -2,15 +2,7 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import Web3 from "web3";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import { Modal, Input, Button } from "@cabindao/topo";
@@ -24,6 +16,13 @@ import {
 } from "../components/constants";
 import { Link1Icon } from "@radix-ui/react-icons";
 import { Share1Icon } from "@radix-ui/react-icons";
+import {
+  useAddress,
+  useChainId,
+  useConnect,
+  useWeb3,
+  Web3Provider,
+} from "../components/Web3Context";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -280,56 +279,12 @@ const SettingsTabContent = () => {
   );
 };
 
-const Web3Context = React.createContext({
-  address: "",
-  web3: { current: undefined } as { current?: Web3 },
-  chainId: -1,
-});
-const useAddress = () => useContext(Web3Context).address;
-const useWeb3 = () => useContext(Web3Context).web3.current!;
-const useChainId = () => useContext(Web3Context).chainId;
-
-const Home: NextPage = () => {
+const HomeContent = () => {
   const router = useRouter();
   const tab = useMemo(() => router.asPath.replace(/^\/#?/, ""), [router]);
-  const [address, setAddress] = useState("");
-  const [chainId, setChainId] = useState(0);
-  const web3 = useRef<Web3>(
-    new Web3(Web3.givenProvider || "ws://localhost:8545")
-  );
-  const getWeb3Info = useCallback(
-    () =>
-      Promise.all([
-        web3.current.eth.getAccounts(),
-        web3.current.eth.getChainId(),
-      ]).then(([addresses, chain]) => {
-        setAddress(addresses[0]);
-        setChainId(chain);
-      }),
-    [setAddress, setChainId]
-  );
-  const connectWallet = useCallback(() => {
-    (web3.current.givenProvider.enable() as Promise<void>).then(getWeb3Info);
-  }, [getWeb3Info, web3]);
-  useEffect(() => {
-    if (web3.current.givenProvider?.isConnected?.()) {
-      getWeb3Info();
-    }
-
-    if (web3.current?.eth?.givenProvider) {
-      web3.current.eth.givenProvider.on(
-        "accountsChanged",
-        (accounts: string[]) => {
-          setAddress(accounts[0]);
-        }
-      );
-
-      // Subscribe to chainId change
-      web3.current.eth.givenProvider.on("chainChanged", (chainId: number) => {
-        setChainId(Number(chainId));
-      });
-    }
-  }, [getWeb3Info, web3, setChainId, setAddress]);
+  const address = useAddress();
+  const chainId = useChainId();
+  const connectWallet = useConnect();
   return (
     <div
       style={{
@@ -362,11 +317,7 @@ const Home: NextPage = () => {
             </Button>
           </>
         ) : (
-          <Button
-            onClick={connectWallet}
-          >
-            Connect Wallet
-          </Button>
+          <Button onClick={connectWallet}>Connect Wallet</Button>
         )}
       </header>
       <div
@@ -386,7 +337,7 @@ const Home: NextPage = () => {
             display: "flex",
             flexDirection: "column",
             flex: "1 0 auto",
-            zIndex: 1200,
+            zIndex: 2,
             position: "fixed",
             top: 0,
             outline: 0,
@@ -404,23 +355,29 @@ const Home: NextPage = () => {
           <Tab to={"settings"}>Settings</Tab>
         </div>
       </div>
-      <Web3Context.Provider value={{ address, web3, chainId }}>
-        <main
-          style={{
-            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            marginLeft: DRAWER_WIDTH,
-            width: `calc(100% - 255px)`,
-          }}
-        >
-          {tab === "memberships" && <MembershipTabContent />}
-          {tab === "users" && <UsersTabContent />}
-          {tab === "settings" && <SettingsTabContent />}
-        </main>
-      </Web3Context.Provider>
+      <main
+        style={{
+          height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          marginLeft: DRAWER_WIDTH,
+          width: `calc(100% - 255px)`,
+        }}
+      >
+        {tab === "memberships" && <MembershipTabContent />}
+        {tab === "users" && <UsersTabContent />}
+        {tab === "settings" && <SettingsTabContent />}
+      </main>
     </div>
+  );
+};
+
+const Home: NextPage = () => {
+  return (
+    <Web3Provider>
+      <HomeContent />
+    </Web3Provider>
   );
 };
 
