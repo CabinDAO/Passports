@@ -11,6 +11,7 @@ import React, {
   useState,
 } from "react";
 import Web3 from "web3";
+import Web3Modal from "web3modal";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import { Modal, Input, Button } from "@cabindao/topo";
@@ -309,7 +310,15 @@ const Home: NextPage = () => {
     [setAddress, setChainId]
   );
   const connectWallet = useCallback(() => {
-    (web3.current.givenProvider.enable() as Promise<void>).then(getWeb3Info);
+    const web3Modal = new Web3Modal({
+      network: "mainnet", // optional
+      cacheProvider: true, // optional
+      providerOptions: {}, // required
+    });
+    web3Modal.connect().then((provider) => {
+      web3.current = new Web3(provider);
+      getWeb3Info();
+    });
   }, [getWeb3Info, web3]);
   useEffect(() => {
     if (web3.current.givenProvider?.isConnected?.()) {
@@ -362,11 +371,7 @@ const Home: NextPage = () => {
             </Button>
           </>
         ) : (
-          <Button
-            onClick={connectWallet}
-          >
-            Connect Wallet
-          </Button>
+          <Button onClick={connectWallet}>Connect Wallet</Button>
         )}
       </header>
       <div
