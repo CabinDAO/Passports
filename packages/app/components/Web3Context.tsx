@@ -47,7 +47,7 @@ export const Web3Provider: React.FC = ({ children }) => {
       .then(async (provider) => {
         if (provider.on) {
           provider.on("close", async () => {
-            await web3Modal.current.clearCachedProvider();
+            await web3Modal.current?.clearCachedProvider();
           });
           provider.on("accountsChanged", (accounts: string[]) => {
             setAddress(accounts[0]);
