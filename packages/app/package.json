@@ -11,6 +11,7 @@
     "@cabindao/nft-passport-contracts": "^0.4.1",
     "@cabindao/topo": "^0.2.2",
     "@cabindao/topo-theme": "^0.1.0",
+    "@walletconnect/web3-provider": "^1.7.1",
     "next": "^12.0.7",
     "react": "17.0.2",
     "react-dom": "17.0.2",
