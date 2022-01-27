@@ -4,6 +4,7 @@ import {
   contractAddressesByNetworkId,
   getAbiFromJson,
   networkIdByName,
+  firebaseConfig,
 } from "../../../components/constants";
 import { ContractSendMethod } from "web3-eth-contract";
 import Web3 from "web3";
@@ -11,13 +12,36 @@ import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/cont
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { styled } from "../../../stitches.config";
 import { Button } from "@cabindao/topo";
-import { useCallback, useRef, useState } from "react";
 import BN from "bn.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { initializeApp } from "firebase/app";
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  getDoc 
+} from 'firebase/firestore/lite';
 
 type QueryParams = {
   network: string;
   address: string;
 };
+
+// Create a connection to the firebase DB.
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Method to check redirection URL for current passport.
+async function getRedirectionUrl(db: any, address: string) {
+  const urlCol = collection(db, 'redirect-urls');
+  const membershipDoc = doc(urlCol, address)
+  const membership = await getDoc(membershipDoc);
+  const membershipData = membership.data();
+  if (membershipData && membershipData["redirect_url"]) {
+    return membershipData["redirect_url"];
+  }
+  return "";
+}
 
 const AppContainer = styled("div", {
   display: "flex",
@@ -133,6 +157,18 @@ const CheckoutPage = ({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [supply, setSupply] = useState(initialSupply);
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    // Fetch redirect url from DB on page load.
+    (async function() {
+      try {
+          const response = await getRedirectionUrl(db, address);
+          setUrl(response);
+      } catch (e) {
+          console.error(e);
+      }
+    })();
+  }, []);
   const onBuy = useCallback(() => {
     setError("");
     setLoading(true);
@@ -171,6 +207,10 @@ const CheckoutPage = ({
             console.log("successfully bought", id, "!");
             setLoading(false);
             setSupply(supply - 1);
+            if (url) {
+              // If valid redirection URL is provided, redirect on successful purchase.
+              window.location.assign(url);
+            }
           })
           .on("error", (e) => {
             setError(e.message);
@@ -181,7 +221,7 @@ const CheckoutPage = ({
         setError(e.message);
         setLoading(false);
       });
-  }, [web3, network, address, price, setSupply, supply]);
+  }, [web3, network, address, price, setSupply, supply, url]);
   return (
     <AppContainer>
       <AppBackground />

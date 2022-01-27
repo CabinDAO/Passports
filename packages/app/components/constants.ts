@@ -45,3 +45,17 @@ export const getAbiFromJson = (json: {
     stateMutability: a.stateMutability as StateMutabilityType,
     type: a.type as AbiType,
   }));
+
+/*
+ * Config needed to make a firebase DB connection.
+ * TODO: use a Cabin account.
+ */
+export const firebaseConfig = {
+  apiKey: "AIzaSyBlP4xTTtpua7u2Jl0Bpybn896NNNUFwx8",
+  authDomain: "passports-339418.firebaseapp.com",
+  projectId: "passports-339418",
+  storageBucket: "passports-339418.appspot.com",
+  messagingSenderId: "198686036255",
+  appId: "1:198686036255:web:47b24729c8c3e52eaf202a",
+  measurementId: "G-ZS4NL2R3GS"
+};
