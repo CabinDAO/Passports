@@ -3,7 +3,7 @@ import {
   networkNameById,
   contractAddressesByNetworkId,
   getAbiFromJson,
-  networkIdByName,
+  networkIdByName
 } from "../../../components/constants";
 import { ContractSendMethod } from "web3-eth-contract";
 import Web3 from "web3";
@@ -11,8 +11,9 @@ import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/cont
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { styled } from "../../../stitches.config";
 import { Button } from "@cabindao/topo";
-import { useCallback, useRef, useState } from "react";
 import BN from "bn.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import axios from "axios";
 
 type QueryParams = {
   network: string;
@@ -133,6 +134,17 @@ const CheckoutPage = ({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [supply, setSupply] = useState(initialSupply);
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    // Fetch redirect url from DB on page load.
+    axios.post("/api/redirectionUrl", {
+      address: address
+    })
+    .then((result) => {
+      setUrl(result.data["redirect_url"]);
+    })
+    .catch(console.error);
+  }, [setUrl]);
   const onBuy = useCallback(() => {
     setError("");
     setLoading(true);
@@ -171,6 +183,11 @@ const CheckoutPage = ({
             console.log("successfully bought", id, "!");
             setLoading(false);
             setSupply(supply - 1);
+            if (url) {
+              // If valid redirection URL is provided, redirect on successful purchase.
+              // TODO show success toast and delay redirection.
+              window.location.assign(url);
+            }
           })
           .on("error", (e) => {
             setError(e.message);
@@ -181,7 +198,7 @@ const CheckoutPage = ({
         setError(e.message);
         setLoading(false);
       });
-  }, [web3, network, address, price, setSupply, supply]);
+  }, [web3, network, address, price, setSupply, supply, url]);
   return (
     <AppContainer>
       <AppBackground />

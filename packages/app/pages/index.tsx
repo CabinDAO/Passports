@@ -14,8 +14,7 @@ import {
   getAbiFromJson,
   networkNameById,
 } from "../components/constants";
-import { Link1Icon } from "@radix-ui/react-icons";
-import { Share1Icon } from "@radix-ui/react-icons";
+import { Link1Icon, Pencil2Icon, Share1Icon } from "@radix-ui/react-icons";
 import {
   useAddress,
   useChainId,
@@ -23,6 +22,7 @@ import {
   useWeb3,
   Web3Provider,
 } from "../components/Web3Context";
+import axios from "axios";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -35,7 +35,7 @@ const TabContainer = styled("div", {
 
 const MembershipCardContainer = styled("div", {
   background: "$sand",
-  width: 300,
+  width: 350,
   height: 256,
   padding: 16,
   display: "inline-block",
@@ -53,22 +53,42 @@ const MembershipHeader = styled("h2", {
   alignItems: "center",
   "& button": {
     marginLeft: "4px",
+    marginTop: "4px"
   },
 });
 
-const MembershipCard = (props: {
+const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
+
+const ModalLabel = styled(`h2`, { marginBottom: 32 });
+
+interface IMembershipProps {
   address: string;
   name: string;
   symbol: string;
   supply: number;
   price: string;
-}) => {
-  const [passport, setPassport] = useState(props);
+}
+
+interface IMembershipCardProps extends IMembershipProps{
+  redirect_url: string | undefined
+}
+
+const MembershipCard = (props: IMembershipCardProps) => {
+  const [passport, setPassport] = useState({
+    address: props.address,
+    name: props.name,
+    symbol: props.symbol,
+    supply: props.supply,
+    price: props.price
+  });
   const web3 = useWeb3();
   const address = useAddress();
   const networkId = useChainId();
   const [shareIsOpen, setShareIsOpen] = useState(false);
   const [userAddress, setUserAddress] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const open = useCallback(() => setIsOpen(true), [setIsOpen]);
+  const [url, setUrl] = useState(props.redirect_url);
   useEffect(() => {
     if (!passport.name) {
       const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
@@ -84,6 +104,9 @@ const MembershipCard = (props: {
       });
     }
   }, [setPassport, passport, web3]);
+  useEffect(() => {
+    setUrl(props.redirect_url);
+  }, [props.redirect_url]);
   return (
     <MembershipCardContainer>
       <MembershipHeader>
@@ -103,6 +126,34 @@ const MembershipCard = (props: {
             leftIcon={<Share1Icon />}
             onClick={() => setShareIsOpen(true)}
           />
+          <Button
+            leftIcon={<Pencil2Icon />}
+            onClick={open}
+          />
+          <Modal
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            title="Edit Membership Type"
+            onConfirm={() => {
+              let upsertData: {
+                [key: string]: string | undefined,
+              } = {};
+              upsertData["redirect_url"] = url;
+              upsertData["contractAddr"] = passport.address
+              return axios.post("/api/updateRedirectionUrl", {
+                data: upsertData
+              });
+            }}
+          >
+            <ModalLabel>
+              {`${passport.name} (${passport.symbol})`}
+            </ModalLabel>
+            <ModalInput
+              label={"Redirect URL"}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </Modal>
           <Modal
             isOpen={shareIsOpen}
             setIsOpen={setShareIsOpen}
@@ -131,7 +182,7 @@ const MembershipCard = (props: {
               onChange={(e) => setUserAddress(e.target.value)}
             />
           </Modal>
-        </div>
+        </div>   
       </MembershipHeader>
       <h6>{passport.symbol}</h6>
       <p>
@@ -150,21 +201,33 @@ const Tab: React.FC<{ to: string }> = ({ children, to }) => {
   return <TabContainer onClick={onClick}>{children}</TabContainer>;
 };
 
-const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
-
 const MembershipTabContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
-  const [memberships, setMemberships] = useState<
-    Parameters<typeof MembershipCard>[0][]
-  >([]);
+  const [memberships, setMemberships] = useState<IMembershipProps[]>([]);
   const address = useAddress();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
+  const [redirectionUrls, setRedirectionUrls] = useState<{
+    [key: string]: string | undefined,
+   }>({});
   const web3 = useWeb3();
   const chainId = useChainId();
+  useEffect(() => {
+    // Fetch the relevant redirection URLs on page load.
+    const membershipAddrs = memberships.map(m => m.address);
+    if (memberships.length > 0) {
+      axios.post("/api/redirectionUrls", {
+        addresses: membershipAddrs
+      })
+      .then((result) => {
+        setRedirectionUrls(result.data["redirect_urls"]);
+      })
+      .catch(console.error);
+    }
+  }, [memberships, setRedirectionUrls]);
   const contractInstance = useMemo<Contract>(() => {
     const contract = new web3.eth.Contract(getAbiFromJson(passportFactoryJson));
     contract.options.address =
@@ -254,7 +317,11 @@ const MembershipTabContent = () => {
       </div>
       <MembershipContainer>
         {memberships.map((m) => (
-          <MembershipCard key={`${chainId}-${m.address}`} {...m} />
+          <MembershipCard 
+            key={`${chainId}-${m.address}`} 
+            {...m}
+            redirect_url={redirectionUrls[m.address]}
+          />
         ))}
       </MembershipContainer>
     </>
