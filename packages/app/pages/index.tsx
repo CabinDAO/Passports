@@ -11,7 +11,6 @@ import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/cont
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import {
   contractAddressesByNetworkId,
-  firebaseConfig,
   getAbiFromJson,
   networkNameById,
 } from "../components/constants";
@@ -23,42 +22,10 @@ import {
   useWeb3,
   Web3Provider,
 } from "../components/Web3Context";
-import { initializeApp } from "firebase/app";
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  query, 
-  where, 
-  doc, 
-  setDoc 
-} from 'firebase/firestore/lite';
+import axios from "axios";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
-
-//Connect to the firebase DB.
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Method to get list of relevant redirection URLs.
-async function getRedirectionUrls(db: any, addresses: string[]) {
-  const urlCol = collection(db, 'redirect-urls');
-  const memberships = await getDocs(query(urlCol, where("contractAddr", "in", addresses)));
-  const data: {[key: string]: string | undefined} = {};
-  memberships.forEach((doc) => {
-    const docData = doc.data();
-    data[docData["contractAddr"]] = docData["redirect_url"];
-  });
-  return data;
-}
-
-// Method to update redirection URL in DB.
-function setRedirectionUrls(db: any, upsertData: {[key: string]: string | undefined}) {
-  const urlCol = collection(db, 'redirect-urls');
-  const contractDoc = doc(urlCol, upsertData['contractAddr']);
-  return setDoc(contractDoc, upsertData);
-}
 
 const TabContainer = styled("div", {
   minHeight: 64,
@@ -172,8 +139,10 @@ const MembershipCard = (props: IMembershipCardProps) => {
                 [key: string]: string | undefined,
               } = {};
               upsertData["redirect_url"] = url;
-              upsertData["contractAddr"] = `${passport.address}`
-              return setRedirectionUrls(db, upsertData);
+              upsertData["contractAddr"] = passport.address
+              return axios.post("/api/updateRedirectionUrl", {
+                data: upsertData
+              });
             }}
           >
             <ModalLabel>
@@ -248,16 +217,17 @@ const MembershipTabContent = () => {
   const chainId = useChainId();
   useEffect(() => {
     // Fetch the relevant redirection URLs on page load.
-    (async function() {
-      try {
-          const membershipAddrs = memberships.map(m => `${m.address}`);
-          const response = await getRedirectionUrls(db, membershipAddrs);
-          setRedirectionUrls(response);
-      } catch (e) {
-          console.error(e);
-      }
-    })();
-  }, [memberships]);
+    const membershipAddrs = memberships.map(m => m.address);
+    if (memberships.length > 0) {
+      axios.post("/api/redirectionUrls", {
+        addresses: membershipAddrs
+      })
+      .then((result) => {
+        setRedirectionUrls(result.data["redirect_urls"]);
+      })
+      .catch(console.error);
+    }
+  }, [memberships, setRedirectionUrls]);
   const contractInstance = useMemo<Contract>(() => {
     const contract = new web3.eth.Contract(getAbiFromJson(passportFactoryJson));
     contract.options.address =
@@ -350,7 +320,7 @@ const MembershipTabContent = () => {
           <MembershipCard 
             key={`${chainId}-${m.address}`} 
             {...m}
-            redirect_url={redirectionUrls[`${m.address}`]}
+            redirect_url={redirectionUrls[m.address]}
           />
         ))}
       </MembershipContainer>

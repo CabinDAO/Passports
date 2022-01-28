@@ -51,11 +51,10 @@ export const getAbiFromJson = (json: {
  * TODO: use a Cabin account.
  */
 export const firebaseConfig = {
-  apiKey: "AIzaSyBlP4xTTtpua7u2Jl0Bpybn896NNNUFwx8",
-  authDomain: "passports-339418.firebaseapp.com",
-  projectId: "passports-339418",
-  storageBucket: "passports-339418.appspot.com",
-  messagingSenderId: "198686036255",
-  appId: "1:198686036255:web:47b24729c8c3e52eaf202a",
-  measurementId: "G-ZS4NL2R3GS"
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: "passports2.firebaseapp.com",
+  projectId: "passports2",
+  storageBucket: "passports2.appspot.com",
+  messagingSenderId: "835188230670",
+  appId: "1:835188230670:web:1ee8ae3a9338c874de8a5f"
 };

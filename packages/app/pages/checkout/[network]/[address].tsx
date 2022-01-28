@@ -3,8 +3,7 @@ import {
   networkNameById,
   contractAddressesByNetworkId,
   getAbiFromJson,
-  networkIdByName,
-  firebaseConfig,
+  networkIdByName
 } from "../../../components/constants";
 import { ContractSendMethod } from "web3-eth-contract";
 import Web3 from "web3";
@@ -14,34 +13,12 @@ import { styled } from "../../../stitches.config";
 import { Button } from "@cabindao/topo";
 import BN from "bn.js";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { initializeApp } from "firebase/app";
-import { 
-  getFirestore, 
-  collection, 
-  doc, 
-  getDoc 
-} from 'firebase/firestore/lite';
+import axios from "axios";
 
 type QueryParams = {
   network: string;
   address: string;
 };
-
-// Create a connection to the firebase DB.
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Method to check redirection URL for current passport.
-async function getRedirectionUrl(db: any, address: string) {
-  const urlCol = collection(db, 'redirect-urls');
-  const membershipDoc = doc(urlCol, address)
-  const membership = await getDoc(membershipDoc);
-  const membershipData = membership.data();
-  if (membershipData && membershipData["redirect_url"]) {
-    return membershipData["redirect_url"];
-  }
-  return "";
-}
 
 const AppContainer = styled("div", {
   display: "flex",
@@ -160,15 +137,14 @@ const CheckoutPage = ({
   const [url, setUrl] = useState("");
   useEffect(() => {
     // Fetch redirect url from DB on page load.
-    (async function() {
-      try {
-          const response = await getRedirectionUrl(db, address);
-          setUrl(response);
-      } catch (e) {
-          console.error(e);
-      }
-    })();
-  }, []);
+    axios.post("/api/redirectionUrl", {
+      address: address
+    })
+    .then((result) => {
+      setUrl(result.data["redirect_url"]);
+    })
+    .catch(console.error);
+  }, [setUrl]);
   const onBuy = useCallback(() => {
     setError("");
     setLoading(true);
@@ -209,6 +185,7 @@ const CheckoutPage = ({
             setSupply(supply - 1);
             if (url) {
               // If valid redirection URL is provided, redirect on successful purchase.
+              // TODO show success toast and delay redirection.
               window.location.assign(url);
             }
           })
