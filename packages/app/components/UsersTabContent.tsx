@@ -170,7 +170,7 @@ const UsersTabContent = () => {
                             </tr>
                             {
                                 Object.keys(users).map((user) => {
-                                    return (<tr>
+                                    return (<tr key={user}>
                                         <TableData>{user}</TableData>
                                         <TableData>{users[user]}</TableData>
                                     </tr>);

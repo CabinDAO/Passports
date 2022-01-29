@@ -144,7 +144,7 @@ const CheckoutPage = ({
       setUrl(result.data["redirect_url"]);
     })
     .catch(console.error);
-  }, [setUrl]);
+  }, [address, setUrl]);
   const onBuy = useCallback(() => {
     setError("");
     setLoading(true);
