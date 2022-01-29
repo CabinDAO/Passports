@@ -23,6 +23,7 @@ import {
   Web3Provider,
 } from "../components/Web3Context";
 import axios from "axios";
+import UsersTabContent from "../components/UsersTabContent";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -142,7 +143,9 @@ const MembershipCard = (props: IMembershipCardProps) => {
               upsertData["contractAddr"] = passport.address
               return axios.post("/api/updateRedirectionUrl", {
                 data: upsertData
-              });
+              })
+              .then(() => console.log("Insert success toast here"))
+              .catch(() => console.log("Insert error toast here"));
             }}
           >
             <ModalLabel>
@@ -164,7 +167,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
               );
               contract.options.address =
                 contractAddressesByNetworkId[networkId]?.passportFactory || "";
-              return new Promise((resolve, reject) =>
+              return new Promise<void>((resolve, reject) =>
                 contract.methods
                   .grantPassport(passport.address, userAddress)
                   .send({ from: address })
@@ -222,7 +225,7 @@ const MembershipTabContent = () => {
       axios.post("/api/redirectionUrls", {
         addresses: membershipAddrs
       })
-      .then((result) => {
+      .then((result: { data: { redirect_urls: Record<string, string> } }) => {
         setRedirectionUrls(result.data["redirect_urls"]);
       })
       .catch(console.error);
@@ -267,7 +270,7 @@ const MembershipTabContent = () => {
           title="New Membership Type"
           onConfirm={() => {
             const weiPrice = web3.utils.toWei(price, "ether");
-            return new Promise((resolve, reject) =>
+            return new Promise<void>((resolve, reject) =>
               contractInstance.methods
                 .create(name, symbol, quantity, weiPrice)
                 .send({ from: address })
@@ -324,15 +327,6 @@ const MembershipTabContent = () => {
           />
         ))}
       </MembershipContainer>
-    </>
-  );
-};
-
-const UsersTabContent = () => {
-  return (
-    <>
-      <h1>Users</h1>
-      <div>Coming Soon!</div>
     </>
   );
 };

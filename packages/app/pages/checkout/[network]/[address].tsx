@@ -140,7 +140,7 @@ const CheckoutPage = ({
     axios.post("/api/redirectionUrl", {
       address: address
     })
-    .then((result) => {
+    .then((result: { data: { redirect_url: string } }) => {
       setUrl(result.data["redirect_url"]);
     })
     .catch(console.error);
