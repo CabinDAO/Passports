@@ -18,9 +18,9 @@ contract PassportFactory is Ownable {
     address passport
   );
 
-  function create(string memory name_, string memory symbol_, uint256 supply, uint256 price) public {
+  function create(string memory name_, string memory symbol_, uint256 supply, uint256 price, string memory metadataHash) public {
     require(supply > 0, "Required to mint at least 1 passport");
-    Passport passport = new Passport(msg.sender, name_, symbol_, supply, price);
+    Passport passport = new Passport(msg.sender, name_, symbol_, supply, price, metadataHash);
     address _addr = address(passport);
     allPassports.push(_addr);
     passportsByAddress[msg.sender].push(_addr);
