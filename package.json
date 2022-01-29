@@ -12,5 +12,7 @@
     "packages/landingpage",
     "packages/landing-page"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "@cabindao/nft-passport-contracts": "^0.5.0"
+  }
 }

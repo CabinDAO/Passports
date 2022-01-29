@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:full": "cross-env USE_LOCAL_CONTRACTS=true next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@types/node": "16.11.10",
     "@types/react": "17.0.37",
+    "cross-env": "^7.0.3",
     "eslint": "7.32.0",
     "eslint-config-next": "12.0.4",
     "typescript": "4.5.2"

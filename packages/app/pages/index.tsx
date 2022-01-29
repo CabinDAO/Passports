@@ -15,7 +15,12 @@ import {
   getAbiFromJson,
   networkNameById,
 } from "../components/constants";
-import { Link1Icon, Pencil2Icon, Share1Icon } from "@radix-ui/react-icons";
+import {
+  Link1Icon,
+  Pencil2Icon,
+  Share1Icon,
+  TrashIcon,
+} from "@radix-ui/react-icons";
 import {
   useAddress,
   useChainId,
@@ -38,7 +43,7 @@ const TabContainer = styled("div", {
 const MembershipCardContainer = styled("div", {
   background: "$sand",
   width: 350,
-  height: 256,
+  height: 512,
   padding: 16,
   display: "inline-block",
   marginRight: "8px",
@@ -60,7 +65,6 @@ const MembershipHeader = styled("h2", {
 });
 
 const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
-type Membership = Parameters<typeof MembershipCard>[0];
 
 const ModalLabel = styled(`h2`, { marginBottom: 32 });
 
@@ -70,6 +74,7 @@ interface IMembershipProps {
   symbol: string;
   supply: number;
   price: string;
+  metadataHash: string;
 }
 
 interface IMembershipCardProps extends IMembershipProps {
@@ -83,6 +88,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
     symbol: props.symbol,
     supply: props.supply,
     price: props.price,
+    metadataHash: props.metadataHash,
   });
   const web3 = useWeb3();
   const address = useAddress();
@@ -92,6 +98,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [url, setUrl] = useState(props.redirect_url);
+  const [metadata, setMetadata] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!passport.name) {
       const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
@@ -103,6 +110,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
           symbol: p[1],
           supply: p[2],
           price: web3.utils.fromWei(p[3], "ether"),
+          metadataHash: p[4],
         });
       });
     }
@@ -110,6 +118,21 @@ const MembershipCard = (props: IMembershipCardProps) => {
   useEffect(() => {
     setUrl(props.redirect_url);
   }, [props.redirect_url]);
+  useEffect(() => {
+    if (!Object.entries(metadata).length && passport.metadataHash) {
+      axios
+        .post(
+          `https://ipfs.infura.io:5001/api/v0/block/get?arg=${passport.metadataHash}`,
+          {}
+        )
+        .then((r) => {
+          const jsonRegex = /{.*}/;
+          const metadataJson = jsonRegex.exec(r.data)?.[0] || "";
+          setMetadata(JSON.parse(metadataJson));
+        });
+    }
+  }, [metadata, passport.metadataHash]);
+  const { thumbnail, ...fields } = metadata;
   return (
     <MembershipCardContainer>
       <MembershipHeader>
@@ -191,6 +214,12 @@ const MembershipCard = (props: IMembershipCardProps) => {
       <p>
         <b>Price:</b> {passport.price} ETH
       </p>
+      {Object.entries(fields).map((f) => (
+        <p key={f[0]}>
+          <b>{f[0]}:</b> {f[1]}
+        </p>
+      ))}
+      {thumbnail && <IpfsImage cid={thumbnail} />}
     </MembershipCardContainer>
   );
 };
@@ -205,23 +234,40 @@ const IpfsImage = ({ cid }: { cid: string }) => {
   const [src, setSrc] = useState("");
   useEffect(() => {
     axios
-      .get(cid)
-      .then((r: { data: { buffer: string } }) =>
-        URL.createObjectURL(
-          new Blob([r.data.buffer], { type: "image/png" } /* (1) */)
-        )
+      .post(
+        `https://ipfs.infura.io:5001/api/v0/block/get?arg=${cid}`,
+        {},
+        { responseType: "text" }
       )
-      .then(setSrc);
+      .then((r) => {
+        const dataUrlRegex = /data:image\/[a-z]{3,4};base64,[a-zA-Z0-9+/]+/;
+        const src = dataUrlRegex.exec(r.data)?.[0] || "";
+        setSrc(src);
+      });
   }, [setSrc, cid]);
-  return <Image src={src} alt={"thumbnail"} />;
+  return src ? (
+    <Image src={src} alt={"thumbnail"} width={300} height={200} />
+  ) : (
+    <div style={{ width: 300, height: 200 }}>
+      <p>Loading...</p>
+    </div>
+  );
 };
+
+const AdditionalFieldRow = styled("div", {
+  display: "flex",
+  alignItems: "center",
+  "& input": {
+    marginRight: "8px",
+  },
+});
 
 const CreateMembershipModal = ({
   contractInstance,
   onSuccess,
 }: {
   contractInstance: Contract;
-  onSuccess: (m: Membership) => void;
+  onSuccess: (m: IMembershipProps) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
@@ -232,28 +278,54 @@ const CreateMembershipModal = ({
   const address = useAddress();
   const web3 = useWeb3();
   const [stage, setStage] = useState(0);
+  const [cid, setCid] = useState("");
+  const [additionalFields, setAdditionalFields] = useState<
+    { key: string; value: string }[]
+  >([]);
   const onFinalConfirm = useCallback(() => {
-    const weiPrice = web3.utils.toWei(price, "ether");
-    return new Promise<void>((resolve, reject) =>
-      contractInstance.methods
-        .create(name, symbol, quantity, weiPrice)
-        .send({ from: address })
-        .on("receipt", (receipt: TransactionReceipt) => {
-          const address =
-            (receipt.events?.["PassportDeployed"]?.returnValues
-              ?.passport as string) || "";
-          onSuccess({
-            address,
-            symbol,
-            name,
-            supply: Number(quantity),
-            price,
-            redirect_url: "",
-          });
-          resolve();
-        })
-        .on("error", reject)
+    const formData = new FormData();
+    formData.append(
+      "files",
+      JSON.stringify({
+        ...Object.fromEntries(
+          additionalFields.map(({ key, value }) => [key, value])
+        ),
+        thumbnail: cid,
+      })
     );
+    return axios
+      .post<{ Hash: string }>(
+        "https://ipfs.infura.io:5001/api/v0/add",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      )
+      .then((r) => {
+        const weiPrice = web3.utils.toWei(price, "ether");
+        return new Promise<void>((resolve, reject) =>
+          contractInstance.methods
+            .create(name, symbol, quantity, weiPrice, r.data.Hash)
+            .send({ from: address })
+            .on("receipt", (receipt: TransactionReceipt) => {
+              const address =
+                (receipt.events?.["PassportDeployed"]?.returnValues
+                  ?.passport as string) || "";
+              onSuccess({
+                address,
+                symbol,
+                name,
+                supply: Number(quantity),
+                price,
+                metadataHash: r.data.Hash,
+              });
+              resolve();
+            })
+            .on("error", reject)
+        );
+      });
   }, [
     symbol,
     name,
@@ -263,10 +335,25 @@ const CreateMembershipModal = ({
     web3,
     address,
     onSuccess,
+    additionalFields,
+    cid,
   ]);
-  const stageConfirms = [() => true, () => true, onFinalConfirm];
+  const stageConfirms = [
+    () => {
+      setStage(1);
+      return true;
+    },
+    () => {
+      setStage(2);
+      return true;
+    },
+    () => {
+      setStage(3);
+      return true;
+    },
+    onFinalConfirm,
+  ];
   const [fileLoading, setFileLoading] = useState(false);
-  const [cid, setCid] = useState("");
   return (
     <>
       <Button onClick={open} type="primary" disabled={!address}>
@@ -277,7 +364,7 @@ const CreateMembershipModal = ({
         setIsOpen={setIsOpen}
         title="New Membership Type"
         onConfirm={stageConfirms[stage]}
-        confirmText={stage === 2 ? "Create" : "Next"}
+        confirmText={stage === stageConfirms.length - 1 ? "Create" : "Next"}
       >
         {stage === 0 && (
           <>
@@ -310,20 +397,33 @@ const CreateMembershipModal = ({
             <Label label={"Upload Thumbnail"}>
               <input
                 type={"file"}
-                onChange={(e) => {
+                onChange={async (e) => {
                   if (e.target.files) {
                     setFileLoading(true);
-                    e.target.files[0]
-                      .arrayBuffer()
-                      .then((data) =>
-                        axios.post("https://ipfs.infura.io:5001/api/v0/add", {
-                          files: [data],
-                        })
-                      )
-                      .then((r: { data: { Hash: string } }) =>
-                        setCid(r.data.Hash)
-                      )
-                      .finally(() => setFileLoading(false));
+                    const formData = new FormData();
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const b64 = reader.result as string;
+                        formData.append("files", b64);
+                        return axios
+                          .post<{ Hash: string }>(
+                            "https://ipfs.infura.io:5001/api/v0/add",
+                            formData,
+                            {
+                              headers: {
+                                "Content-Type": "multipart/form-data",
+                              },
+                            }
+                          )
+                          .then((r) => {
+                            setCid(r.data.Hash);
+                          })
+                          .finally(() => setFileLoading(false));
+                      };
+                      reader.readAsDataURL(file);
+                    }
                   }
                 }}
               />
@@ -332,6 +432,60 @@ const CreateMembershipModal = ({
           </>
         )}
         {stage === 2 && (
+          <>
+            <h2>Additional Metadata</h2>
+            {additionalFields.map((a, i) => (
+              <AdditionalFieldRow key={i}>
+                <ModalInput
+                  label={"Key"}
+                  value={a.key}
+                  onChange={(e) =>
+                    setAdditionalFields(
+                      additionalFields.map((field, j) =>
+                        j === i
+                          ? { value: field.value, key: e.target.value }
+                          : field
+                      )
+                    )
+                  }
+                />
+                <ModalInput
+                  label={"Value"}
+                  value={a.value}
+                  onChange={(e) =>
+                    setAdditionalFields(
+                      additionalFields.map((field, j) =>
+                        j === i
+                          ? { value: e.target.value, key: field.key }
+                          : field
+                      )
+                    )
+                  }
+                />
+                <Button
+                  leftIcon={<TrashIcon />}
+                  onClick={() =>
+                    setAdditionalFields([
+                      ...additionalFields,
+                      { key: "", value: "" },
+                    ])
+                  }
+                />
+              </AdditionalFieldRow>
+            ))}
+            <Button
+              onClick={() =>
+                setAdditionalFields([
+                  ...additionalFields,
+                  { key: "", value: "" },
+                ])
+              }
+            >
+              Add Field
+            </Button>
+          </>
+        )}
+        {stage === 3 && (
           <>
             <h2>Details</h2>
             <p>
@@ -350,6 +504,11 @@ const CreateMembershipModal = ({
               <b>Thumbnail:</b>
             </p>
             <IpfsImage cid={cid} />
+            {additionalFields.map((a) => (
+              <p key={a.key}>
+                <b>{a.key}:</b> {a.value}
+              </p>
+            ))}
           </>
         )}
       </Modal>
@@ -358,7 +517,7 @@ const CreateMembershipModal = ({
 };
 
 const MembershipTabContent = () => {
-  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [memberships, setMemberships] = useState<IMembershipProps[]>([]);
   const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
@@ -398,7 +557,7 @@ const MembershipTabContent = () => {
               symbol: "",
               supply: 0,
               price: "0",
-              redirect_url: "",
+              metadataHash: "",
             }))
           );
         })
