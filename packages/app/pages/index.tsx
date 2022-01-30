@@ -121,14 +121,11 @@ const MembershipCard = (props: IMembershipCardProps) => {
   useEffect(() => {
     if (!Object.entries(metadata).length && passport.metadataHash) {
       axios
-        .post(
-          `https://ipfs.infura.io:5001/api/v0/block/get?arg=${passport.metadataHash}`,
-          {}
+        .get(
+          `https://ipfs.io/ipfs/${passport.metadataHash}`,
         )
         .then((r) => {
-          const jsonRegex = /{.*}/;
-          const metadataJson = jsonRegex.exec(r.data)?.[0] || "";
-          setMetadata(JSON.parse(metadataJson));
+          setMetadata(r.data);
         });
     }
   }, [metadata, passport.metadataHash]);
@@ -231,26 +228,13 @@ const Tab: React.FC<{ to: string }> = ({ children, to }) => {
 };
 
 const IpfsImage = ({ cid }: { cid: string }) => {
-  const [src, setSrc] = useState("");
-  useEffect(() => {
-    axios
-      .post(
-        `https://ipfs.infura.io:5001/api/v0/block/get?arg=${cid}`,
-        {},
-        { responseType: "text" }
-      )
-      .then((r) => {
-        const dataUrlRegex = /data:image\/[a-z]{3,4};base64,[a-zA-Z0-9+/]+/;
-        const src = dataUrlRegex.exec(r.data)?.[0] || "";
-        setSrc(src);
-      });
-  }, [setSrc, cid]);
-  return src ? (
-    <Image src={src} alt={"thumbnail"} width={300} height={200} />
-  ) : (
-    <div style={{ width: 300, height: 200 }}>
-      <p>Loading...</p>
-    </div>
+  return (
+    <Image
+      src={`https://ipfs.io/ipfs/${cid}`}
+      alt={"thumbnail"}
+      width={300}
+      height={200}
+    />
   );
 };
 
@@ -403,26 +387,21 @@ const CreateMembershipModal = ({
                     const formData = new FormData();
                     const file = e.target.files[0];
                     if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const b64 = reader.result as string;
-                        formData.append("files", b64);
-                        return axios
-                          .post<{ Hash: string }>(
-                            "https://ipfs.infura.io:5001/api/v0/add",
-                            formData,
-                            {
-                              headers: {
-                                "Content-Type": "multipart/form-data",
-                              },
-                            }
-                          )
-                          .then((r) => {
-                            setCid(r.data.Hash);
-                          })
-                          .finally(() => setFileLoading(false));
-                      };
-                      reader.readAsDataURL(file);
+                      formData.append("files", file);
+                      return axios
+                        .post<{ Hash: string }>(
+                          "https://ipfs.infura.io:5001/api/v0/add",
+                          formData,
+                          {
+                            headers: {
+                              "Content-Type": "multipart/form-data",
+                            },
+                          }
+                        )
+                        .then((r) => {
+                          setCid(r.data.Hash);
+                        })
+                        .finally(() => setFileLoading(false));
                     }
                   }
                 }}
@@ -503,12 +482,12 @@ const CreateMembershipModal = ({
             <p>
               <b>Thumbnail:</b>
             </p>
-            {cid && <IpfsImage cid={cid} />}
             {additionalFields.map((a) => (
               <p key={a.key}>
                 <b>{a.key}:</b> {a.value}
               </p>
             ))}
+            {cid && <IpfsImage cid={cid} />}
           </>
         )}
       </Modal>
