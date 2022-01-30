@@ -5,6 +5,9 @@ const path = require("path");
 module.exports = (phase) => {
   const baseConfig = {
     reactStrictMode: true,
+    images: {
+      domains: ['ipfs.io'],
+    },
   };
 
   if (phase === PHASE_DEVELOPMENT_SERVER && process.env.USE_LOCAL_CONTRACTS) {
