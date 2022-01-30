@@ -32,6 +32,8 @@ import axios from "axios";
 import UsersTabContent from "../components/UsersTabContent";
 import { ipfsAdd } from "../components/utils";
 
+import { getChainName } from "../utils/getChainName";
+
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
 
@@ -551,6 +553,7 @@ const HomeContent = () => {
   const tab = useMemo(() => router.asPath.replace(/^\/#?/, ""), [router]);
   const address = useAddress();
   const chainId = useChainId();
+  const chainName = getChainName(chainId);
   const connectWallet = useConnect();
   return (
     <div
@@ -577,7 +580,7 @@ const HomeContent = () => {
         {address ? (
           <>
             {chainId && (
-              <span style={{ marginRight: 16 }}>ChainId: {chainId}</span>
+              <span style={{ marginRight: 16 }}>Connected on {chainName}</span>
             )}
             <Button>
               {address.slice(0, 6)}...{address.slice(-4)}
