@@ -30,6 +30,7 @@ import {
 } from "../components/Web3Context";
 import axios from "axios";
 import UsersTabContent from "../components/UsersTabContent";
+import { ipfsAdd } from "../components/utils";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -120,13 +121,9 @@ const MembershipCard = (props: IMembershipCardProps) => {
   }, [props.redirect_url]);
   useEffect(() => {
     if (!Object.entries(metadata).length && passport.metadataHash) {
-      axios
-        .get(
-          `https://ipfs.io/ipfs/${passport.metadataHash}`,
-        )
-        .then((r) => {
-          setMetadata(r.data);
-        });
+      axios.get(`https://ipfs.io/ipfs/${passport.metadataHash}`).then((r) => {
+        setMetadata(r.data);
+      });
     }
   }, [metadata, passport.metadataHash]);
   const { thumbnail, ...fields } = metadata;
@@ -267,49 +264,36 @@ const CreateMembershipModal = ({
     { key: string; value: string }[]
   >([]);
   const onFinalConfirm = useCallback(() => {
-    const formData = new FormData();
-    formData.append(
-      "files",
+    return ipfsAdd(
       JSON.stringify({
         ...Object.fromEntries(
           additionalFields.map(({ key, value }) => [key, value])
         ),
         ...(cid ? { thumbnail: cid } : {}),
       })
-    );
-    return axios
-      .post<{ Hash: string }>(
-        "https://ipfs.infura.io:5001/api/v0/add",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      )
-      .then((r) => {
-        const weiPrice = web3.utils.toWei(price, "ether");
-        return new Promise<void>((resolve, reject) =>
-          contractInstance.methods
-            .create(name, symbol, quantity, weiPrice, r.data.Hash)
-            .send({ from: address })
-            .on("receipt", (receipt: TransactionReceipt) => {
-              const address =
-                (receipt.events?.["PassportDeployed"]?.returnValues
-                  ?.passport as string) || "";
-              onSuccess({
-                address,
-                symbol,
-                name,
-                supply: Number(quantity),
-                price,
-                metadataHash: r.data.Hash,
-              });
-              resolve();
-            })
-            .on("error", reject)
-        );
-      });
+    ).then((metadataHash) => {
+      const weiPrice = web3.utils.toWei(price, "ether");
+      return new Promise<void>((resolve, reject) =>
+        contractInstance.methods
+          .create(name, symbol, quantity, weiPrice, metadataHash)
+          .send({ from: address })
+          .on("receipt", (receipt: TransactionReceipt) => {
+            const address =
+              (receipt.events?.["PassportDeployed"]?.returnValues
+                ?.passport as string) || "";
+            onSuccess({
+              address,
+              symbol,
+              name,
+              supply: Number(quantity),
+              price,
+              metadataHash,
+            });
+            resolve();
+          })
+          .on("error", reject)
+      );
+    });
   }, [
     symbol,
     name,
@@ -387,20 +371,8 @@ const CreateMembershipModal = ({
                     const formData = new FormData();
                     const file = e.target.files[0];
                     if (file) {
-                      formData.append("files", file);
-                      return axios
-                        .post<{ Hash: string }>(
-                          "https://ipfs.infura.io:5001/api/v0/add",
-                          formData,
-                          {
-                            headers: {
-                              "Content-Type": "multipart/form-data",
-                            },
-                          }
-                        )
-                        .then((r) => {
-                          setCid(r.data.Hash);
-                        })
+                      return ipfsAdd(file)
+                        .then(setCid)
                         .finally(() => setFileLoading(false));
                     }
                   }
