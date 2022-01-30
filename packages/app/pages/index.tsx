@@ -290,7 +290,7 @@ const CreateMembershipModal = ({
         ...Object.fromEntries(
           additionalFields.map(({ key, value }) => [key, value])
         ),
-        thumbnail: cid,
+        ...(cid ? { thumbnail: cid } : {}),
       })
     );
     return axios
@@ -503,7 +503,7 @@ const CreateMembershipModal = ({
             <p>
               <b>Thumbnail:</b>
             </p>
-            <IpfsImage cid={cid} />
+            {cid && <IpfsImage cid={cid} />}
             {additionalFields.map((a) => (
               <p key={a.key}>
                 <b>{a.key}:</b> {a.value}
