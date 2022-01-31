@@ -15,12 +15,15 @@ contract Passport is ERC721, Ownable {
   uint256 public supply;
   uint256[] public tokenIds;
   string public metadataHash;
+  bool private enableTransfer = false;
+  uint256 public royalty;
   event Purchase(address owner, uint256 price, uint256 id, string uri);
-  constructor(address owner, string memory name_, string memory symbol_, uint256 _supply, uint256 _price, string memory _metadataHash) ERC721(name_, symbol_) {
+  constructor(address owner, string memory name_, string memory symbol_, uint256 _supply, uint256 _price, string memory _metadataHash, uint256 _royalty) ERC721(name_, symbol_) {
     _owner = payable(owner);
     price = _price;
     supply = _supply;
     metadataHash = _metadataHash;
+    royalty = _royalty;
   }
 
   function buy(uint256 _id) external payable {
@@ -41,6 +44,34 @@ contract Passport is ERC721, Ownable {
     supply = supply - 1;
     
     emit Purchase(msg.sender, price, _id, tokenURI(_id));
+  }
+
+  function transfer(
+      address from,
+      address to,
+      uint256 tokenId
+  ) external payable {
+    enableTransfer = true;
+    if (royalty > 0) {
+      uint256 ownerPayment = royalty * 39 / 40;
+      (bool success1, ) = _owner.call{value: ownerPayment}("");
+      require(success1, "Address: unable to send value, recipient may have reverted");
+
+      uint256 cabinPayment = royalty / 40;
+      (bool success2, ) = _cabindao.call{value: cabinPayment}("");
+      require(success2, "Address: unable to send value, recipient may have reverted");
+    }
+    _transfer(from, to, tokenId);
+    enableTransfer = false;
+  }
+
+  function _transfer(
+      address from,
+      address to,
+      uint256 tokenId
+  ) internal virtual override {
+    require(enableTransfer, "Token transfer disabled");
+    super._transfer(from, to, tokenId);
   }
 
   function get() public view returns(string memory, string memory, uint256, uint256, string memory) {
