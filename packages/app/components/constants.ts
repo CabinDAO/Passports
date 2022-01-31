@@ -1,6 +1,8 @@
 import { AbiType, StateMutabilityType, AbiItem } from "web3-utils";
 import {
+  // KOVAN_STAKING_ADDRESS,
   KOVAN_PASSPORT_FACTORY_ADDRESS,
+  // ROPSTEN_STAKING_ADDRESS,
   ROPSTEN_PASSPORT_FACTORY_ADDRESS,
 } from "@cabindao/nft-passport-contracts/artifacts/addresses";
 
@@ -21,16 +23,20 @@ export const networkIdByName = Object.fromEntries(
 );
 
 export const contractAddressesByNetworkId: {
-  [id: number]: { passportFactory: string };
+  [id: number]: { passportFactory: string; staking: string };
 } = {
   [LOCALHOST_NETWORK_ID]: {
-    passportFactory: process.env.NEXT_PUBLIC_LOCAL_PASSPORT_ADDRESS || "",
+    passportFactory:
+      process.env.NEXT_PUBLIC_LOCAL_PASSPORT_FACTORY_ADDRESS || "",
+    staking: process.env.NEXT_PUBLIC_LOCAL_STAKING_ADDRESS || "",
   },
   [KOVAN_NETWORK_ID]: {
     passportFactory: KOVAN_PASSPORT_FACTORY_ADDRESS,
+    staking: "", //KOVAN_STAKING_ADDRESS,
   },
   [ROPSTEN_NETWORK_ID]: {
     passportFactory: ROPSTEN_PASSPORT_FACTORY_ADDRESS,
+    staking: "", //ROPSTEN_STAKING_ADDRESS,
   },
 };
 
@@ -56,5 +62,5 @@ export const firebaseConfig = {
   projectId: "passports2",
   storageBucket: "passports2.appspot.com",
   messagingSenderId: "835188230670",
-  appId: "1:835188230670:web:1ee8ae3a9338c874de8a5f"
+  appId: "1:835188230670:web:1ee8ae3a9338c874de8a5f",
 };
