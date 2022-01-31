@@ -41,7 +41,8 @@ async function deploy(key: string) {
 }
 
 async function main() {
-  return Promise.all([deploy("PASSPORT_FACTORY"), deploy("STAKING")]);
+  await deploy("PASSPORT_FACTORY");
+  await deploy("STAKING");
 }
 
 main().catch((error) => {
