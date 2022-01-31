@@ -368,7 +368,6 @@ const CreateMembershipModal = ({
                 onChange={async (e) => {
                   if (e.target.files) {
                     setFileLoading(true);
-                    const formData = new FormData();
                     const file = e.target.files[0];
                     if (file) {
                       return ipfsAdd(file)
@@ -450,9 +449,6 @@ const CreateMembershipModal = ({
             </p>
             <p>
               <b>Price:</b> {price} ETH
-            </p>
-            <p>
-              <b>Thumbnail:</b>
             </p>
             {additionalFields.map((a) => (
               <p key={a.key}>
