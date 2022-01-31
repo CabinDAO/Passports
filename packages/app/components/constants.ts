@@ -1,8 +1,8 @@
 import { AbiType, StateMutabilityType, AbiItem } from "web3-utils";
 import {
-  // KOVAN_STAKING_ADDRESS,
+  KOVAN_STAKING_ADDRESS,
   KOVAN_PASSPORT_FACTORY_ADDRESS,
-  // ROPSTEN_STAKING_ADDRESS,
+  ROPSTEN_STAKING_ADDRESS,
   ROPSTEN_PASSPORT_FACTORY_ADDRESS,
 } from "@cabindao/nft-passport-contracts/artifacts/addresses";
 
@@ -32,11 +32,11 @@ export const contractAddressesByNetworkId: {
   },
   [KOVAN_NETWORK_ID]: {
     passportFactory: KOVAN_PASSPORT_FACTORY_ADDRESS,
-    staking: "", //KOVAN_STAKING_ADDRESS,
+    staking: KOVAN_STAKING_ADDRESS,
   },
   [ROPSTEN_NETWORK_ID]: {
     passportFactory: ROPSTEN_PASSPORT_FACTORY_ADDRESS,
-    staking: "", //ROPSTEN_STAKING_ADDRESS,
+    staking: ROPSTEN_STAKING_ADDRESS,
   },
 };
 
