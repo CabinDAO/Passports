@@ -9,6 +9,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 
 dotenv.config();
+dotenv.config({ path: "../app/.env" });
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -20,6 +21,32 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     console.log(await account.getBalance());
   }
 });
+
+// Doesn't quite work yet - Added a hidden keyboard shortcut in the frontend to faucet for now
+task("faucet", "Seed an account with the test token")
+  .addParam("address", "account to seed")
+  .addParam("quantity", "number of tokens", "100")
+  .setAction(async (taskArgs, hre) => {
+    const signer = await hre.ethers
+      .getSigners()
+      .then((signer) => signer.find((s) => s.address === taskArgs.address));
+    const contract = await hre.ethers.getContractAt(
+      "TestToken",
+      process.env.NEXT_PUBLIC_LOCAL_TEST_TOKEN_ADDRESS || "",
+      signer
+    );
+    contract.functions
+      .faucet(hre.ethers.utils.parseEther(taskArgs.quantity), {
+        from: taskArgs.address,
+      })
+      .then((a) => a.wait())
+      .then(console.log)
+      .catch((e) => {
+        console.error("Error!");
+        console.error(e);
+      })
+      .finally(() => console.log("done!"));
+  });
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

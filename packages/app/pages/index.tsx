@@ -31,6 +31,7 @@ import {
 import axios from "axios";
 import UsersTabContent from "../components/UsersTabContent";
 import { ipfsAdd } from "../components/utils";
+import SettingsTabContent from "../components/SettingsTabContent";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -529,15 +530,6 @@ const MembershipTabContent = () => {
           />
         ))}
       </MembershipContainer>
-    </>
-  );
-};
-
-const SettingsTabContent = () => {
-  return (
-    <>
-      <h1>Settings</h1>
-      <div>Coming Soon!</div>
     </>
   );
 };

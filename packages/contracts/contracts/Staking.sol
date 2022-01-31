@@ -10,9 +10,12 @@ contract Staking is Ownable {
     address[] internal stakeholders;
     mapping(address => uint256) internal indices;
     mapping(address => uint256) internal stakes;
-    ERC20 token = ERC20(0x5FbDB2315678afecb367f032d93F642f64180aa3);
-    constructor() {}
+    ERC20 token;
+    constructor(address _token) {
+        token = ERC20(_token);
+    }
 
+    event StakeCreated();
     function createStake(uint256 _stake) public
     {
         token.transferFrom(msg.sender, address(this), _stake);
@@ -21,8 +24,10 @@ contract Staking is Ownable {
             stakeholders.push(msg.sender);
         }
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
+        emit StakeCreated(); 
     }
 
+    event StakeRemoved();
     function removeStake(uint256 _stake) public
     {
         require(_stake <= stakes[msg.sender], "Cannot remove more than allocated stake");
@@ -37,7 +42,8 @@ contract Staking is Ownable {
             delete indices[addressToMove];
             stakeholders.pop();
         }
-        token.transferFrom(address(this), msg.sender, _stake);
+        token.transfer(msg.sender, _stake);
+        emit StakeRemoved();
     }
 
     function isStakeholder(address _address) public view returns (bool)

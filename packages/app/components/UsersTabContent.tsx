@@ -1,6 +1,6 @@
 import { Box, Label, Select } from "@cabindao/topo";
 import { useEffect, useMemo, useState } from "react";
-import { Contract, ContractSendMethod } from "web3-eth-contract";
+import type { Contract, ContractSendMethod } from "web3-eth-contract";
 import { contractAddressesByNetworkId, getAbiFromJson } from "./constants";
 import { useAddress, useChainId, useWeb3 } from "./Web3Context";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
@@ -102,7 +102,7 @@ const UsersTabContent = () => {
                 .finally(() => setShowLoading(false));
             });
         }
-    }, [selectedOption, setUsers]);
+    }, [selectedOption, setUsers, web3]);
 
     useEffect(() => {
         // Get details of all memberships to populate dropdown
@@ -131,7 +131,7 @@ const UsersTabContent = () => {
         else {
             setMembershipDetails({});
         }
-    }, [mAddresses]);
+    }, [mAddresses, web3]);
 
     return (
         <>

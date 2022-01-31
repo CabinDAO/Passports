@@ -2,13 +2,15 @@ import { ethers, network } from "hardhat";
 import fs from "fs";
 import path from "path";
 
-async function deploy(key: string) {
+async function deploy(key: string, ...constructorArgs: string[]) {
   const name = key
     .split("_")
     .map((s) => `${s.slice(0, 1)}${s.slice(1).toLowerCase()}`)
     .join("");
   const FactoryContract = await ethers.getContractFactory(name);
-  const contract = await FactoryContract.deploy();
+  const contract = constructorArgs.length
+    ? await FactoryContract.deploy(...constructorArgs)
+    : await FactoryContract.deploy();
 
   await contract.deployed();
 
@@ -38,11 +40,14 @@ async function deploy(key: string) {
       `export declare const ${network.name.toUpperCase()}_${key}_ADDRESS: string;\n`
     );
   }
+  return contract.address;
 }
 
 async function main() {
   await deploy("PASSPORT_FACTORY");
-  await deploy("STAKING");
+  await deploy("TEST_TOKEN").then(
+    (addr) => deploy("STAKING", addr)
+  );
 }
 
 main().catch((error) => {
