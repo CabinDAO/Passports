@@ -54,6 +54,7 @@ const SettingsTagContent = () => {
       contractAddressesByNetworkId[chainId]?.token || "";
     return contract;
   }, [web3, chainId]);
+  // uncomment this line to add a hidden keyboard shortcut to faucet yourself with ERC20 until hardhat task is working
   // useFaucet();
   useEffect(() => {
     if (contractInstance.options.address) {
