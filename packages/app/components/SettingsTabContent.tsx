@@ -3,7 +3,7 @@ import { useAddress, useWeb3, useChainId } from "./Web3Context";
 import type { Contract, ContractSendMethod } from "web3-eth-contract";
 import { contractAddressesByNetworkId, getAbiFromJson } from "./constants";
 import stakingJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Staking.sol/Staking.json";
-import testTokenJson from "../../contracts/artifacts/contracts/TestToken.sol/TestToken.json";
+import testTokenJson from "@cabindao/nft-passport-contracts/artifacts/contracts/TestToken.sol/TestToken.json";
 import { Button } from "@cabindao/topo";
 
 const useFaucet = () => {
