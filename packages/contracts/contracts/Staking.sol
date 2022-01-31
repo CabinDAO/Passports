@@ -18,12 +18,12 @@ contract Staking is Ownable {
     event StakeCreated();
     function createStake(uint256 _stake) public
     {
-        token.transferFrom(msg.sender, address(this), _stake* 10**uint(18));
+        token.transferFrom(msg.sender, address(this), _stake);
         if(stakes[msg.sender] == 0) {
             indices[msg.sender] = stakeholders.length;
             stakeholders.push(msg.sender);
         }
-        stakes[msg.sender] = stakes[msg.sender].add(_stake* 10**uint(18));
+        stakes[msg.sender] = stakes[msg.sender].add(_stake);
         emit StakeCreated(); 
     }
 
@@ -31,7 +31,7 @@ contract Staking is Ownable {
     function removeStake(uint256 _stake) public
     {
         require(_stake <= stakes[msg.sender], "Cannot remove more than allocated stake");
-        stakes[msg.sender] = stakes[msg.sender].sub(_stake* 10**uint(18));
+        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
         if(stakes[msg.sender] == 0) {
             uint256 s = indices[msg.sender];
             address addressToMove = stakeholders[stakeholders.length - 1];
@@ -42,7 +42,7 @@ contract Staking is Ownable {
             delete indices[addressToMove];
             stakeholders.pop();
         }
-        token.transferFrom(address(this), msg.sender, _stake* 10**uint(18));
+        token.transfer(msg.sender, _stake);
         emit StakeRemoved();
     }
 

@@ -45,7 +45,9 @@ async function deploy(key: string, ...constructorArgs: string[]) {
 
 async function main() {
   await deploy("PASSPORT_FACTORY");
-  await deploy("TEST_TOKEN").then((addr) => deploy("STAKING", addr));
+  await deploy("TEST_TOKEN").then(
+    (addr) => deploy("STAKING", addr)
+  );
 }
 
 main().catch((error) => {

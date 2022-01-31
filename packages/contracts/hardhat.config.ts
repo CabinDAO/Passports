@@ -22,17 +22,30 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+// Doesn't quite work yet - Added a hidden keyboard shortcut in the frontend to faucet for now
 task("faucet", "Seed an account with the test token")
   .addParam("address", "account to seed")
   .addParam("quantity", "number of tokens", "100")
   .setAction(async (taskArgs, hre) => {
+    const signer = await hre.ethers
+      .getSigners()
+      .then((signer) => signer.find((s) => s.address === taskArgs.address));
     const contract = await hre.ethers.getContractAt(
       "TestToken",
-      process.env.NEXT_PUBLIC_LOCAL_TEST_TOKEN_ADDRESS || ""
+      process.env.NEXT_PUBLIC_LOCAL_TEST_TOKEN_ADDRESS || "",
+      signer
     );
     contract.functions
-      .faucet(Number(taskArgs.quantity), { from: taskArgs.address })
-      .then(() => console.log("done"));
+      .faucet(hre.ethers.utils.parseEther(taskArgs.quantity), {
+        from: taskArgs.address,
+      })
+      .then((a) => a.wait())
+      .then(console.log)
+      .catch((e) => {
+        console.error("Error!");
+        console.error(e);
+      })
+      .finally(() => console.log("done!"));
   });
 
 // You need to export an object to set up your config

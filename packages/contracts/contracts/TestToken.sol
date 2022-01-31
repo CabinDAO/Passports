@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TestToken is ERC20 {
     constructor() ERC20('Cabin Token', "CABIN") {
-        _mint(msg.sender, 10000 * 10**uint(decimals()));
+        _mint(address(this), 10000 * 10**uint(decimals()));
     }
 
     event Fauceted(
@@ -13,9 +13,8 @@ contract TestToken is ERC20 {
     );
     function faucet(uint256 quantity) public
     {
-        this.transferFrom(address(this), msg.sender, quantity * 10**uint(decimals()));
+        _approve(address(this), msg.sender, quantity);
+        transferFrom(address(this), msg.sender, quantity);
         emit Fauceted(quantity); 
     }
-
-    fallback() external {} 
 }

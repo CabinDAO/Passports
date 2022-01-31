@@ -23,12 +23,13 @@ export const networkIdByName = Object.fromEntries(
 );
 
 export const contractAddressesByNetworkId: {
-  [id: number]: { passportFactory: string; staking: string };
+  [id: number]: { passportFactory: string; staking: string, token?: string };
 } = {
   [LOCALHOST_NETWORK_ID]: {
     passportFactory:
       process.env.NEXT_PUBLIC_LOCAL_PASSPORT_FACTORY_ADDRESS || "",
     staking: process.env.NEXT_PUBLIC_LOCAL_STAKING_ADDRESS || "",
+    token: process.env.NEXT_PUBLIC_LOCAL_TEST_TOKEN_ADDRESS || "",
   },
   [KOVAN_NETWORK_ID]: {
     passportFactory: KOVAN_PASSPORT_FACTORY_ADDRESS,
