@@ -6,7 +6,7 @@ import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
-import { Modal, Input, Button, Label, Toast } from "@cabindao/topo";
+import { Modal, Input, Button, Label, Box, Toast } from "@cabindao/topo";
 import { styled } from "../stitches.config";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
@@ -14,6 +14,8 @@ import {
   contractAddressesByNetworkId,
   getAbiFromJson,
   networkNameById,
+  shimmer,
+  toBase64,
 } from "../components/constants";
 import {
   Link1Icon,
@@ -71,6 +73,16 @@ const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
 
 const ModalLabel = styled(`h2`, { marginBottom: 32 });
 
+const ModalInputBox = styled(Box, { marginBottom: 25});
+
+const ModalInputLabel = styled(`label`, {
+  fontFamily: `var(--fonts-mono)`,
+  fontWeight: 600,
+  fontSize: `var(--fontSizes-sm)`,
+  textTransform: "uppercase",
+  marginRight: 10
+})
+
 interface IMembershipProps {
   address: string;
   name: string;
@@ -81,7 +93,7 @@ interface IMembershipProps {
 }
 
 interface IMembershipCardProps extends IMembershipProps {
-  redirect_url: string | undefined;
+  customization: Record<string, string>;
 }
 
 const MembershipCard = (props: IMembershipCardProps) => {
@@ -102,7 +114,12 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [supplyIsOpen, setSupplyIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
-  const [url, setUrl] = useState(props.redirect_url);
+  const [url, setUrl] = useState(props.customization.redirect_url);
+  const [brandColor, setBrandColor] = useState(props.customization.brand_color);
+  const [accColor, setAccColor] = useState(props.customization.accent_color);
+  const [buttonTxt, setButtonTxt] = useState(props.customization.button_txt);
+  const [logoCid, setLogoCid] = useState(props.customization.logo_cid);
+  const [fileLoading, setFileLoading] = useState(false);
   const [metadata, setMetadata] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!passport.name) {
@@ -121,8 +138,12 @@ const MembershipCard = (props: IMembershipCardProps) => {
     }
   }, [setPassport, passport, web3]);
   useEffect(() => {
-    setUrl(props.redirect_url);
-  }, [props.redirect_url]);
+    setUrl(props.customization.redirect_url);
+    setBrandColor(props.customization.brand_color);
+    setAccColor(props.customization.accent_color);
+    setButtonTxt(props.customization.button_txt);
+    setLogoCid(props.customization.logo_cid);
+  }, [props.customization]);
   useEffect(() => {
     if (!Object.entries(metadata).length && passport.metadataHash) {
       axios.get(`https://ipfs.io/ipfs/${passport.metadataHash}`).then((r) => {
@@ -160,23 +181,25 @@ const MembershipCard = (props: IMembershipCardProps) => {
           <Modal
             isOpen={isOpen}
             setIsOpen={setIsOpen}
-            title="Edit Membership Type"
+            title="Customize Checkout"
             onConfirm={() => {
-              let upsertData: {
-                [key: string]: string | undefined;
-              } = {};
-              upsertData["redirect_url"] = url;
-              upsertData["contractAddr"] = passport.address;
-              return axios
-                .post("/api/updateRedirectionUrl", {
-                  data: upsertData,
-                })
-                .then(() =>
-                  setToastMessage("Successfully updated membership data!")
-                )
-                .catch((e) =>
-                  setToastMessage(`ERROR: ${e.response?.data || e.message}`)
-                );
+              let upsertData: Record<string,string> = {
+                redirect_url: url,
+                contractAddr: passport.address,
+                brand_color: brandColor,
+                accent_color: accColor,
+                button_txt: buttonTxt,
+                logo_cid: logoCid
+              };
+              return axios.post("/api/updateCustomization", {
+                data: upsertData
+              })
+              .then(() =>
+                setToastMessage("Successfully updated membership data!")
+              )
+              .catch((e) =>
+                setToastMessage(`ERROR: ${e.response?.data || e.message}`)
+              );
             }}
           >
             <ModalLabel>{`${passport.name} (${passport.symbol})`}</ModalLabel>
@@ -185,6 +208,46 @@ const MembershipCard = (props: IMembershipCardProps) => {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
+            <ModalInputBox>
+              <ModalInputLabel htmlFor="bcolor">Brand color:</ModalInputLabel>
+              <input type="color" 
+                id="bcolor" 
+                name="bcolor" 
+                value={brandColor || "#fdf3e7"}
+                onChange={(e) => setBrandColor(e.target.value)}></input>
+            </ModalInputBox>
+            <ModalInputBox>
+              <ModalInputLabel htmlFor="acolor">Accent color:</ModalInputLabel>
+              <input type="color" 
+                id="acolor" 
+                name="acolor" 
+                value={accColor || "#324841"}
+                onChange={(e) => setAccColor(e.target.value)}></input>
+            </ModalInputBox>
+            <ModalInput
+              label={"Button Text"}
+              value={buttonTxt}
+              onChange={(e) => setButtonTxt(e.target.value)}
+            />
+            <ModalInputBox>
+              <Label label={logoCid ? "Change Logo" : "Upload Logo"}>
+                <input
+                  type={"file"}
+                  onChange={async (e) => {
+                    if (e.target.files) {
+                      setFileLoading(true);
+                      const file = e.target.files[0];
+                      if (file) {
+                        return ipfsAdd(file)
+                          .then(setLogoCid)
+                          .finally(() => setFileLoading(false));
+                      }
+                    }
+                  }}
+                />
+              </Label>
+              {fileLoading && "Loading..."}
+          </ModalInputBox>
           </Modal>
           <Modal
             isOpen={shareIsOpen}
@@ -272,13 +335,19 @@ const Tab: React.FC<{ to: string }> = ({ children, to }) => {
   return <TabContainer onClick={onClick}>{children}</TabContainer>;
 };
 
-const IpfsImage = ({ cid }: { cid: string }) => {
+export const IpfsImage = ({ cid, height, width }: { 
+  cid: string,
+  height?: number,
+  width?: number
+ }) => {
   return (
     <Image
       src={`https://ipfs.io/ipfs/${cid}`}
       alt={"thumbnail"}
-      width={300}
-      height={200}
+      width={height || 300}
+      height={width || 200}
+      placeholder="blur"
+      blurDataURL={`data:image/svg+xml;base64,${toBase64(shimmer(700, 475))}`}
     />
   );
 };
@@ -516,23 +585,20 @@ const MembershipTabContent = () => {
   const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
-  const [redirectionUrls, setRedirectionUrls] = useState<{
-    [key: string]: string | undefined;
-  }>({});
+  const [customizations, setCustomizations] = useState<Record<string, Record<string,string>>>({});
   useEffect(() => {
     // Fetch the relevant redirection URLs on page load.
     const membershipAddrs = memberships.map((m) => m.address);
     if (memberships.length > 0) {
-      axios
-        .post("/api/redirectionUrls", {
-          addresses: membershipAddrs,
-        })
-        .then((result: { data: { redirect_urls: Record<string, string> } }) => {
-          setRedirectionUrls(result.data["redirect_urls"]);
-        })
-        .catch(console.error);
+      axios.post("/api/customizations", {
+        addresses: membershipAddrs
+      })
+      .then((result: { data: { customizations: Record<string, Record<string,string>> } }) => {
+        setCustomizations(result.data["customizations"]);
+      })
+      .catch(console.error);
     }
-  }, [memberships, setRedirectionUrls]);
+  }, [memberships, setCustomizations]);
   const contractInstance = useMemo<Contract>(() => {
     const contract = new web3.eth.Contract(getAbiFromJson(passportFactoryJson));
     contract.options.address =
@@ -574,7 +640,7 @@ const MembershipTabContent = () => {
           <MembershipCard
             key={`${chainId}-${m.address}`}
             {...m}
-            redirect_url={redirectionUrls[m.address]}
+            customization={customizations[m.address] || {}}
           />
         ))}
       </MembershipContainer>

@@ -9,11 +9,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             // Create a connection to the firebase DB.
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
-            const urlCol = collection(db, 'redirect-urls');
+            const urlCol = collection(db, 'customizations');
             const membershipDoc = doc(urlCol, req.body.address)
             getDoc(membershipDoc).then((membership) => {
                 const membershipData = membership.data();
-                res.status(200).json({redirect_url: (membershipData?.["redirect_url"] || "")});
+                res.status(200).json(membershipData);
             });
             break;
         default:
