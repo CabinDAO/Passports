@@ -216,10 +216,10 @@ const CheckoutPage = ({
             console.log("successfully bought", id, "!");
             setLoading(false);
             setSupply(supply - 1);
-            if (customization.url) {
+            if (customization.redirect_url) {
               // If valid redirection URL is provided, redirect on successful purchase.
               // TODO show success toast and delay redirection.
-              window.location.assign(customization.url);
+              window.location.assign(customization.redirect_url);
             }
           })
           .on("error", (e) => {
