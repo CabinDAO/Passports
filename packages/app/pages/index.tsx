@@ -2,7 +2,6 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
@@ -35,6 +34,7 @@ import axios from "axios";
 import UsersTabContent from "../components/UsersTabContent";
 import { ipfsAdd } from "../components/utils";
 import SettingsTabContent from "../components/SettingsTabContent";
+import IpfsImage from "../components/IpfsImage";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -335,22 +335,6 @@ const Tab: React.FC<{ to: string }> = ({ children, to }) => {
   return <TabContainer onClick={onClick}>{children}</TabContainer>;
 };
 
-export const IpfsImage = ({ cid, height, width }: { 
-  cid: string,
-  height?: number,
-  width?: number
- }) => {
-  return (
-    <Image
-      src={`https://ipfs.io/ipfs/${cid}`}
-      alt={"thumbnail"}
-      width={height || 300}
-      height={width || 200}
-      placeholder="blur"
-      blurDataURL={`data:image/svg+xml;base64,${toBase64(shimmer(700, 475))}`}
-    />
-  );
-};
 
 const AdditionalFieldRow = styled("div", {
   display: "flex",

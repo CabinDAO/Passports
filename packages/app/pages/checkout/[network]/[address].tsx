@@ -13,7 +13,7 @@ import { styled } from "../../../stitches.config";
 import BN from "bn.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { IpfsImage } from "../..";
+import IpfsImage from "../../../components/IpfsImage";
 
 type QueryParams = {
   network: string;
@@ -236,7 +236,7 @@ const CheckoutPage = ({
     <AppContainer>
       <AppBackground 
         style={{
-          background: (customization.brand_color || "$sand")
+          background: (customization.brand_color || "#FDF3E7")
         }}
       />
       <App>
@@ -271,10 +271,11 @@ const CheckoutPage = ({
             onClick={onBuy} 
             disabled={loading}
             style={{
-              backgroundColor: (customization.accent_color || "$forest")
+              backgroundColor: (customization.accent_color || "#324841"),
+              color: "#FDF3E7"
             }}
           >
-            {customization.button_txt || "Buy"} ({supply} left)
+            {customization.button_txt?.replace?.(/{supply}/g, supply.toString()) || `Buy (${supply} left)`}
           </Button>
           <p style={{ color: "darkred" }}>{error}</p>
         </AppPayment>
