@@ -9,15 +9,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             // Create a connection to the firebase DB.
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
-            const urlCol = collection(db, 'redirect-urls');
+            const urlCol = collection(db, 'customizations');
             getDocs(query(urlCol, where("contractAddr", "in", req.body.addresses)))
                 .then((memberships) => {
-                    const data: {[key: string]: string | undefined} = {};
+                    const data: {[key: string]: Record<string, string> | undefined} = {};
                     memberships.forEach((doc) => {
                         const docData = doc.data();
-                        data[docData["contractAddr"]] = docData["redirect_url"];
+                        data[docData["contractAddr"]] = docData;
                     });
-                    res.status(200).json({redirect_urls: data});
+                    res.status(200).json({customizations: data});
                 });
             break;
         default:

@@ -1,4 +1,4 @@
-import { GetStaticPaths, GetServerSideProps } from "next";
+import { GetStaticPaths, GetStaticProps } from "next";
 import {
   networkNameById,
   contractAddressesByNetworkId,
@@ -10,15 +10,33 @@ import Web3 from "web3";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { styled } from "../../../stitches.config";
-import { Button } from "@cabindao/topo";
 import BN from "bn.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
+import IpfsImage from "../../../components/IpfsImage";
 
 type QueryParams = {
   network: string;
   address: string;
 };
+
+const Button = styled("button", {
+  display: "inline-flex",
+  flexGrow: 0,
+  justifyContent: "center",
+  alignItems: "center",
+  fontFamily: "$sans",
+  fontWeight: 600,
+  fontSize: "$sm",
+  transition: "all 0.2s ease-in-out",
+  textDecoration: "none",
+  boxSizing: "border-box",
+  cursor: "pointer",
+  border: "none",
+  height: "$10",
+  py: 0,
+  px: "$4"
+})
 
 const AppContainer = styled("div", {
   display: "flex",
@@ -65,7 +83,6 @@ const AppOverview = styled("div", {
 
 const AppHeader = styled("header", {
   display: "flex",
-  justifyContent: "space-between",
   alignItems: "center",
 });
 
@@ -111,12 +128,19 @@ const PaymentRequestHeader = styled("div", {
   marginBottom: "24px",
 });
 
+const BottomText = styled("p", {
+    position: "fixed",
+    bottom: 0,
+    right: 10
+})
+
 type PageProps = {
   address: string;
   name: string;
   symbol: string;
   supply: number;
   price: string;
+  metadataHash: string;
   network: string;
 };
 
@@ -126,6 +150,7 @@ const CheckoutPage = ({
   supply: initialSupply,
   price,
   address,
+  metadataHash,
   network,
 }: PageProps) => {
   const web3 = useRef<Web3>(
@@ -134,17 +159,25 @@ const CheckoutPage = ({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [supply, setSupply] = useState(initialSupply);
-  const [url, setUrl] = useState("");
+  const [customization, setCustomization] = useState<Record<string,string>>({});
+  const [metadata, setMetadata] = useState<Record<string, string>>({});
   useEffect(() => {
     // Fetch redirect url from DB on page load.
-    axios.post("/api/redirectionUrl", {
+    axios.post("/api/customization", {
       address: address
     })
-    .then((result: { data: { redirect_url: string } }) => {
-      setUrl(result.data["redirect_url"]);
+    .then((result: { data: Record<string,string> }) => {
+      setCustomization(result.data);
     })
     .catch(console.error);
-  }, [address, setUrl]);
+  }, [address, setCustomization]);
+  useEffect(() => {
+    if (!Object.entries(metadata).length && metadataHash) {
+      axios.get(`https://ipfs.io/ipfs/${metadataHash}`).then((r) => {
+        setMetadata(r.data);
+      });
+    }
+  }, [metadata, metadataHash]);
   const onBuy = useCallback(() => {
     setError("");
     setLoading(true);
@@ -183,10 +216,10 @@ const CheckoutPage = ({
             console.log("successfully bought", id, "!");
             setLoading(false);
             setSupply(supply - 1);
-            if (url) {
+            if (customization.redirect_url) {
               // If valid redirection URL is provided, redirect on successful purchase.
               // TODO show success toast and delay redirection.
-              window.location.assign(url);
+              window.location.assign(customization.redirect_url);
             }
           })
           .on("error", (e) => {
@@ -198,13 +231,25 @@ const CheckoutPage = ({
         setError(e.message);
         setLoading(false);
       });
-  }, [web3, network, address, price, setSupply, supply, url]);
+  }, [web3, network, address, price, setSupply, supply, customization]);
   return (
     <AppContainer>
-      <AppBackground />
+      <AppBackground 
+        style={{
+          background: (customization.brand_color || "#FDF3E7")
+        }}
+      />
       <App>
         <AppOverview>
           <AppHeader>
+            {
+              (customization.logo_cid) ?
+                (<IpfsImage
+                  cid={customization.logo_cid}
+                  height={50}
+                  width={50}
+                />) : null
+            }
             <AppNetworkContainer>{network}</AppNetworkContainer>
           </AppHeader>
           <AppSummaryContainer>
@@ -212,16 +257,30 @@ const CheckoutPage = ({
               {name} ({symbol})
             </ProductSummaryName>
             <ProductSummaryAmount>Ξ{price}</ProductSummaryAmount>
+            {
+              (metadata && metadata.thumbnail) ?
+                (<IpfsImage
+                  cid={metadata.thumbnail}
+                />) : null
+            }
           </AppSummaryContainer>
         </AppOverview>
         <AppPayment>
           <PaymentRequestHeader>Pay With Wallet</PaymentRequestHeader>
-          <Button onClick={onBuy} disabled={loading}>
-            Buy ({supply} left)
+          <Button 
+            onClick={onBuy} 
+            disabled={loading}
+            style={{
+              backgroundColor: (customization.accent_color || "#324841"),
+              color: "#FDF3E7"
+            }}
+          >
+            {customization.button_txt?.replace?.(/{supply}/g, supply.toString()) || `Buy (${supply} left)`}
           </Button>
           <p style={{ color: "darkred" }}>{error}</p>
         </AppPayment>
       </App>
+      <BottomText>Powered by CabinDAO</BottomText>
     </AppContainer>
   );
 };
@@ -258,7 +317,7 @@ export const getStaticPaths: GetStaticPaths<QueryParams> = () => {
   });
 };
 
-export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
+export const getStaticProps: GetStaticProps<PageProps, QueryParams> = (
   context
 ) => {
   const { network = "", address = "" } = context.params || {};
@@ -273,6 +332,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
         symbol: p[1],
         supply: p[2],
         price: web3.utils.fromWei(p[3], "ether"),
+        metadataHash: p[4],
         network,
       },
     }))
@@ -286,6 +346,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
           symbol: "404",
           price: "0",
           supply: 0,
+          metadataHash: ""
         },
       };
     });

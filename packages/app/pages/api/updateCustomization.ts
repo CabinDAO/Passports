@@ -8,7 +8,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         case "POST":
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
-            const urlCol = collection(db, 'redirect-urls');
+            const urlCol = collection(db, 'customizations');
             const contractDoc = doc(urlCol, req.body.data['contractAddr']);
             setDoc(contractDoc, req.body.data)
                 .then(() => {
