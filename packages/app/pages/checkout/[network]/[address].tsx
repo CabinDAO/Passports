@@ -1,4 +1,4 @@
-import { GetStaticProps, GetStaticPaths, GetServerSideProps } from "next";
+import { GetStaticPaths, GetServerSideProps } from "next";
 import {
   networkNameById,
   contractAddressesByNetworkId,
