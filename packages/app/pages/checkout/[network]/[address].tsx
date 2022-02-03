@@ -1,13 +1,10 @@
-import { GetStaticPaths, GetStaticProps } from "next";
+import { GetServerSideProps } from "next";
 import {
-  networkNameById,
-  contractAddressesByNetworkId,
   getAbiFromJson,
   networkIdByName
 } from "../../../components/constants";
 import { ContractSendMethod } from "web3-eth-contract";
 import Web3 from "web3";
-import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { styled } from "../../../stitches.config";
 import BN from "bn.js";
@@ -292,32 +289,7 @@ const getWeb3 = (networkName: string) =>
       : `https://eth-${networkName}.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
   );
 
-export const getStaticPaths: GetStaticPaths<QueryParams> = () => {
-  return Promise.all(
-    Object.entries(networkNameById)
-      .map(([id, name]) => ({
-        name,
-        address: contractAddressesByNetworkId[Number(id)].passportFactory,
-      }))
-      .filter(({ address }) => !!address)
-      .map(({ name, address }) => {
-        const web3 = getWeb3(name);
-        const contract = new web3.eth.Contract(
-          getAbiFromJson(passportFactoryJson),
-          address
-        );
-        return (contract.methods.getPassports() as ContractSendMethod)
-          .call()
-          .then((addresses: string[]) =>
-            addresses.map((address) => ({ params: { network: name, address } }))
-          );
-      })
-  ).then((paths) => {
-    return { paths: paths.flat(), fallback: true };
-  });
-};
-
-export const getStaticProps: GetStaticProps<PageProps, QueryParams> = (
+export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
   context
 ) => {
   const { network = "", address = "" } = context.params || {};
