@@ -134,9 +134,10 @@ const MembershipCard = (props: IMembershipCardProps) => {
           price: web3.utils.fromWei(p[3], "ether"),
           metadataHash: p[4],
         });
+        setNewSupply(Number(p[2]));
       });
     }
-  }, [setPassport, passport, web3]);
+  }, [setPassport, passport, web3, setNewSupply]);
   useEffect(() => {
     setUrl(props.customization.redirect_url);
     setBrandColor(props.customization.brand_color);
@@ -290,8 +291,12 @@ const MembershipCard = (props: IMembershipCardProps) => {
                 contract.methods
                   .setSupply(newSupply)
                   .send({ from: address })
-                  .on("receipt", () => { 
-                    resolve(); 
+                  .on("receipt", () => {
+                    setPassport({
+                      ...passport,
+                      supply: newSupply,
+                    })
+                    resolve();
                   })
                   .on("error", reject)
               );
