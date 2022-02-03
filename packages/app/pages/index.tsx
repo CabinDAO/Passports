@@ -6,7 +6,7 @@ import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
-import { Modal, Input, Button, Label } from "@cabindao/topo";
+import { Modal, Input, Button, Label, Toast } from "@cabindao/topo";
 import { styled } from "../stitches.config";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
@@ -20,6 +20,7 @@ import {
   Pencil2Icon,
   Share1Icon,
   TrashIcon,
+  ArrowUpIcon,
 } from "@radix-ui/react-icons";
 import {
   useAddress,
@@ -97,7 +98,9 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const networkId = useChainId();
   const [shareIsOpen, setShareIsOpen] = useState(false);
   const [userAddress, setUserAddress] = useState("");
+  const [newSupply, setNewSupply] = useState(passport.supply);
   const [isOpen, setIsOpen] = useState(false);
+  const [supplyIsOpen, setSupplyIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [url, setUrl] = useState(props.redirect_url);
   const [metadata, setMetadata] = useState<Record<string, string>>({});
@@ -128,6 +131,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
     }
   }, [metadata, passport.metadataHash]);
   const { thumbnail, ...fields } = metadata;
+  const [toastMessage, setToastMessage] = useState("");
   return (
     <MembershipCardContainer>
       <MembershipHeader>
@@ -135,19 +139,24 @@ const MembershipCard = (props: IMembershipCardProps) => {
         <div>
           <Button
             leftIcon={<Link1Icon />}
-            onClick={() =>
+            onClick={() => {
               window.navigator.clipboard.writeText(
                 `${window.location.origin}/checkout/${
                   networkNameById[Number(networkId)]
                 }/${passport.address}`
-              )
-            }
+              );
+              setToastMessage("Copied checkout link!");
+            }}
           />
           <Button
             leftIcon={<Share1Icon />}
             onClick={() => setShareIsOpen(true)}
           />
           <Button leftIcon={<Pencil2Icon />} onClick={open} />
+          <Button
+            leftIcon={<ArrowUpIcon />}
+            onClick={() => setSupplyIsOpen(true)}
+          />
           <Modal
             isOpen={isOpen}
             setIsOpen={setIsOpen}
@@ -157,12 +166,17 @@ const MembershipCard = (props: IMembershipCardProps) => {
                 [key: string]: string | undefined;
               } = {};
               upsertData["redirect_url"] = url;
-              upsertData["contractAddr"] = passport.address
-              return axios.post("/api/updateRedirectionUrl", {
-                data: upsertData
-              })
-              .then(() => console.log("Insert success toast here"))
-              .catch(() => console.log("Insert error toast here"));
+              upsertData["contractAddr"] = passport.address;
+              return axios
+                .post("/api/updateRedirectionUrl", {
+                  data: upsertData,
+                })
+                .then(() =>
+                  setToastMessage("Successfully updated membership data!")
+                )
+                .catch((e) =>
+                  setToastMessage(`ERROR: ${e.response?.data || e.message}`)
+                );
             }}
           >
             <ModalLabel>{`${passport.name} (${passport.symbol})`}</ModalLabel>
@@ -200,6 +214,33 @@ const MembershipCard = (props: IMembershipCardProps) => {
               onChange={(e) => setUserAddress(e.target.value)}
             />
           </Modal>
+          <Modal
+            isOpen={supplyIsOpen}
+            setIsOpen={setSupplyIsOpen}
+            title="Change Supply"
+            onConfirm={() => {
+              const contract = new web3.eth.Contract(
+                getAbiFromJson(passportJson)
+              );
+              contract.options.address = passport.address;
+              return new Promise<void>((resolve, reject) =>
+                contract.methods
+                  .setSupply(newSupply)
+                  .send({ from: address })
+                  .on("receipt", () => { 
+                    resolve(); 
+                  })
+                  .on("error", reject)
+              );
+            }}
+          >
+            <ModalInput
+              label={"New Supply"}
+              value={newSupply}
+              onChange={(e) => setNewSupply(Number(e.target.value))}
+              type={"number"}
+            />
+          </Modal>
         </div>
       </MembershipHeader>
       <h6>{passport.symbol}</h6>
@@ -215,6 +256,12 @@ const MembershipCard = (props: IMembershipCardProps) => {
         </p>
       ))}
       {thumbnail && <IpfsImage cid={thumbnail} />}
+      <Toast
+        isOpen={!!toastMessage}
+        onClose={() => setToastMessage("")}
+        message={toastMessage}
+        intent={toastMessage.startsWith("ERROR") ? "error" : "success"}
+      />
     </MembershipCardContainer>
   );
 };
@@ -476,13 +523,14 @@ const MembershipTabContent = () => {
     // Fetch the relevant redirection URLs on page load.
     const membershipAddrs = memberships.map((m) => m.address);
     if (memberships.length > 0) {
-      axios.post("/api/redirectionUrls", {
-        addresses: membershipAddrs
-      })
-      .then((result: { data: { redirect_urls: Record<string, string> } }) => {
-        setRedirectionUrls(result.data["redirect_urls"]);
-      })
-      .catch(console.error);
+      axios
+        .post("/api/redirectionUrls", {
+          addresses: membershipAddrs,
+        })
+        .then((result: { data: { redirect_urls: Record<string, string> } }) => {
+          setRedirectionUrls(result.data["redirect_urls"]);
+        })
+        .catch(console.error);
     }
   }, [memberships, setRedirectionUrls]);
   const contractInstance = useMemo<Contract>(() => {

@@ -1,4 +1,4 @@
-import { GetStaticProps, GetStaticPaths } from "next";
+import { GetStaticProps, GetStaticPaths, GetServerSideProps } from "next";
 import {
   networkNameById,
   contractAddressesByNetworkId,
@@ -258,7 +258,7 @@ export const getStaticPaths: GetStaticPaths<QueryParams> = () => {
   });
 };
 
-export const getStaticProps: GetStaticProps<PageProps, QueryParams> = (
+export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
   context
 ) => {
   const { network = "", address = "" } = context.params || {};
