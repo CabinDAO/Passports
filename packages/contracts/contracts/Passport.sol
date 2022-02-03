@@ -16,11 +16,19 @@ contract Passport is ERC721, Ownable {
   uint256[] public tokenIds;
   string public metadataHash;
   event Purchase(address owner, uint256 price, uint256 id, string uri);
-  constructor(address owner, string memory name_, string memory symbol_, uint256 _supply, uint256 _price, string memory _metadataHash) ERC721(name_, symbol_) {
-    _owner = payable(owner);
+  constructor(address owner_, string memory name_, string memory symbol_, uint256 _supply, uint256 _price, string memory _metadataHash) ERC721(name_, symbol_) {
+    _owner = payable(owner_);
     price = _price;
     supply = _supply;
     metadataHash = _metadataHash;
+  }
+
+  function owner() public view override returns (address) {
+    return _owner;
+  }
+
+  function setSupply(uint256 value) public onlyOwner{
+    supply = value;
   }
 
   function buy(uint256 _id) external payable {
