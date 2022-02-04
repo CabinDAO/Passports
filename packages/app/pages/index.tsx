@@ -5,7 +5,15 @@ import Link from "next/link";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
-import { Modal, Input, Button, Label, Box, Toast } from "@cabindao/topo";
+import {
+  Modal,
+  Input,
+  Button,
+  Label,
+  Box,
+  Toast,
+  Checkbox,
+} from "@cabindao/topo";
 import { styled } from "../stitches.config";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
@@ -73,15 +81,15 @@ const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
 
 const ModalLabel = styled(`h2`, { marginBottom: 32 });
 
-const ModalInputBox = styled(Box, { marginBottom: 25});
+const ModalInputBox = styled(Box, { marginBottom: 25 });
 
 const ModalInputLabel = styled(`label`, {
   fontFamily: `var(--fonts-mono)`,
   fontWeight: 600,
   fontSize: `var(--fontSizes-sm)`,
   textTransform: "uppercase",
-  marginRight: 10
-})
+  marginRight: 10,
+});
 
 interface IMembershipProps {
   address: string;
@@ -90,11 +98,18 @@ interface IMembershipProps {
   supply: number;
   price: string;
   metadataHash: string;
+  claimable: boolean;
 }
 
 interface IMembershipCardProps extends IMembershipProps {
   customization: Record<string, string>;
 }
+
+const BalanceLine = styled("p", {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
 
 const MembershipCard = (props: IMembershipCardProps) => {
   const [passport, setPassport] = useState({
@@ -104,6 +119,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
     supply: props.supply,
     price: props.price,
     metadataHash: props.metadataHash,
+    claimable: props.claimable,
   });
   const web3 = useWeb3();
   const address = useAddress();
@@ -121,6 +137,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const [logoCid, setLogoCid] = useState(props.customization.logo_cid);
   const [fileLoading, setFileLoading] = useState(false);
   const [metadata, setMetadata] = useState<Record<string, string>>({});
+  const [balance, setBalance] = useState("0");
   useEffect(() => {
     if (!passport.name) {
       const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
@@ -133,6 +150,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
           supply: p[2],
           price: web3.utils.fromWei(p[3], "ether"),
           metadataHash: p[4],
+          claimable: p[6],
         });
         setNewSupply(Number(p[2]));
       });
@@ -151,7 +169,19 @@ const MembershipCard = (props: IMembershipCardProps) => {
         setMetadata(r.data);
       });
     }
-  }, [metadata, passport.metadataHash]);
+    if (passport.claimable) {
+      web3.eth
+        .getBalance(passport.address)
+        .then((v) => setBalance(web3.utils.fromWei(v, "ether")));
+    }
+  }, [
+    metadata,
+    passport.metadataHash,
+    passport.claimable,
+    web3,
+    passport.address,
+    setBalance,
+  ]);
   const { thumbnail, ...fields } = metadata;
   const [toastMessage, setToastMessage] = useState("");
   return (
@@ -184,23 +214,24 @@ const MembershipCard = (props: IMembershipCardProps) => {
             setIsOpen={setIsOpen}
             title="Customize Checkout"
             onConfirm={() => {
-              let upsertData: Record<string,string> = {
+              let upsertData: Record<string, string> = {
                 redirect_url: url,
                 contractAddr: passport.address,
                 brand_color: brandColor,
                 accent_color: accColor,
                 button_txt: buttonTxt,
-                logo_cid: logoCid
+                logo_cid: logoCid,
               };
-              return axios.post("/api/updateCustomization", {
-                data: upsertData
-              })
-              .then(() =>
-                setToastMessage("Successfully updated membership data!")
-              )
-              .catch((e) =>
-                setToastMessage(`ERROR: ${e.response?.data || e.message}`)
-              );
+              return axios
+                .post("/api/updateCustomization", {
+                  data: upsertData,
+                })
+                .then(() =>
+                  setToastMessage("Successfully updated membership data!")
+                )
+                .catch((e) =>
+                  setToastMessage(`ERROR: ${e.response?.data || e.message}`)
+                );
             }}
           >
             <ModalLabel>{`${passport.name} (${passport.symbol})`}</ModalLabel>
@@ -211,19 +242,23 @@ const MembershipCard = (props: IMembershipCardProps) => {
             />
             <ModalInputBox>
               <ModalInputLabel htmlFor="bcolor">Brand color:</ModalInputLabel>
-              <input type="color" 
-                id="bcolor" 
-                name="bcolor" 
+              <input
+                type="color"
+                id="bcolor"
+                name="bcolor"
                 value={brandColor || "#fdf3e7"}
-                onChange={(e) => setBrandColor(e.target.value)}></input>
+                onChange={(e) => setBrandColor(e.target.value)}
+              ></input>
             </ModalInputBox>
             <ModalInputBox>
               <ModalInputLabel htmlFor="acolor">Accent color:</ModalInputLabel>
-              <input type="color" 
-                id="acolor" 
-                name="acolor" 
+              <input
+                type="color"
+                id="acolor"
+                name="acolor"
                 value={accColor || "#324841"}
-                onChange={(e) => setAccColor(e.target.value)}></input>
+                onChange={(e) => setAccColor(e.target.value)}
+              ></input>
             </ModalInputBox>
             <ModalInput
               label={"Button Text"}
@@ -248,7 +283,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
                 />
               </Label>
               {fileLoading && "Loading..."}
-          </ModalInputBox>
+            </ModalInputBox>
           </Modal>
           <Modal
             isOpen={shareIsOpen}
@@ -295,7 +330,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
                     setPassport({
                       ...passport,
                       supply: newSupply,
-                    })
+                    });
                     resolve();
                   })
                   .on("error", reject)
@@ -312,6 +347,30 @@ const MembershipCard = (props: IMembershipCardProps) => {
         </div>
       </MembershipHeader>
       <h6>{passport.symbol}</h6>
+      {passport.claimable && (
+        <BalanceLine>
+          <span>
+            <b>Balance:</b> {balance} ETH
+          </span>
+          <Button
+            disabled={balance === "0"}
+            onClick={() => {
+              const contract = new web3.eth.Contract(
+                getAbiFromJson(passportJson)
+              );
+              contract.options.address = passport.address;
+              (contract.methods.claimEth() as ContractSendMethod)
+                .send({ from: address })
+                .on("receipt", () => {
+                  setToastMessage(`Successfully Claimed ${balance} ETH!`);
+                  setBalance("0");
+                });
+            }}
+          >
+            Claim
+          </Button>
+        </BalanceLine>
+      )}
       <p>
         <b>Supply:</b> {passport.supply}
       </p>
@@ -340,7 +399,6 @@ const Tab: React.FC<{ to: string }> = ({ children, to }) => {
   return <TabContainer onClick={onClick}>{children}</TabContainer>;
 };
 
-
 const AdditionalFieldRow = styled("div", {
   display: "flex",
   alignItems: "center",
@@ -362,6 +420,7 @@ const CreateMembershipModal = ({
   const [symbol, setSymbol] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
+  const [claimable, setClaimable] = useState(false);
   const address = useAddress();
   const web3 = useWeb3();
   const [stage, setStage] = useState(0);
@@ -381,7 +440,7 @@ const CreateMembershipModal = ({
       const weiPrice = web3.utils.toWei(price, "ether");
       return new Promise<void>((resolve, reject) =>
         contractInstance.methods
-          .create(name, symbol, quantity, weiPrice, metadataHash)
+          .create(name, symbol, quantity, weiPrice, metadataHash, claimable)
           .send({ from: address })
           .on("receipt", (receipt: TransactionReceipt) => {
             const address =
@@ -394,6 +453,7 @@ const CreateMembershipModal = ({
               supply: Number(quantity),
               price,
               metadataHash,
+              claimable,
             });
             resolve();
           })
@@ -411,6 +471,7 @@ const CreateMembershipModal = ({
     onSuccess,
     additionalFields,
     cid,
+    claimable,
   ]);
   const stageConfirms = [
     () => {
@@ -464,6 +525,19 @@ const CreateMembershipModal = ({
               onChange={(e) => setPrice(e.target.value)}
               type={"number"}
             />
+            <Label
+              label="Funds Claimable"
+              description="If checked, your users pay less gas and you could claim your funds whenever you want as they are stored in the contract. If unchecked, you are paid immediately when users buy a passport."
+            >
+              <Checkbox
+                checked={claimable}
+                onCheckedChange={(b) =>
+                  b === "indeterminate"
+                    ? setClaimable(false)
+                    : setClaimable(true)
+                }
+              />
+            </Label>
           </>
         )}
         {stage === 1 && (
@@ -574,18 +648,25 @@ const MembershipTabContent = () => {
   const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
-  const [customizations, setCustomizations] = useState<Record<string, Record<string,string>>>({});
+  const [customizations, setCustomizations] = useState<
+    Record<string, Record<string, string>>
+  >({});
   useEffect(() => {
     // Fetch the relevant redirection URLs on page load.
     const membershipAddrs = memberships.map((m) => m.address);
     if (memberships.length > 0) {
-      axios.post("/api/customizations", {
-        addresses: membershipAddrs
-      })
-      .then((result: { data: { customizations: Record<string, Record<string,string>> } }) => {
-        setCustomizations(result.data["customizations"]);
-      })
-      .catch(console.error);
+      axios
+        .post("/api/customizations", {
+          addresses: membershipAddrs,
+        })
+        .then(
+          (result: {
+            data: { customizations: Record<string, Record<string, string>> };
+          }) => {
+            setCustomizations(result.data["customizations"]);
+          }
+        )
+        .catch(console.error);
     }
   }, [memberships, setCustomizations]);
   const contractInstance = useMemo<Contract>(() => {
@@ -609,6 +690,7 @@ const MembershipTabContent = () => {
               supply: 0,
               price: "0",
               metadataHash: "",
+              claimable: false,
             }))
           );
         })
