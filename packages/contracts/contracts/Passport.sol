@@ -3,12 +3,14 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * The Passport contract is an ERC721 that represents member access for DAOs.
  */
-contract Passport is ERC721, Ownable {
+contract Passport is ERC721, Ownable, AccessControl {
   bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
   address payable public _owner;
   address payable public _cabindao = payable(0x8dca852d10c3CfccB88584281eC1Ef2d335253Fd);
@@ -17,6 +19,7 @@ contract Passport is ERC721, Ownable {
   uint256 public supply;
   uint256[] public tokenIds;
   string public metadataHash;
+  bool public isPrivate;
   uint256 public royaltyPcnt;
   address public royaltyRecipient;
   bool public claimable;
@@ -29,7 +32,8 @@ contract Passport is ERC721, Ownable {
     uint256 _price, 
     string memory _metadataHash, 
     uint256 _royaltyPcnt, 
-    bool _claimable
+    bool _claimable,
+    bool _isPrivate
   ) ERC721(name_, symbol_) {
     _owner = payable(owner_);
     price = _price;
@@ -38,6 +42,8 @@ contract Passport is ERC721, Ownable {
     royaltyPcnt = _royaltyPcnt;
     royaltyRecipient = _owner;
     claimable = _claimable;
+    isPrivate = _isPrivate;
+    _setupRole(DEFAULT_ADMIN_ROLE, owner_);
   }
 
   /// @inheritdoc	ERC165
@@ -45,7 +51,7 @@ contract Passport is ERC721, Ownable {
       public
       view
       virtual
-      override
+      override(ERC721, AccessControl)
       returns (bool)
   {
       return (interfaceId == _INTERFACE_ID_ERC2981) || super.supportsInterface(interfaceId);
@@ -87,6 +93,7 @@ contract Passport is ERC721, Ownable {
     require(supply > 0, "Error, no more supply of this membership");
     require(msg.value >= price, "Error, Token costs more");
     require(!sold[_id], "Error, Token is sold");
+    require(!isPrivate || isMinter(msg.sender), "Address is not allowed to mint");
 
     if (!claimable) {
       uint256 ownerPayment = msg.value * 39 / 40;
@@ -105,8 +112,8 @@ contract Passport is ERC721, Ownable {
     emit Purchase(msg.sender, price, _id, tokenURI(_id));
   }
 
-  function get() public view returns(string memory, string memory, uint256, uint256, string memory, uint256, bool) {
-    return (name(), symbol(), supply, price, metadataHash, royaltyPcnt, claimable);
+  function get() public view returns(string memory, string memory, uint256, uint256, string memory, uint256, bool, bool) {
+    return (name(), symbol(), supply, price, metadataHash, royaltyPcnt, claimable, isPrivate);
   }
 
   function claimEth() public onlyOwner {
@@ -117,5 +124,47 @@ contract Passport is ERC721, Ownable {
   event Received(address, uint);
   receive() external payable {
       emit Received(msg.sender, msg.value);
+  }
+
+  /**
+    * @dev A method to verify if the account belongs to the minter role
+    * @param account The address to verify.
+    * @return Return `true` if the account belongs to the minter role.
+    */
+  function isMinter(address account)
+      public
+      virtual
+      view
+      returns(bool)
+  {
+      return hasRole(MINTER_ROLE, account);
+  }
+
+  /**
+    * @dev Add accounts to the minter role. Restricted to admins.
+    * @param accounts The members to add as a member.
+    */
+  function addMinters(address[] memory accounts)
+      public
+      virtual
+      onlyOwner
+  {
+      for(uint i; i < accounts.length; i++) {
+          grantRole(MINTER_ROLE, accounts[i]);
+      }
+  }
+
+  /**
+    * @dev Remove accounts from the minter role. Restricted to admins.
+    * @param accounts The member to remove.
+    */
+  function removeMinters(address[] memory accounts)
+      public
+      virtual
+      onlyOwner
+  {
+      for(uint i; i < accounts.length; i++) {
+          revokeRole(MINTER_ROLE, accounts[i]);
+      }
   }
 }
