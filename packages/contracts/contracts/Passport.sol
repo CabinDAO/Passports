@@ -61,7 +61,7 @@ contract Passport is ERC721, Ownable {
       view
       returns (address receiver, uint256 royaltyAmount)
   {
-      receiver = _owner;
+      receiver = royaltyRecipient;
       royaltyAmount = (value * royaltyPcnt) / 10000;
   }
 
