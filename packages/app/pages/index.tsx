@@ -440,7 +440,7 @@ const CreateMembershipModal = ({
       const weiPrice = web3.utils.toWei(price, "ether");
       return new Promise<void>((resolve, reject) =>
         contractInstance.methods
-          .create(name, symbol, quantity, weiPrice, metadataHash, claimable)
+          .create(name, symbol, quantity, weiPrice, metadataHash, 0, claimable)
           .send({ from: address })
           .on("receipt", (receipt: TransactionReceipt) => {
             const address =
