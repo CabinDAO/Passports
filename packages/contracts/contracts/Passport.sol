@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * The Passport contract does this and that...
+ * The Passport contract is an ERC721 that represents member access for DAOs.
  */
 contract Passport is ERC721, Ownable {
   bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
@@ -18,6 +18,7 @@ contract Passport is ERC721, Ownable {
   uint256[] public tokenIds;
   string public metadataHash;
   uint256 public royaltyPcnt;
+  address public royaltyRecipient;
   bool public claimable;
   event Purchase(address owner, uint256 price, uint256 id, string uri);
   constructor(
@@ -35,6 +36,7 @@ contract Passport is ERC721, Ownable {
     supply = _supply;
     metadataHash = _metadataHash;
     royaltyPcnt = _royaltyPcnt;
+    royaltyRecipient = _owner;
     claimable = _claimable;
   }
 
@@ -65,9 +67,11 @@ contract Passport is ERC721, Ownable {
 
   /// @notice Allows to set the royalties on the contract
   /// @dev This function in a real contract should be protected with a onlyOwner (or equivalent) modifier
+  /// @param recipient recipient of the royalties
   /// @param value royalties value (between 0 and 10000)
-  function setRoyalties(address, uint256 value) public onlyOwner{
+  function setRoyalties(address recipient, uint256 value) public onlyOwner{
       require(value <= 10000, 'ERC2981Royalties: Too high');
+      royaltyRecipient = recipient;
       royaltyPcnt = value;
   }
 
