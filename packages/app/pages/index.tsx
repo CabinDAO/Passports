@@ -381,7 +381,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
         <b>Price:</b> {passport.price} ETH
       </p>
       <p>
-        <b>Royalty %:</b> {passport.royaltyPcnt}%
+        <b>Royalty:</b> {passport.royaltyPcnt}%
       </p>
       {Object.entries(fields).map((f) => (
         <p key={f[0]}>
@@ -647,7 +647,7 @@ const CreateMembershipModal = ({
               <b>Price:</b> {price} ETH
             </p>
             <p>
-              <b>Royalty %:</b> {royaltyPcnt}%
+              <b>Royalty:</b> {royaltyPcnt}%
             </p>
             {additionalFields.map((a) => (
               <p key={a.key}>
