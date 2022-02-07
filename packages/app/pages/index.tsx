@@ -99,6 +99,7 @@ interface IMembershipProps {
   price: string;
   metadataHash: string;
   claimable: boolean;
+  royaltyPcnt: number;
 }
 
 interface IMembershipCardProps extends IMembershipProps {
@@ -120,6 +121,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
     price: props.price,
     metadataHash: props.metadataHash,
     claimable: props.claimable,
+    royaltyPcnt: props.royaltyPcnt
   });
   const web3 = useWeb3();
   const address = useAddress();
@@ -151,6 +153,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
           price: web3.utils.fromWei(p[3], "ether"),
           metadataHash: p[4],
           claimable: p[6],
+          royaltyPcnt: p[5]/100
         });
         setNewSupply(Number(p[2]));
       });
@@ -377,6 +380,9 @@ const MembershipCard = (props: IMembershipCardProps) => {
       <p>
         <b>Price:</b> {passport.price} ETH
       </p>
+      <p>
+        <b>Royalty:</b> {passport.royaltyPcnt}%
+      </p>
       {Object.entries(fields).map((f) => (
         <p key={f[0]}>
           <b>{f[0]}:</b> {f[1]}
@@ -421,6 +427,7 @@ const CreateMembershipModal = ({
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [claimable, setClaimable] = useState(false);
+  const [royaltyPcnt, setRoyaltyPcnt] = useState("");
   const address = useAddress();
   const web3 = useWeb3();
   const [stage, setStage] = useState(0);
@@ -438,9 +445,10 @@ const CreateMembershipModal = ({
       })
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price, "ether");
+      const royalty = Number(royaltyPcnt)*100 | 0;
       return new Promise<void>((resolve, reject) =>
         contractInstance.methods
-          .create(name, symbol, quantity, weiPrice, metadataHash, 0, claimable)
+          .create(name, symbol, quantity, weiPrice, metadataHash, royalty, claimable)
           .send({ from: address })
           .on("receipt", (receipt: TransactionReceipt) => {
             const address =
@@ -454,6 +462,7 @@ const CreateMembershipModal = ({
               price,
               metadataHash,
               claimable,
+              royaltyPcnt: royalty/100
             });
             resolve();
           })
@@ -465,6 +474,7 @@ const CreateMembershipModal = ({
     name,
     quantity,
     price,
+    royaltyPcnt,
     contractInstance,
     web3,
     address,
@@ -523,6 +533,12 @@ const CreateMembershipModal = ({
               label={"Price"}
               value={price}
               onChange={(e) => setPrice(e.target.value)}
+              type={"number"}
+            />
+            <ModalInput
+              label={"Royalty %"}
+              value={royaltyPcnt}
+              onChange={(e) => setRoyaltyPcnt(e.target.value)}
               type={"number"}
             />
             <Label
@@ -630,6 +646,9 @@ const CreateMembershipModal = ({
             <p>
               <b>Price:</b> {price} ETH
             </p>
+            <p>
+              <b>Royalty:</b> {royaltyPcnt}%
+            </p>
             {additionalFields.map((a) => (
               <p key={a.key}>
                 <b>{a.key}:</b> {a.value}
@@ -691,6 +710,7 @@ const MembershipTabContent = () => {
               price: "0",
               metadataHash: "",
               claimable: false,
+              royaltyPcnt: 0
             }))
           );
         })
