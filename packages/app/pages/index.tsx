@@ -56,7 +56,7 @@ const TabContainer = styled("div", {
 const MembershipCardContainer = styled("div", {
   background: "$sand",
   width: 350,
-  height: 512,
+  minHeight: 512,
   padding: 16,
   display: "inline-block",
   marginRight: "8px",
@@ -121,7 +121,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
     price: props.price,
     metadataHash: props.metadataHash,
     claimable: props.claimable,
-    royaltyPcnt: props.royaltyPcnt
+    royaltyPcnt: props.royaltyPcnt,
   });
   const web3 = useWeb3();
   const address = useAddress();
@@ -153,7 +153,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
           price: web3.utils.fromWei(p[3], "ether"),
           metadataHash: p[4],
           claimable: p[6],
-          royaltyPcnt: p[5]/100
+          royaltyPcnt: p[5] / 100,
         });
         setNewSupply(Number(p[2]));
       });
@@ -445,10 +445,18 @@ const CreateMembershipModal = ({
       })
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price, "ether");
-      const royalty = Number(royaltyPcnt)*100 | 0;
+      const royalty = (Number(royaltyPcnt) * 100) | 0;
       return new Promise<void>((resolve, reject) =>
         contractInstance.methods
-          .create(name, symbol, quantity, weiPrice, metadataHash, royalty, claimable)
+          .create(
+            name,
+            symbol,
+            quantity,
+            weiPrice,
+            metadataHash,
+            royalty,
+            claimable
+          )
           .send({ from: address })
           .on("receipt", (receipt: TransactionReceipt) => {
             const address =
@@ -462,7 +470,7 @@ const CreateMembershipModal = ({
               price,
               metadataHash,
               claimable,
-              royaltyPcnt: royalty/100
+              royaltyPcnt: royalty / 100,
             });
             resolve();
           })
@@ -710,7 +718,7 @@ const MembershipTabContent = () => {
               price: "0",
               metadataHash: "",
               claimable: false,
-              royaltyPcnt: 0
+              royaltyPcnt: 0,
             }))
           );
         })
