@@ -9,6 +9,7 @@ export default class Document extends NextDocument {
         <Head>
           <style
             id="stitches"
+            // https://stitches.dev/docs/server-side-rendering
             dangerouslySetInnerHTML={{ __html: getCssText() }}
           />
         </Head>
