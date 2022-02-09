@@ -3,12 +3,12 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 /**
  * The Passport contract is an ERC721 that represents member access for DAOs.
  */
-contract Passport is ERC721, Ownable, AccessControl {
+contract Passport is ERC721, Ownable, AccessControlEnumerable {
   bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
   bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -51,7 +51,7 @@ contract Passport is ERC721, Ownable, AccessControl {
       public
       view
       virtual
-      override(ERC721, AccessControl)
+      override(ERC721, AccessControlEnumerable)
       returns (bool)
   {
       return (interfaceId == _INTERFACE_ID_ERC2981) || super.supportsInterface(interfaceId);
@@ -167,4 +167,24 @@ contract Passport is ERC721, Ownable, AccessControl {
           revokeRole(MINTER_ROLE, accounts[i]);
       }
   }
+
+  /**
+    * @dev Return all accounts from the minter role. Restricted to admins.
+    */
+  function getAllowedMinters()
+      public
+      virtual
+      onlyOwner
+      returns(address[] memory)
+  {
+      uint minterCount = getRoleMemberCount(MINTER_ROLE);
+      address[] memory minters = new address[](minterCount);
+      
+      for (uint i = 0; i < minterCount; ++i) {
+        minters[i] = getRoleMember(MINTER_ROLE, i);
+      }
+
+      return minters;
+  }
+
 }
