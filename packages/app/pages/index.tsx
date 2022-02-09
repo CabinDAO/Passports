@@ -43,6 +43,7 @@ import UsersTabContent from "../components/UsersTabContent";
 import { ipfsAdd } from "../components/utils";
 import SettingsTabContent from "../components/SettingsTabContent";
 import IpfsImage from "../components/IpfsImage";
+import ManageTabContent from "../components/ManageTabContent";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -100,6 +101,7 @@ interface IMembershipProps {
   metadataHash: string;
   claimable: boolean;
   royaltyPcnt: number;
+  isPrivate: boolean;
 }
 
 interface IMembershipCardProps extends IMembershipProps {
@@ -428,6 +430,7 @@ const CreateMembershipModal = ({
   const [price, setPrice] = useState("");
   const [claimable, setClaimable] = useState(false);
   const [royaltyPcnt, setRoyaltyPcnt] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const address = useAddress();
   const web3 = useWeb3();
   const [stage, setStage] = useState(0);
@@ -455,7 +458,8 @@ const CreateMembershipModal = ({
             weiPrice,
             metadataHash,
             royalty,
-            claimable
+            claimable,
+            isPrivate
           )
           .send({ from: address })
           .on("receipt", (receipt: TransactionReceipt) => {
@@ -471,6 +475,7 @@ const CreateMembershipModal = ({
               metadataHash,
               claimable,
               royaltyPcnt: royalty / 100,
+              isPrivate
             });
             resolve();
           })
@@ -490,6 +495,7 @@ const CreateMembershipModal = ({
     additionalFields,
     cid,
     claimable,
+    isPrivate
   ]);
   const stageConfirms = [
     () => {
@@ -559,6 +565,19 @@ const CreateMembershipModal = ({
                   b === "indeterminate"
                     ? setClaimable(false)
                     : setClaimable(true)
+                }
+              />
+            </Label>
+            <Label
+              label="Private Passport"
+              description="If checked, only an authorized lst of addresses can mint the passort. This list can be managed from the Manage Tab"
+            >
+              <Checkbox
+                checked={isPrivate}
+                onCheckedChange={(b) =>
+                  b === "indeterminate"
+                    ? setIsPrivate(false)
+                    : setIsPrivate(true)
                 }
               />
             </Label>
@@ -719,6 +738,7 @@ const MembershipTabContent = () => {
               metadataHash: "",
               claimable: false,
               royaltyPcnt: 0,
+              isPrivate: false
             }))
           );
         })
@@ -820,6 +840,7 @@ const HomeContent = () => {
           </div>
           <Tab to={"memberships"}>Memberships</Tab>
           <Tab to={"users"}>Users</Tab>
+          <Tab to={"manage"}>Manage</Tab>
           <Tab to={"settings"}>Settings</Tab>
         </div>
       </div>
@@ -835,6 +856,7 @@ const HomeContent = () => {
       >
         {tab === "memberships" && <MembershipTabContent />}
         {tab === "users" && <UsersTabContent />}
+        {tab === "manage" && <ManageTabContent />}
         {tab === "settings" && <SettingsTabContent />}
       </main>
     </div>
