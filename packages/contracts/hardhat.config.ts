@@ -67,13 +67,21 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: getAccountsFromEnv("PRIVATE_KEY"),
+    },
+    goerli: {
+      url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: getAccountsFromEnv("PRIVATE_KEY"),
+    },
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: getAccountsFromEnv("ROPSTEN_PRIVATE_KEY"),
+      accounts: getAccountsFromEnv("PRIVATE_KEY"),
     },
     kovan: {
       url: `https://eth-kovan.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: getAccountsFromEnv("KOVAN_PRIVATE_KEY"),
+      accounts: getAccountsFromEnv("PRIVATE_KEY"),
     },
     localhost: {
       url: "http://localhost:8545",
