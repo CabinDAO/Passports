@@ -8,8 +8,7 @@ on:
 
 env:
   ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-  ROPSTEN_PRIVATE_KEY: ${{ secrets.ROPSTEN_PRIVATE_KEY }}
-  KOVAN_PRIVATE_KEY: ${{ secrets.KOVAN_PRIVATE_KEY }}
+  PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
 jobs:
   deploy:
@@ -31,6 +30,12 @@ jobs:
         working-directory: packages/contracts
       - name: Deploy to Ropsten
         run: npm run migrate:ropsten
+        working-directory: packages/contracts
+      - name: Deploy to Rinkeby
+        run: npm run migrate:rinkeby
+        working-directory: packages/contracts
+      - name: Deploy to Goerli
+        run: npm run migrate:goerli
         working-directory: packages/contracts
       - uses: JS-DevTools/npm-publish@v1
         with:
