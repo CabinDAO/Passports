@@ -1,6 +1,6 @@
 {
   "name": "@cabindao/nft-passport-contracts",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Smart contracts powering Cabin's NFT Passports product",
   "main": "index.js",
   "repository": "https://github.com/CabinDAO/Passports",
