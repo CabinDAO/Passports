@@ -577,7 +577,7 @@ const CreateMembershipModal = ({
                 onCheckedChange={(b) =>
                   b === "indeterminate"
                     ? setIsPrivate(false)
-                    : setIsPrivate(true)
+                    : setIsPrivate(b)
                 }
               />
             </Label>

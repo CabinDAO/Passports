@@ -1,4 +1,4 @@
-import { Box, Button, Input, Label, Modal, Select } from "@cabindao/topo";
+import { Box, Button, Input, Label, Modal, Select, Toast } from "@cabindao/topo";
 import { useEffect, useMemo, useState } from "react";
 import type { Contract, ContractSendMethod } from "web3-eth-contract";
 import { contractAddressesByNetworkId, getAbiFromJson } from "./constants";
@@ -8,6 +8,8 @@ import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/cont
 import { styled } from "../stitches.config";
 import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
+import Papa from 'papaparse';
+import { strictEqual } from "assert";
 
 const SmallBox = styled(Box, {
     width: "25%",
@@ -67,13 +69,13 @@ const ManageTabContent = () => {
     const [addOpen, setAddOpen] = useState<boolean>(false);
     const [removeOpen, setRemoveOpen] = useState<boolean>(false);
     const [bulkAddOpen, setBulkAddOpen] = useState<boolean>(false);
-    const [bulkRemoveOpen, setBulkRemoveOpen] = useState<boolean>(false);
     const [sAddr, setSAddr] = useState<string>("");
     const address = useAddress();
     const web3 = useWeb3();
     const chainId = useChainId();
     const [selectedOption, setSelectedOption] = useState<string>("");
     const [bulkAddrList, setBulkAddrList] = useState<string[]>([]);
+    const [toastMessage, setToastMessage] = useState("");
     const contractInstance = useMemo<Contract>(() => {
         const contract = new web3.eth.Contract(getAbiFromJson(passportFactoryJson));
         contract.options.address =
@@ -90,10 +92,47 @@ const ManageTabContent = () => {
                 from: address,
             })
             .then((r: string[]) => {setMAddresses(r)})
-            .catch(console.error)
+            .then(() => {
+                // Get details of all private memberships to populate dropdown
+                if(mAddresses.length > 0) {
+                    setShowLoading(true);
+                    const promises = mAddresses.map((mAddr) => {
+                        const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
+                        contract.options.address = mAddr;
+                        return (contract.methods.get() as ContractSendMethod).call().then((p) => {
+                            if (p[7]) {
+                                const data: MembershipDetailMap = {};
+                                data[mAddr] = {
+                                    name: p[0],
+                                    symbol: p[1],
+                                    supply: p[2],
+                                    price: web3.utils.fromWei(p[3], "ether")
+                                };
+                                return data;
+                            }
+                            else {
+                                return {};
+                            }
+                        });
+                    });
+                    Promise.all(promises).then((values) => {
+                        const data = Object.assign({}, ...values);
+                        setMembershipDetails(data);
+                    })
+                    .catch((e) => {
+                        setToastMessage(`ERROR: ${e.response?.data || e.message}`);
+                        setMembershipDetails({});
+                    })
+                    .finally(() => setShowLoading(false));;
+                }
+                else {
+                    setMembershipDetails({});
+                }
+            })
+            .catch((e) => setToastMessage(`ERROR: ${e.response?.data || e.message}`))
             .finally(() => setShowLoading(false));
         }
-    }, [contractInstance, address, setMAddresses]);
+    }, [contractInstance, address, setMAddresses, mAddresses, web3]);
 
     useEffect(() => {
         // Get list of allowed minters for selected private passports
@@ -106,44 +145,10 @@ const ManageTabContent = () => {
                 from: address,
             })
             .then((addrs) => setAllowedUsers(addrs))
-            .catch(console.error)
+            .catch((e) => setToastMessage(`ERROR: ${e.response?.data || e.message}`))
             .finally(() => setShowLoading(false));
         }
     }, [selectedOption, setAllowedUsers, web3, address]);
-
-    useEffect(() => {
-        // Get details of all private memberships to populate dropdown
-        if(mAddresses.length > 0) {
-            setShowLoading(true);
-            const promises = mAddresses.map((mAddr) => {
-                const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-                contract.options.address = mAddr;
-                return (contract.methods.get() as ContractSendMethod).call().then((p) => {
-                    const data: MembershipDetailMap = {};
-                    data[mAddr] = {
-                        name: p[0],
-                        symbol: p[1],
-                        supply: p[2],
-                        price: web3.utils.fromWei(p[3], "ether")
-                    };
-                    if (p[7]) {
-                        return data;
-                    }
-                    else {
-                        return {};
-                    }
-                });
-            });
-            Promise.all(promises).then((values) => {
-                const data = Object.assign({}, ...values);
-                setMembershipDetails(data);
-            })
-            .finally(() => setShowLoading(false));;
-        }
-        else {
-            setMembershipDetails({});
-        }
-    }, [mAddresses, web3]);
 
     return (
         <>
@@ -163,7 +168,7 @@ const ManageTabContent = () => {
                             setAddOpen(false);
                             setSAddr("");
                         })
-                        .on("error", console.error);
+                        .on("error", (e: Error, receipt: TransactionReceipt) => setToastMessage(`ERROR: ${e.message}`));
                     
                 }}
             >
@@ -190,7 +195,7 @@ const ManageTabContent = () => {
                             setRemoveOpen(false);
                             setSAddr("");
                         })
-                        .on("error", console.error);
+                        .on("error", (e: Error, receipt: TransactionReceipt) => setToastMessage(`ERROR: ${e.message}`));
                     
                 }}
             >
@@ -216,7 +221,7 @@ const ManageTabContent = () => {
                             setBulkAddOpen(false);
                             setBulkAddrList([]);
                         })
-                        .on("error", console.error);
+                        .on("error", (e: Error, receipt: TransactionReceipt) => setToastMessage(`ERROR: ${e.message}`));
                     
                 }}
             >
@@ -228,85 +233,18 @@ const ManageTabContent = () => {
                         accept={".csv"}
                         onChange={async (e) => {
                             if (e.target.files) {
-                                let reader = new FileReader();     
-                                reader.readAsText(e.target.files[0]);
-                                reader.onload = function (event) {
-                                    const delim = ',';
-                                    let str = event.target?.result?.toString() || "";
-                                    const headers = str.slice(0,str.indexOf('\n')).split(delim);
-                                    const rows = str.slice(str.indexOf('\n')+1).split('\n');
-
-                                    const addrsInCsv = rows.map( row => {
-                                        const values = row.split(delim);
-                                        const eachObject = headers.reduce((obj: {[key: string]: string}, header, i) => {
-                                            obj[header] = values[i];
-                                            return obj;
-                                        }, {})
-                                        return eachObject['address'];
-                                    });
-
-                                    const relevantAddr = addrsInCsv.filter((addr) => (addr && !allowedUsers.includes(addr)));
-                                    setBulkAddrList(relevantAddr);
-
-                                };
-                                reader.onerror = console.error;
-                            }
-                        }}
-                        />
-                    </Label>
-                </ModalInputBox>
-            </Modal>
-            <Modal
-                isOpen={bulkRemoveOpen}
-                setIsOpen={setBulkRemoveOpen}
-                title="Remove addresses"
-                onConfirm={() => {
-                    const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-                    contract.options.address = selectedOption;
-                    return contract.methods.removeMinters(bulkAddrList)
-                        .send({
-                            from: address,
-                        })
-                        .on("receipt", (receipt: TransactionReceipt) => {
-                            const updatedUsers = allowedUsers.filter((user) => (!bulkAddrList.includes(user)));
-                            setAllowedUsers(updatedUsers);
-                            setBulkRemoveOpen(false);
-                            setBulkAddrList([]);
-                        })
-                        .on("error", console.error);
-                    
-                }}
-            >
-                <div> {`All the addresses should be under column named "address". All other columns will be ignored.`} </div>
-                <ModalInputBox>
-                    <Label label={"Upload CSV"}>
-                        <input
-                        type={"file"}
-                        accept={".csv"}
-                        onChange={async (e) => {
-                            if (e.target.files) {
-                                let reader = new FileReader();     
-                                reader.readAsText(e.target.files[0]);
-                                reader.onload = function (event) {
-                                    const delim = ',';
-                                    let str = event.target?.result?.toString() || "";
-                                    const headers = str.slice(0,str.indexOf('\n')).split(delim);
-                                    const rows = str.slice(str.indexOf('\n')+1).split('\n');
-
-                                    const addrsInCsv = rows.map( row => {
-                                        const values = row.split(delim);
-                                        const eachObject = headers.reduce((obj: {[key: string]: string}, header, i) => {
-                                            obj[header] = values[i];
-                                            return obj;
-                                        }, {})
-                                        return eachObject['address'];
-                                    });
-
-                                    const relevantAddr = addrsInCsv.filter((addr) => allowedUsers.includes(addr));
-                                    setBulkAddrList(relevantAddr);
-
-                                };
-                                reader.onerror = console.error;
+                                const f: File = e.target.files[0];
+                                Papa.parse<Record<string,string>, File>(f, {
+                                    header: true, 
+                                    complete: function(results) {
+                                        const addrsInCsv = results.data.map((result) => result['address']);
+                                        const relevantAddr = addrsInCsv.filter((addr) => (addr && !allowedUsers.includes(addr)));
+                                        setBulkAddrList(relevantAddr);
+                                    },
+                                    error: function(e) {
+                                        setToastMessage(`ERROR: ${e.message}`);
+                                    }
+                                })
                             }
                         }}
                         />
@@ -324,8 +262,8 @@ const ManageTabContent = () => {
                                 label: `${membershipDetails[addr]["name"]} (${membershipDetails[addr]["symbol"]})`
                             }
                         })}
+                        disabled={false}
                         onChange = {(val) => setSelectedOption(val)}
-                        disabled = {false}
                     />  : <div>Please create some Private Passports first!</div>
                 }
             </SmallBox>
@@ -355,12 +293,6 @@ const ManageTabContent = () => {
                             leftIcon={<MinusIcon />}
                             onClick={() => setRemoveOpen(true)}
                         />
-                        <Button
-                            leftIcon={<MinusIcon />}
-                            onClick={() => setBulkRemoveOpen(true)}
-                        >
-                            Upload CSV
-                        </Button>
                     </ButtonBox>
                     {allowedUsers.length>0 ?
                         (<Table>
@@ -379,6 +311,12 @@ const ManageTabContent = () => {
                 </>) : null
             }
             </TableBox>
+            <Toast
+                isOpen={!!toastMessage}
+                onClose={() => setToastMessage("")}
+                message={toastMessage}
+                intent={toastMessage.startsWith("ERROR") ? "error" : "success"}
+            />
         </>
     );
 };
