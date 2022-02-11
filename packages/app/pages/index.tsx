@@ -40,7 +40,7 @@ import {
 } from "../components/Web3Context";
 import axios from "axios";
 import UsersTabContent from "../components/UsersTabContent";
-import { ipfsAdd } from "../components/utils";
+import { ipfsAdd, resolveAddress } from "../components/utils";
 import SettingsTabContent from "../components/SettingsTabContent";
 import IpfsImage from "../components/IpfsImage";
 import ManageTabContent from "../components/ManageTabContent";
@@ -303,13 +303,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
               );
               contract.options.address =
                 contractAddressesByNetworkId[networkId]?.passportFactory || "";
-              return (
-                userAddress.endsWith(".eth")
-                  ? web3.eth.ens.getAddress(userAddress).catch(() => "")
-                  : userAddress.startsWith("0x")
-                  ? Promise.resolve(userAddress)
-                  : Promise.resolve("")
-              )
+              return resolveAddress(userAddress, web3)
                 .then((ethAddress) =>
                   ethAddress
                     ? new Promise<void>((resolve, reject) =>

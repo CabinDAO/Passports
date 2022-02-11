@@ -10,6 +10,7 @@ import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
 import Papa from 'papaparse';
 import { strictEqual } from "assert";
+import { resolveAddress } from "./utils";
 
 const SmallBox = styled(Box, {
     width: "25%",
@@ -159,7 +160,8 @@ const ManageTabContent = () => {
                 onConfirm={() => {
                     const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
                     contract.options.address = selectedOption;
-                    return contract.methods.addMinters([sAddr])
+                    return resolveAddress(sAddr, web3).then(addr => new Promise<void>((resolve, reject) =>
+                        contract.methods.addMinters([addr])
                         .send({
                             from: address,
                         })
@@ -167,8 +169,10 @@ const ManageTabContent = () => {
                             setAllowedUsers([...allowedUsers, sAddr]);
                             setAddOpen(false);
                             setSAddr("");
+                            resolve();
                         })
-                        .on("error", (e: Error, receipt: TransactionReceipt) => setToastMessage(`ERROR: ${e.message}`));
+                        .on("error", reject)
+                    )).catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
                     
                 }}
             >
@@ -185,7 +189,8 @@ const ManageTabContent = () => {
                 onConfirm={() => {
                     const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
                     contract.options.address = selectedOption;
-                    return contract.methods.removeMinters([sAddr])
+                    return resolveAddress(sAddr, web3).then(addr => new Promise<void>((resolve, reject) =>
+                       contract.methods.removeMinters([addr])
                         .send({
                             from: address,
                         })
@@ -194,8 +199,10 @@ const ManageTabContent = () => {
                             setAllowedUsers(updatedUsers);
                             setRemoveOpen(false);
                             setSAddr("");
+                            resolve()
                         })
-                        .on("error", (e: Error, receipt: TransactionReceipt) => setToastMessage(`ERROR: ${e.message}`));
+                        .on("error", reject)
+                    )).catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
                     
                 }}
             >
@@ -212,16 +219,20 @@ const ManageTabContent = () => {
                 onConfirm={() => {
                     const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
                     contract.options.address = selectedOption;
-                    return contract.methods.addMinters(bulkAddrList)
-                        .send({
-                            from: address,
-                        })
-                        .on("receipt", (receipt: TransactionReceipt) => {
-                            setAllowedUsers([...bulkAddrList,...allowedUsers]);
-                            setBulkAddOpen(false);
-                            setBulkAddrList([]);
-                        })
-                        .on("error", (e: Error, receipt: TransactionReceipt) => setToastMessage(`ERROR: ${e.message}`));
+                    return Promise.all(bulkAddrList.map(addr => resolveAddress(addr, web3)))
+                      .then(addrList => new Promise<void>((resolve, reject) =>
+                        contract.methods.addMinters(addrList)
+                          .send({
+                              from: address,
+                          })
+                          .on("receipt", (receipt: TransactionReceipt) => {
+                              setAllowedUsers([...bulkAddrList,...allowedUsers]);
+                              setBulkAddOpen(false);
+                              setBulkAddrList([]);
+                              resolve();
+                          })
+                          .on("error", reject)
+                    )).catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
                     
                 }}
             >

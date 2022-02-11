@@ -1,4 +1,5 @@
 import axios from "axios";
+import type Web3 from "web3";
 
 export const ipfsAdd = (s: string | Blob) => {
   const formData = new FormData();
@@ -15,3 +16,11 @@ export const ipfsAdd = (s: string | Blob) => {
     )
     .then((r) => r.data.Hash);
 };
+
+export const resolveAddress = (addr: string, web3: Web3) => (
+  addr.endsWith(".eth")
+    ? web3.eth.ens.getAddress(addr).catch(() => "")
+    : addr.startsWith("0x")
+    ? Promise.resolve(addr)
+    : Promise.resolve("")
+)
