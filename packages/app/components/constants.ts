@@ -63,11 +63,11 @@ export const getAbiFromJson = (json: {
  */
 export const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: "passports2.firebaseapp.com",
-  projectId: "passports2",
-  storageBucket: "passports2.appspot.com",
-  messagingSenderId: "835188230670",
-  appId: "1:835188230670:web:1ee8ae3a9338c874de8a5f",
+  authDomain: process.env.FIREBASE_PROJECT_ID+".firebaseapp.com",
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_PROJECT_ID+".appspot.com",
+  messagingSenderId: process.env.FIREBASE_MSSG_SENDER,
+  appId: process.env.FIREBASE_APP_ID,
 };
 
 export const shimmer = (w: number, h: number) => `
