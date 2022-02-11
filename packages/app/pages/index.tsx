@@ -61,8 +61,8 @@ const MembershipCardContainer = styled("div", {
   padding: 16,
   display: "inline-block",
   marginRight: "8px",
-  marginBottom: "8px",    
-  verticalAlign: 'top',
+  marginBottom: "8px",
+  verticalAlign: "top",
 });
 
 const MembershipContainer = styled("div", {
@@ -304,10 +304,10 @@ const MembershipCard = (props: IMembershipCardProps) => {
               contract.options.address =
                 contractAddressesByNetworkId[networkId]?.passportFactory || "";
               return (
-                userAddress.startsWith("0x")
+                userAddress.endsWith(".eth")
+                  ? web3.eth.ens.getAddress(userAddress).catch(() => "")
+                  : userAddress.startsWith("0x")
                   ? Promise.resolve(userAddress)
-                  : userAddress.endsWith(".eth")
-                  ? web3.eth.ens.getAddress(userAddress)
                   : Promise.resolve("")
               )
                 .then((ethAddress) =>
@@ -323,7 +323,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
                           .on("error", reject)
                       )
                     : Promise.reject(
-                        new Error(`Invalid ethereum address ${userAddress}`)
+                        new Error(`Invalid wallet address ${userAddress}`)
                       )
                 )
                 .catch((e) => setToastMessage(`ERROR: ${e.message}`));
@@ -492,7 +492,7 @@ const CreateMembershipModal = ({
               metadataHash,
               claimable,
               royaltyPcnt: royalty / 100,
-              isPrivate
+              isPrivate,
             });
             resolve();
           })
@@ -512,7 +512,7 @@ const CreateMembershipModal = ({
     additionalFields,
     cid,
     claimable,
-    isPrivate
+    isPrivate,
   ]);
   const stageConfirms = [
     () => {
@@ -590,9 +590,7 @@ const CreateMembershipModal = ({
               <Checkbox
                 checked={isPrivate}
                 onCheckedChange={(b) =>
-                  b === "indeterminate"
-                    ? setIsPrivate(false)
-                    : setIsPrivate(b)
+                  b === "indeterminate" ? setIsPrivate(false) : setIsPrivate(b)
                 }
               />
             </Label>
@@ -753,7 +751,7 @@ const MembershipTabContent = () => {
               metadataHash: "",
               claimable: false,
               royaltyPcnt: 0,
-              isPrivate: false
+              isPrivate: false,
             }))
           );
         })
