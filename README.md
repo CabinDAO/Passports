@@ -94,7 +94,7 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
 ### Wallet Setup
 
 1. Open up MetaMask, click the accounts circle in the top right and click "import account".
-1. Past the private key from step 3 and click import. (Each of the accounts created in step 3 are pre-populated with 10,000 ETH)
+1. Paste the private key from step 3 and click import. (Each of the accounts created in step 3 are pre-populated with 10,000 ETH)
 1. If you don't see the ETH balance after importing, switch off of the "Localhost" network you created to another network, then go back to "Localhost". You should then see the balance. 
 
 Note that every time you change the smart contracts, you will need to rebuild and redeploy it to your local network in order to see the changes. Most of the times this will copying the new contract address to your `packages/app/.env` file for you. You will then need to reboot the frontend.
