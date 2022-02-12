@@ -40,7 +40,7 @@ import {
 } from "../components/Web3Context";
 import axios from "axios";
 import UsersTabContent from "../components/UsersTabContent";
-import { ipfsAdd } from "../components/utils";
+import { ipfsAdd, resolveAddress } from "../components/utils";
 import SettingsTabContent from "../components/SettingsTabContent";
 import IpfsImage from "../components/IpfsImage";
 import ManageTabContent from "../components/ManageTabContent";
@@ -62,6 +62,7 @@ const MembershipCardContainer = styled("div", {
   display: "inline-block",
   marginRight: "8px",
   marginBottom: "8px",
+  verticalAlign: "top",
 });
 
 const MembershipContainer = styled("div", {
@@ -169,9 +170,11 @@ const MembershipCard = (props: IMembershipCardProps) => {
     setLogoCid(props.customization.logo_cid);
   }, [props.customization]);
   useEffect(() => {
-    if (!Object.entries(metadata).length && passport.metadataHash) {
+    if (!Object.keys(metadata).length && passport.metadataHash) {
       axios.get(`https://ipfs.io/ipfs/${passport.metadataHash}`).then((r) => {
-        setMetadata(r.data);
+        if (Object.keys(r.data).length) {
+          setMetadata(r.data);
+        }
       });
     }
     if (passport.claimable) {
@@ -294,22 +297,30 @@ const MembershipCard = (props: IMembershipCardProps) => {
             isOpen={shareIsOpen}
             setIsOpen={setShareIsOpen}
             title="Grant Access to Membership"
-            onConfirm={() => {
+            onConfirm={async () => {
               const contract = new web3.eth.Contract(
                 getAbiFromJson(passportFactoryJson)
               );
               contract.options.address =
                 contractAddressesByNetworkId[networkId]?.passportFactory || "";
-              return new Promise<void>((resolve, reject) =>
-                contract.methods
-                  .grantPassport(passport.address, userAddress)
-                  .send({ from: address })
-                  .on("receipt", () => {
-                    setUserAddress("");
-                    resolve();
-                  })
-                  .on("error", reject)
-              );
+              return resolveAddress(userAddress, web3)
+                .then((ethAddress) =>
+                  ethAddress
+                    ? new Promise<void>((resolve, reject) =>
+                        contract.methods
+                          .grantPassport(passport.address, ethAddress)
+                          .send({ from: address })
+                          .on("receipt", () => {
+                            setUserAddress("");
+                            resolve();
+                          })
+                          .on("error", reject)
+                      )
+                    : Promise.reject(
+                        new Error(`Invalid wallet address ${userAddress}`)
+                      )
+                )
+                .catch((e) => setToastMessage(`ERROR: ${e.message}`));
             }}
           >
             <ModalInput
@@ -475,7 +486,7 @@ const CreateMembershipModal = ({
               metadataHash,
               claimable,
               royaltyPcnt: royalty / 100,
-              isPrivate
+              isPrivate,
             });
             resolve();
           })
@@ -495,7 +506,7 @@ const CreateMembershipModal = ({
     additionalFields,
     cid,
     claimable,
-    isPrivate
+    isPrivate,
   ]);
   const stageConfirms = [
     () => {
@@ -562,9 +573,7 @@ const CreateMembershipModal = ({
               <Checkbox
                 checked={claimable}
                 onCheckedChange={(b) =>
-                  b === "indeterminate"
-                    ? setClaimable(false)
-                    : setClaimable(true)
+                  b === "indeterminate" ? setClaimable(false) : setClaimable(b)
                 }
               />
             </Label>
@@ -575,9 +584,7 @@ const CreateMembershipModal = ({
               <Checkbox
                 checked={isPrivate}
                 onCheckedChange={(b) =>
-                  b === "indeterminate"
-                    ? setIsPrivate(false)
-                    : setIsPrivate(b)
+                  b === "indeterminate" ? setIsPrivate(false) : setIsPrivate(b)
                 }
               />
             </Label>
@@ -738,7 +745,7 @@ const MembershipTabContent = () => {
               metadataHash: "",
               claimable: false,
               royaltyPcnt: 0,
-              isPrivate: false
+              isPrivate: false,
             }))
           );
         })
