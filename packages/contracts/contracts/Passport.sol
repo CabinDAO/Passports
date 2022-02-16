@@ -4,14 +4,11 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * The Passport contract is an ERC721 that represents member access for DAOs.
  */
 contract Passport is ERC721, Ownable, AccessControlEnumerable {
-  using Counters for Counters.Counter;
-  Counters.Counter private _tokenIds;
 
   bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
   bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -92,10 +89,7 @@ contract Passport is ERC721, Ownable, AccessControlEnumerable {
     supply = value;
   }
 
-  function buy() external payable {
-
-    _tokenIds.increment();
-    uint256 _id = _tokenIds.current();
+  function buy(uint256 _id) external payable {
 
     require(supply > 0, "Error, no more supply of this membership");
     require(msg.value >= price, "Error, Token costs more");
@@ -198,28 +192,16 @@ contract Passport is ERC721, Ownable, AccessControlEnumerable {
     * @dev Airdrop tokens to a list of address. Restricted to admins.
     * @param accounts The members to which token need to be airdropped.
     */
-  function airdrop(address[] memory accounts)
+  function airdrop(address[] memory accounts, uint256[] memory _tokenIds)
       external
-      payable
       onlyOwner
   {
       require(supply >= accounts.length, "Error, number of accounts exceeds supply");
-      require(msg.value >= price*accounts.length, "Error, Airdrop costs more");
       require(!isPrivate || isMinter(msg.sender), "Address is not allowed to mint");
+      require(accounts.length == _tokenIds.length, "Number of accounts should match number of token IDs");
       
-      if (!claimable) {
-        uint256 ownerPayment = msg.value * 39 / 40;
-        (bool success1, ) = _owner.call{value: ownerPayment}("");
-        require(success1, "Address: unable to send value, recipient may have reverted");
-      }
-
-      uint256 cabinPayment = msg.value / 40;
-      (bool success2, ) = _cabindao.call{value: cabinPayment}("");
-      require(success2, "Address: unable to send value, recipient may have reverted");
-
       for(uint i; i < accounts.length; i++) {
-          _tokenIds.increment();
-          uint256 _id = _tokenIds.current();
+          uint256 _id = _tokenIds[i];
 
           require(!sold[_id], "Error, Token is sold");
 
