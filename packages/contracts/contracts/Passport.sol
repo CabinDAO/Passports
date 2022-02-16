@@ -188,6 +188,7 @@ contract Passport is ERC721, Ownable, AccessControlEnumerable {
       return minters;
   }
 
+  event Airdrop(address, uint);
   /**
     * @dev Airdrop tokens to a list of address. Restricted to admins.
     * @param accounts The members to which token need to be airdropped.
@@ -205,14 +206,13 @@ contract Passport is ERC721, Ownable, AccessControlEnumerable {
 
           require(!sold[_id], "Error, Token is sold");
 
-          _mint(msg.sender, _id);
+          _mint(accounts[i], _id);
           sold[_id] = true;
-          supply = supply - 1;
-          emit Purchase(msg.sender, price, _id, tokenURI(_id));
-
-          safeTransferFrom(msg.sender, accounts[i], _id);        
+          supply = supply - 1;   
       }
       
+      emit Airdrop(msg.sender, accounts.length);
+
   }
 
 }
