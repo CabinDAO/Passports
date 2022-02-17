@@ -1,5 +1,5 @@
 import axios from "axios";
-import type Web3 from "web3";
+import Web3 from "web3";
 
 export const ipfsAdd = (s: string | Blob) => {
   const formData = new FormData();
@@ -17,10 +17,16 @@ export const ipfsAdd = (s: string | Blob) => {
     .then((r) => r.data.Hash);
 };
 
-export const resolveAddress = (addr: string, web3: Web3) => (
+export const resolveAddress = (addr: string, web3: Web3) =>
   addr.endsWith(".eth")
     ? web3.eth.ens.getAddress(addr).catch(() => "")
     : addr.startsWith("0x")
     ? Promise.resolve(addr)
-    : Promise.resolve("")
-)
+    : Promise.resolve("");
+
+export const getWeb3 = (networkName: string) =>
+  new Web3(
+    networkName === "localhost"
+      ? "http://localhost:8545"
+      : `https://eth-${networkName}.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
+  );
