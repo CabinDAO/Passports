@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
  * The Passport contract is an ERC721 that represents member access for DAOs.
  */
 contract Passport is ERC721, Ownable, AccessControlEnumerable {
+
   bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
   bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -17,7 +18,6 @@ contract Passport is ERC721, Ownable, AccessControlEnumerable {
   mapping(uint256 => bool) public sold;
   uint256 public price;
   uint256 public supply;
-  uint256[] public tokenIds;
   string public metadataHash;
   bool public isPrivate;
   uint256 public royaltyPcnt;
@@ -90,6 +90,7 @@ contract Passport is ERC721, Ownable, AccessControlEnumerable {
   }
 
   function buy(uint256 _id) external payable {
+
     require(supply > 0, "Error, no more supply of this membership");
     require(msg.value >= price, "Error, Token costs more");
     require(!sold[_id], "Error, Token is sold");
@@ -185,6 +186,33 @@ contract Passport is ERC721, Ownable, AccessControlEnumerable {
       }
 
       return minters;
+  }
+
+  event Airdrop(address, uint);
+  /**
+    * @dev Airdrop tokens to a list of address. Restricted to admins.
+    * @param accounts The members to which token need to be airdropped.
+    */
+  function airdrop(address[] memory accounts, uint256[] memory _tokenIds)
+      external
+      onlyOwner
+  {
+      require(supply >= accounts.length, "Error, number of accounts exceeds supply");
+      require(!isPrivate || isMinter(msg.sender), "Address is not allowed to mint");
+      require(accounts.length == _tokenIds.length, "Number of accounts should match number of token IDs");
+      
+      for(uint i; i < accounts.length; i++) {
+          uint256 _id = _tokenIds[i];
+
+          require(!sold[_id], "Error, Token is sold");
+
+          _mint(accounts[i], _id);
+          sold[_id] = true;
+          supply = supply - 1;   
+      }
+      
+      emit Airdrop(msg.sender, accounts.length);
+
   }
 
 }
