@@ -30,6 +30,7 @@ import {
   Share1Icon,
   TrashIcon,
   ArrowUpIcon,
+  OpacityIcon
 } from "@radix-ui/react-icons";
 import {
   useAddress,
@@ -44,6 +45,8 @@ import { ipfsAdd, resolveAddress } from "../components/utils";
 import SettingsTabContent from "../components/SettingsTabContent";
 import IpfsImage from "../components/IpfsImage";
 import ManageTabContent from "../components/ManageTabContent";
+import Papa from "papaparse";
+import BN from "bn.js";
 
 const DRAWER_WIDTH = 255;
 const HEADER_HEIGHT = 64;
@@ -134,6 +137,8 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const [newSupply, setNewSupply] = useState(passport.supply);
   const [isOpen, setIsOpen] = useState(false);
   const [supplyIsOpen, setSupplyIsOpen] = useState(false);
+  const [airDropIsOpen, setAirDropIsOpen] = useState(false);
+  const [airdropAddrList, setAirdropAddrList] = useState<string[]>([]);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [url, setUrl] = useState(props.customization.redirect_url);
   const [brandColor, setBrandColor] = useState(props.customization.brand_color);
@@ -216,6 +221,10 @@ const MembershipCard = (props: IMembershipCardProps) => {
           <Button
             leftIcon={<ArrowUpIcon />}
             onClick={() => setSupplyIsOpen(true)}
+          />
+          <Button
+            leftIcon={<OpacityIcon />}
+            onClick={() => setAirDropIsOpen(true)}
           />
           <Modal
             isOpen={isOpen}
@@ -359,6 +368,65 @@ const MembershipCard = (props: IMembershipCardProps) => {
               onChange={(e) => setNewSupply(Number(e.target.value))}
               type={"number"}
             />
+          </Modal>
+          <Modal
+            isOpen={airDropIsOpen}
+            setIsOpen={setAirDropIsOpen}
+            title="Airdrop Passports"
+            onConfirm={() => {
+              const contract = new web3.eth.Contract(
+                getAbiFromJson(passportJson)
+              );
+              contract.options.address = passport.address;
+              return Promise.all(airdropAddrList.map(addr => resolveAddress(addr, web3)))
+                .then(addrList => new Promise<void>((resolve, reject) =>
+                  contract.methods
+                  .airdrop(addrList, addrList.map((addr) => {return new BN(web3.utils.randomHex(32).replace(/^0x/, ""), "hex");}))
+                  .send({ 
+                    from: address
+                  })
+                  .on("receipt", (receipt: TransactionReceipt) => {
+                    setToastMessage("Airdrop Successful!");
+                    setPassport({
+                      ...passport,
+                      supply: passport.supply-addrList.length,
+                    });
+                    setAirDropIsOpen(false);
+                    resolve();
+                  })
+                  .on("error", (e: Error) => {
+                    setToastMessage(`ERROR: ${e.message}`)
+                    reject(e);
+                  })
+                )).catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
+            }}
+          >
+            <div> {`All the addresses should be under column named "address". All other columns will be ignored.`} </div>
+            <ModalInputBox>
+                <Label label={"Upload CSV"}>
+                    <input
+                    type={"file"}
+                    accept={".csv"}
+                    onChange={async (e) => {
+                        if (e.target.files) {
+                            const f: File = e.target.files[0];
+                            Papa.parse<Record<string,string>, File>(f, {
+                                header: true, 
+                                complete: function(results) {
+                                    const addrsInCsv = results.data.map((result) => result['address']);
+                                    const relevantAddr = addrsInCsv.filter((addr) => addr);
+                                    setAirdropAddrList(relevantAddr);
+                                },
+                                error: function(e) {
+                                    setToastMessage(`ERROR: ${e.message}`);
+                                }
+                            })
+                        }
+                    }}
+                    />
+                </Label>
+            </ModalInputBox>
+            {airdropAddrList.length>0 ? <div>{airdropAddrList.length} Addresses</div> : null}
           </Modal>
         </div>
       </MembershipHeader>
