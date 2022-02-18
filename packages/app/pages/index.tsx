@@ -385,7 +385,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
                   .send({ 
                     from: address
                   })
-                  .then(() => {
+                  .on("receipt", (receipt: TransactionReceipt) => {
                     setToastMessage("Airdrop Successful!");
                     setPassport({
                       ...passport,
@@ -394,9 +394,9 @@ const MembershipCard = (props: IMembershipCardProps) => {
                     setAirDropIsOpen(false);
                     resolve();
                   })
-                  .catch((e: Error) => {
+                  .on("error", (e: Error) => {
                     setToastMessage(`ERROR: ${e.message}`)
-                    reject();
+                    reject(e);
                   })
                 )).catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
             }}
