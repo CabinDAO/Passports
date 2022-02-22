@@ -6,7 +6,8 @@ import { getAbiFromJson } from "../../components/constants";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { address, network, tokenId } = JSON.parse(req.body);
+  const { address, network, tokenId, signature, signatureMessage } =
+    typeof req.body === "string" ? JSON.parse(req.body) : req.body;
   switch (req.method) {
     case "POST":
       const web3 = getWeb3(network);
@@ -22,14 +23,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             {
               contractAddress: address,
               tokenId,
-              signature: "",
-              signatureMessage: "",
+              signature,
+              signatureMessage,
               pass: {
                 type: "generic",
                 description,
               },
             },
-            { headers: { "X-API-KEY": process.env.ETHPASS_API_KEY || "" } }
+            {
+              headers: {
+                "X-API-KEY": process.env.ETHPASS_API_KEY || "",
+                "x-api-scope": "pass.com.ethpass",
+              },
+            }
           )
         )
         .then((r) => res.status(200).json(r.data))

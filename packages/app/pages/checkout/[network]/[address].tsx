@@ -205,38 +205,49 @@ const CheckoutPage = ({
           getAbiFromJson(passportJson),
           address
         );
-        return new Promise((resolve, reject) =>
-          (
-            contract.methods.buy(
-              new BN(web3.current.utils.randomHex(32).replace(/^0x/, ""), "hex")
-            ) as ContractSendMethod
-          )
-            .send({
-              from: accounts[0],
-              value: web3.current.utils.toWei(price, "ether"),
-            })
-            .on("receipt", (receipt) => {
-              const id =
-                (receipt.events?.["Purchase"]?.returnValues?.id as string) ||
-                "";
-              setLoading(false);
-              setSupply(supply - 1);
-              resolve(id);
-            })
-            .on("error", reject)
+        return new Promise<{ tokenId: string; userAddress: string }>(
+          (resolve, reject) =>
+            (
+              contract.methods.buy(
+                new BN(
+                  web3.current.utils.randomHex(32).replace(/^0x/, ""),
+                  "hex"
+                )
+              ) as ContractSendMethod
+            )
+              .send({
+                from: accounts[0],
+                value: web3.current.utils.toWei(price, "ether"),
+              })
+              .on("receipt", (receipt) => {
+                const tokenId =
+                  (receipt.events?.["Purchase"]?.returnValues?.id as string) ||
+                  "";
+                setLoading(false);
+                setSupply(supply - 1);
+                resolve({ tokenId, userAddress: accounts[0] });
+              })
+              .on("error", reject)
         );
       })
-      .then((tokenId) =>
-        generateApplePass
-          ? axios
-              .post("/api/ethpass", {
+      .then((output) => {
+        if (generateApplePass && output) {
+          const { tokenId, userAddress } = output;
+          const signatureMessage = `Give Passports permission to generate an Apple Wallet Pass for token ${tokenId}`;
+          return web3.current.eth.personal
+            .sign(signatureMessage, userAddress, "")
+            .then((signature) =>
+              axios.post("/api/ethpass", {
                 tokenId,
                 address,
                 network,
+                signature,
+                signatureMessage,
               })
-              .then(() => Promise.resolve())
-          : Promise.resolve()
-      )
+            )
+            .then(() => Promise.resolve());
+        }
+      })
       .then(() => {
         if (customization.redirect_url) {
           // If valid redirection URL is provided, redirect on successful purchase.
