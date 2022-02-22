@@ -17,19 +17,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       );
       return (contract.methods.symbol() as ContractSendMethod)
         .call()
-        .then((description) =>
-          axios.post(
-            "https://api.ethpass.xyz.com/api/v1/pass",
-            {
-              contractAddress: address,
-              tokenId,
-              signature,
-              signatureMessage,
-              pass: {
-                type: "generic",
-                description,
-              },
+        .then((description) => {
+          const body = {
+            contractAddress: address,
+            tokenId,
+            signature,
+            signatureMessage,
+            pass: {
+              type: "generic",
+              description,
             },
+          };
+          console.log('Calling ethpass with:');
+          console.log(JSON.stringify(body, null, 4));
+          return axios.post(
+            "https://api.ethpass.xyz/api/v1/pass",
+            body,
             {
               headers: {
                 "X-API-KEY": process.env.ETHPASS_API_KEY || "",
@@ -37,7 +40,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               },
             }
           )
-        )
+          })
         .then((r) => res.status(200).json(r.data))
         .catch((e) => res.status(500).send(e.response?.data || e.message));
     case "GET":
