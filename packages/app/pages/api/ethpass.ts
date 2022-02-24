@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
-import { getWeb3 } from "../../components/utils";
-import { getAbiFromJson } from "../../components/constants";
+import { getWeb3, ipfsAdd } from "../../components/utils";
+import { getAbiFromJson, networkIdByName } from "../../components/constants";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
+import fs from 'fs';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const { address, network, tokenId, signature, signatureMessage } =
@@ -20,6 +21,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         .then((description) => {
           const body = {
             contractAddress: address,
+            chainId: networkIdByName[network],
             tokenId,
             signature,
             signatureMessage,
@@ -28,20 +30,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               description,
             },
           };
-          console.log('Calling ethpass with:');
-          console.log(JSON.stringify(body, null, 4));
-          return axios.post(
-            "https://api.ethpass.xyz/api/v1/pass",
-            body,
-            {
-              headers: {
-                "X-API-KEY": process.env.ETHPASS_API_KEY || "",
-                "x-api-scope": "pass.com.ethpass",
-              },
-            }
-          )
-          })
-        .then((r) => res.status(200).json(r.data))
+          return axios.post("https://api.ethpass.xyz/api/v1/pass", body, {
+            headers: {
+              "X-API-KEY": process.env.ETHPASS_API_KEY || "",
+              "x-api-scope": "pass.com.ethpass",
+            },
+          });
+        })
+        .then((r) => {
+          console.log("Successfully created ethpass", r.data.id);
+          fs.writeFileSync('out', r.data.buffer);
+          return ipfsAdd(r.data.buffer).then((ipfsHash) =>
+            res.status(200).json({ ipfsHash, id: r.data.id })
+          );
+        })
         .catch((e) => res.status(500).send(e.response?.data || e.message));
     case "GET":
       return axios
