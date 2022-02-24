@@ -1,18 +1,20 @@
 import axios from "axios";
 import Web3 from "web3";
-import FormData from "form-data";
+import NodeFormData from "form-data";
 
-export const ipfsAdd = (s: string | Blob) => {
-  const formData = new FormData();
+export const ipfsAdd = (s: string | Blob, serverSide?: true) => {
+  const formData = serverSide ? new NodeFormData() : new FormData();
   formData.append("files", s);
   return axios
     .post<{ Hash: string }>(
       "https://ipfs.infura.io:5001/api/v0/add",
-      formData,
+      serverSide ? (formData as NodeFormData).getBuffer() : formData,
       {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: serverSide
+          ? (formData as NodeFormData).getHeaders()
+          : {
+              "Content-Type": "multipart/form-data",
+            },
       }
     )
     .then((r) => r.data.Hash);

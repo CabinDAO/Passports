@@ -241,7 +241,7 @@ const CheckoutPageContent = ({
                 signatureMessage,
               })
             )
-            .then((r) => setQrfile(`https://ipfs.io/ipfs/${r.data.ipfsHash}`));
+            .then((r) => setQrfile(`${window.location.origin}/api/ethpass?hash=${r.data.ipfsHash}`));
         }
       })
       .then(() => {
