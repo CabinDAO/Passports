@@ -1,6 +1,6 @@
 {
   "name": "@cabindao/nft-passport-contracts",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Smart contracts powering Cabin's NFT Passports product",
   "main": "index.js",
   "repository": "https://github.com/CabinDAO/Passports",
@@ -14,6 +14,7 @@
     "migrate:ropsten": "hardhat run --network ropsten scripts/deploy.ts",
     "migrate:rinkeby": "hardhat run --network rinkeby scripts/deploy.ts",
     "migrate:goerli": "hardhat run --network goerli scripts/deploy.ts",
+    "prettier": "prettier --write \"contracts/**/*.sol\"",
     "test": "hardhat test",
     "test:watch": "nodemon -x 'npx hardhat test' -w contracts -w test -e ts,sol"
   },
@@ -43,7 +44,7 @@
     "hardhat-gas-reporter": "^1.0.4",
     "nodemon": "^2.0.14",
     "prettier": "^2.4.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.13",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.7.17",
     "ts-node": "^10.4.0",

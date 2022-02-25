@@ -11,28 +11,32 @@ contract Staking is Ownable {
     mapping(address => uint256) internal indices;
     mapping(address => uint256) internal stakes;
     ERC20 token;
+
     constructor(address _token) {
         token = ERC20(_token);
     }
 
     event StakeCreated();
-    function createStake(uint256 _stake) public
-    {
+
+    function createStake(uint256 _stake) public {
         token.transferFrom(msg.sender, address(this), _stake);
-        if(stakes[msg.sender] == 0) {
+        if (stakes[msg.sender] == 0) {
             indices[msg.sender] = stakeholders.length;
             stakeholders.push(msg.sender);
         }
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
-        emit StakeCreated(); 
+        emit StakeCreated();
     }
 
     event StakeRemoved();
-    function removeStake(uint256 _stake) public
-    {
-        require(_stake <= stakes[msg.sender], "Cannot remove more than allocated stake");
+
+    function removeStake(uint256 _stake) public {
+        require(
+            _stake <= stakes[msg.sender],
+            "Cannot remove more than allocated stake"
+        );
         stakes[msg.sender] = stakes[msg.sender].sub(_stake);
-        if(stakes[msg.sender] == 0) {
+        if (stakes[msg.sender] == 0) {
             uint256 s = indices[msg.sender];
             address addressToMove = stakeholders[stakeholders.length - 1];
             if (addressToMove != msg.sender) {
@@ -46,8 +50,7 @@ contract Staking is Ownable {
         emit StakeRemoved();
     }
 
-    function isStakeholder(address _address) public view returns (bool)
-    {
+    function isStakeholder(address _address) public view returns (bool) {
         return stakes[_address] >= 0;
     }
 }
