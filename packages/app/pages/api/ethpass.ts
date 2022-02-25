@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
-import { getWeb3, ipfsAdd } from "../../components/utils";
+import { getWeb3 } from "../../components/utils";
 import { getAbiFromJson, networkIdByName } from "../../components/constants";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
-import unzipper from "unzipper";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
@@ -44,15 +43,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             .json({ fileURL: r.data.fileURL, id: r.data.id });
         })
         .catch((e) => res.status(500).send(e.response?.data || e.message));
-    case "GET":
-      res.status(200).setHeader("Content-Type", "application/vnd.apple.pkpass");
-      return axios
-        .get(`https://ipfs.io/ipfs/${req.query.hash}`, {
-          responseType: "stream",
-        })
-        .then((r) => r.data.pipe(unzipper.Parse()).pipe(res));
     default:
-      res.setHeader("Allow", ["POST", "GET"]);
+      res.setHeader("Allow", ["POST"]);
       res.status(405).end(`Method ${req.method} Not Allowed`);
       break;
   }
