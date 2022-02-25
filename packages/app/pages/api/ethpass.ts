@@ -38,10 +38,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           });
         })
         .then((r) => {
-          console.log("Successfully created ethpass", r.data.id);
-          return ipfsAdd(Buffer.from(r.data.buffer.data).toString(), true).then(
-            (ipfsHash) => res.status(200).json({ ipfsHash, id: r.data.id })
-          );
+          console.log("Successfully created ethpass", r.data.id, 'at', r.data.fileURL);
+          return res
+            .status(200)
+            .json({ fileURL: r.data.fileURL, id: r.data.id });
         })
         .catch((e) => res.status(500).send(e.response?.data || e.message));
     case "GET":

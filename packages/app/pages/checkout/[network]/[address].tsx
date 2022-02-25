@@ -241,7 +241,7 @@ const CheckoutPageContent = ({
                 signatureMessage,
               })
             )
-            .then((r) => setQrfile(`${window.location.origin}/api/ethpass?hash=${r.data.ipfsHash}`));
+            .then((r) => setQrfile(r.data.fileURL));
         }
       })
       .then(() => {
