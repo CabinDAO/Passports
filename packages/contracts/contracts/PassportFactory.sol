@@ -17,8 +17,8 @@ contract PassportFactory is Ownable {
     event PassportDeployed(address passport);
 
     function create(
-        string memory name_,
-        string memory symbol_,
+        string memory name,
+        string memory symbol,
         uint256 supply,
         uint256 price,
         string memory metadataHash,
@@ -29,8 +29,8 @@ contract PassportFactory is Ownable {
         require(supply > 0, "Required to mint at least 1 passport");
         Passport passport = new Passport(
             msg.sender,
-            name_,
-            symbol_,
+            name,
+            symbol,
             supply,
             price,
             metadataHash,
