@@ -220,7 +220,7 @@ const CheckoutPageContent = ({
         })
         .on("receipt", (receipt) => {
           const tokenId =
-            (receipt.events?.["Purchase"]?.returnValues?.id as string) || "";
+            (receipt.events?.["Transfer"]?.returnValues?.id as string) || "";
           setLoading(false);
           setSupply(supply - 1);
           resolve(tokenId);

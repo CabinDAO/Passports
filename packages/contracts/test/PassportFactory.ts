@@ -3,18 +3,20 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import type { PassportFactory } from "../typechain";
 import { utils } from "ethers";
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { fail } from "assert";
 
 use(solidity);
 
-describe("PassportFactory", async function () {
+describe("PassportFactory", function () {
+  let owner: SignerWithAddress | undefined;
+  let dao1: SignerWithAddress | undefined;
   let contract: PassportFactory;
 
-  const wallets = await ethers.getSigners();
-  const owner = wallets.pop();
-  const dao1 = wallets.pop();
-  console.log('yo');
-
   beforeEach(async function () {
+    const wallets = await ethers.getSigners();
+    owner = wallets.pop();
+    dao1 = wallets.pop();
     const factoryContract = await ethers.getContractFactory(
       "PassportFactory",
       owner
@@ -25,20 +27,27 @@ describe("PassportFactory", async function () {
 
   describe("Deployment", function () {
     it("Should set the right owner", async function () {
-      expect(await contract.owner()).to.equal(owner?.getAddress());
+      expect(await contract.owner()).to.equal(await owner?.getAddress());
     });
   });
 
   describe("Create", function () {
     it("Should create a new instance of the Passport contract", async function () {
-      const passport = await contract.connect(dao1?.address || "").create(
+      if (!dao1) fail("dao1 address not properly set");
+      const connectedContract = contract.connect(dao1);
+      expect(await connectedContract.getMemberships()).to.have.length(0);
+      const passport = await connectedContract.create(
         "test",
         "TES",
         15,
-        utils.parseEther("0.75")
+        utils.parseEther("0.75"),
+        "0xmetadata",
+        utils.parseEther("0"),
+        false,
+        false
       );
-      console.log(passport);
-      expect(passport.blockHash).to.equal(dao1?.getAddress());
+      await passport.wait();
+      expect(await connectedContract.getMemberships()).to.have.length(1);
     });
   });
 });

@@ -25,6 +25,9 @@ jobs:
       - name: build
         run: npm run build
         working-directory: packages/contracts
+      - name: test
+        run: npm run test
+        working-directory: packages/contracts
       - name: Deploy to Kovan
         run: npm run migrate:kovan
         working-directory: packages/contracts

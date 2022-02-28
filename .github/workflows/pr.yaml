@@ -1,0 +1,28 @@
+name: Set of checks to run on PRs
+on: pull_request
+
+env:
+  ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+  PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.17.6
+      - name: install
+        run: npm install
+        working-directory: packages/contracts
+      - name: build
+        run: npm run build
+        working-directory: packages/contracts
+      - name: lint
+        run: npm run lint
+        working-directory: packages/contracts
+      - name: test
+        run: npm run test
+        working-directory: packages/contracts
