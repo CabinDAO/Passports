@@ -1,16 +1,22 @@
 import { GetServerSideProps } from "next";
-import {
-  getAbiFromJson,
-  networkIdByName
-} from "../../../components/constants";
-import { ContractSendMethod } from "web3-eth-contract";
+import { getAbiFromJson, networkIdByName } from "../../../components/constants";
+import type { ContractSendMethod } from "web3-eth-contract";
 import Web3 from "web3";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { styled } from "../../../stitches.config";
 import BN from "bn.js";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import IpfsImage from "../../../components/IpfsImage";
+import { Checkbox, Label } from "@cabindao/topo";
+import { getWeb3 } from "../../../components/utils";
+import {
+  useAddress,
+  useChainId,
+  useWeb3,
+  Web3Provider,
+} from "../../../components/Web3Context";
+import QRCode from "qrcode";
 
 type QueryParams = {
   network: string;
@@ -32,8 +38,8 @@ const Button = styled("button", {
   border: "none",
   height: "$10",
   py: 0,
-  px: "$4"
-})
+  px: "$4",
+});
 
 const AppContainer = styled("div", {
   display: "flex",
@@ -126,10 +132,14 @@ const PaymentRequestHeader = styled("div", {
 });
 
 const BottomText = styled("p", {
-    position: "fixed",
-    bottom: 0,
-    right: 10
-})
+  position: "fixed",
+  bottom: 0,
+  right: 10,
+});
+
+const CheckBoxContainer = styled("div", {
+  margin: "16px 0",
+});
 
 type PageProps = {
   address: string;
@@ -141,7 +151,7 @@ type PageProps = {
   network: string;
 };
 
-const CheckoutPage = ({
+const CheckoutPageContent = ({
   name,
   symbol,
   supply: initialSupply,
@@ -150,23 +160,33 @@ const CheckoutPage = ({
   metadataHash,
   network,
 }: PageProps) => {
-  const web3 = useRef<Web3>(
-    new Web3(Web3.givenProvider || "ws://localhost:8545")
-  );
+  const web3 = useWeb3();
+  const account = useAddress();
+  const chainId = useChainId();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [supply, setSupply] = useState(initialSupply);
-  const [customization, setCustomization] = useState<Record<string,string>>({});
+  const correctNetwork = useMemo(
+    () => Number(chainId) === Number(networkIdByName[network]),
+    [network, chainId]
+  );
+  const [customization, setCustomization] = useState<Record<string, string>>(
+    {}
+  );
   const [metadata, setMetadata] = useState<Record<string, string>>({});
+  const [generateApplePass, setGenerateApplePass] = useState(false);
+  const [qrFile, setQrfile] = useState("");
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     // Fetch redirect url from DB on page load.
-    axios.post("/api/customization", {
-      address: address
-    })
-    .then((result: { data: Record<string,string> }) => {
-      setCustomization(result.data);
-    })
-    .catch(console.error);
+    axios
+      .post("/api/customization", {
+        address: address,
+      })
+      .then((result: { data: Record<string, string> }) => {
+        setCustomization(result.data);
+      })
+      .catch(console.error);
   }, [address, setCustomization]);
   useEffect(() => {
     if (!Object.entries(metadata).length && metadataHash) {
@@ -175,105 +195,142 @@ const CheckoutPage = ({
       });
     }
   }, [metadata, metadataHash]);
+  useEffect(() => {
+    if (qrFile)
+      QRCode.toCanvas(qrCanvasRef.current, qrFile).catch((e) =>
+        setError(e.message)
+      );
+  }, [qrFile, qrCanvasRef]);
   const onBuy = useCallback(() => {
     setError("");
     setLoading(true);
-    return (
-      web3.current.givenProvider.isConnected()
-        ? Promise.resolve()
-        : (web3.current.givenProvider.enable() as Promise<void>)
-    )
-      .then(() =>
-        Promise.all([
-          web3.current.eth.getAccounts(),
-          web3.current.eth.getChainId(),
-        ])
+    const contract = new web3.eth.Contract(
+      getAbiFromJson(passportJson),
+      address
+    );
+    return new Promise<string>((resolve, reject) =>
+      (
+        contract.methods.buy(
+          new BN(web3.utils.randomHex(32).replace(/^0x/, ""), "hex")
+        ) as ContractSendMethod
       )
-      .then(([accounts, chainId]) => {
-        if (Number(chainId) !== Number(networkIdByName[network])) {
-          setError(`Signed into the wrong network`);
-          return;
+        .send({
+          from: account,
+          value: web3.utils.toWei(price, "ether"),
+        })
+        .on("receipt", (receipt) => {
+          const tokenId =
+            (receipt.events?.["Purchase"]?.returnValues?.id as string) || "";
+          setLoading(false);
+          setSupply(supply - 1);
+          resolve(tokenId);
+        })
+        .on("error", reject)
+    )
+      .then((tokenId) => {
+        if (generateApplePass && tokenId) {
+          const signatureMessage = `Give Passports permission to generate an Apple Wallet Pass for token ${tokenId}`;
+          return web3.eth.personal
+            .sign(signatureMessage, account, "")
+            .then((signature) =>
+              axios.post("/api/ethpass", {
+                tokenId,
+                address,
+                network,
+                signature,
+                signatureMessage,
+              })
+            )
+            .then((r) => setQrfile(r.data.fileURL));
         }
-        const contract = new web3.current.eth.Contract(
-          getAbiFromJson(passportJson),
-          address
-        );
-        (
-          contract.methods.buy(
-            new BN(web3.current.utils.randomHex(32).replace(/^0x/, ""), "hex")
-          ) as ContractSendMethod
-        )
-          .send({
-            from: accounts[0],
-            value: web3.current.utils.toWei(price, "ether"),
-          })
-          .on("receipt", (receipt) => {
-            const id =
-              (receipt.events?.["Purchase"]?.returnValues?.id as string) || "";
-            console.log("successfully bought", id, "!");
-            setLoading(false);
-            setSupply(supply - 1);
-            if (customization.redirect_url) {
-              // If valid redirection URL is provided, redirect on successful purchase.
-              // TODO show success toast and delay redirection.
-              window.location.assign(customization.redirect_url);
-            }
-          })
-          .on("error", (e) => {
-            setError(e.message);
-            setLoading(false);
-          });
+      })
+      .then(() => {
+        if (customization.redirect_url) {
+          // If valid redirection URL is provided, redirect on successful purchase.
+          // TODO show success toast and delay redirection.
+          //      Maybe also pass qrfile url as a query param
+          window.location.assign(customization.redirect_url);
+        }
       })
       .catch((e) => {
         setError(e.message);
-        setLoading(false);
-      });
-  }, [web3, network, address, price, setSupply, supply, customization]);
+      })
+      .finally(() => setLoading(false));
+  }, [
+    web3,
+    network,
+    address,
+    price,
+    setSupply,
+    supply,
+    customization,
+    generateApplePass,
+    account,
+  ]);
   return (
     <AppContainer>
-      <AppBackground 
+      <AppBackground
         style={{
-          background: (customization.brand_color || "#FDF3E7")
+          background: customization.brand_color || "#FDF3E7",
         }}
       />
       <App>
         <AppOverview>
           <AppHeader>
-            {
-              (customization.logo_cid) ?
-                (<IpfsImage
-                  cid={customization.logo_cid}
-                  height={50}
-                  width={50}
-                />) : null
-            }
+            {customization.logo_cid ? (
+              <IpfsImage cid={customization.logo_cid} height={50} width={50} />
+            ) : null}
             <AppNetworkContainer>{network}</AppNetworkContainer>
+            {!correctNetwork && (
+              <div>
+                You are connected to the wrong network to buy this NFT. Please
+                switch to {network}
+              </div>
+            )}
           </AppHeader>
           <AppSummaryContainer>
             <ProductSummaryName>
               {name} ({symbol})
             </ProductSummaryName>
             <ProductSummaryAmount>Ξ{price}</ProductSummaryAmount>
-            {
-              (metadata && metadata.thumbnail) ?
-                (<IpfsImage
-                  cid={metadata.thumbnail}
-                />) : null
-            }
+            {metadata && metadata.thumbnail ? (
+              <IpfsImage cid={metadata.thumbnail} />
+            ) : null}
           </AppSummaryContainer>
         </AppOverview>
         <AppPayment>
           <PaymentRequestHeader>Pay With Wallet</PaymentRequestHeader>
-          <Button 
-            onClick={onBuy} 
-            disabled={loading}
-            style={{
-              backgroundColor: (customization.accent_color || "#324841"),
-              color: "#FDF3E7"
-            }}
-          >
-            {customization.button_txt?.replace?.(/{supply}/g, supply.toString()) || `Buy (${supply} left)`}
-          </Button>
+          <div>
+            <Button
+              onClick={onBuy}
+              disabled={!correctNetwork || loading}
+              style={{
+                backgroundColor: customization.accent_color || "#324841",
+                color: "#FDF3E7",
+              }}
+            >
+              {customization.button_txt?.replace?.(
+                /{supply}/g,
+                supply.toString()
+              ) || `Buy (${supply} left)`}
+            </Button>
+          </div>
+          <CheckBoxContainer>
+            <Label label={"Generate Apple Wallet Pass"}>
+              <Checkbox
+                checked={generateApplePass}
+                onCheckedChange={(e) =>
+                  e === "indeterminate"
+                    ? setGenerateApplePass(false)
+                    : setGenerateApplePass(e)
+                }
+                disabled={!correctNetwork}
+              />
+            </Label>
+          </CheckBoxContainer>
+          <div>
+            <canvas ref={qrCanvasRef} />
+          </div>
           <p style={{ color: "darkred" }}>{error}</p>
         </AppPayment>
       </App>
@@ -282,12 +339,13 @@ const CheckoutPage = ({
   );
 };
 
-const getWeb3 = (networkName: string) =>
-  new Web3(
-    networkName === "localhost"
-      ? "http://localhost:8545"
-      : `https://eth-${networkName}.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
+const CheckoutPage = (props: PageProps) => {
+  return (
+    <Web3Provider>
+      <CheckoutPageContent {...props} />
+    </Web3Provider>
   );
+};
 
 export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
   context
@@ -318,7 +376,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
           symbol: "404",
           price: "0",
           supply: 0,
-          metadataHash: ""
+          metadataHash: "",
         },
       };
     });
