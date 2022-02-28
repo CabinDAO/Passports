@@ -1,6 +1,5 @@
 import axios from "axios";
 import Web3 from "web3";
-import NodeFormData from "form-data";
 
 export const ipfsAdd = (s: string | Blob) => {
   const formData = new FormData();
