@@ -28,3 +28,21 @@ jobs:
       - name: test
         run: npm run test
         working-directory: packages/contracts
+      - name: Deploy to Kovan
+        run: npm run migrate:kovan
+        working-directory: packages/contracts
+      - name: Deploy to Ropsten
+        run: npm run migrate:ropsten
+        working-directory: packages/contracts
+      - name: Deploy to Rinkeby
+        run: npm run migrate:rinkeby
+        working-directory: packages/contracts
+      - name: Deploy to Goerli
+        run: npm run migrate:goerli
+        working-directory: packages/contracts
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: "public"
+          check-version: false
+          package: ./packages/contracts/package.json
