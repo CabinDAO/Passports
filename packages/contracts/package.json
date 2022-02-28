@@ -9,6 +9,7 @@
   "scripts": {
     "build": "hardhat compile",
     "dev": "hardhat node",
+    "lint": "prettier --list-different \"contracts/**/*.sol\"",
     "migrate:local": "hardhat run --network localhost scripts/deploy.ts",
     "migrate:kovan": "hardhat run --network kovan scripts/deploy.ts",
     "migrate:ropsten": "hardhat run --network ropsten scripts/deploy.ts",
