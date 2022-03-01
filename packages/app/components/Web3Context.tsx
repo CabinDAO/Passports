@@ -8,18 +8,23 @@ import React, {
 } from "react";
 import Web3 from "web3";
 import Web3Modal from "web3modal";
+import { lookupAddress } from "./utils";
 
 const Web3Context = React.createContext({
   address: "",
+  displayAddress: "",
   web3: { current: undefined } as { current?: Web3 },
   chainId: -1,
   networkId: -1,
   connectWallet: () => Promise.resolve(),
+  disconnectWallet: () => Promise.resolve(),
 });
 export const useAddress = () => useContext(Web3Context).address;
+export const useDisplayAddress = () => useContext(Web3Context).displayAddress;
 export const useWeb3 = () => useContext(Web3Context).web3.current!;
 export const useChainId = () => useContext(Web3Context).chainId;
 export const useConnect = () => useContext(Web3Context).connectWallet;
+export const useDisconnect = () => useContext(Web3Context).disconnectWallet;
 export const useNetworkId = () => useContext(Web3Context).networkId;
 
 const providerOptions = {
@@ -33,12 +38,22 @@ const providerOptions = {
 
 export const Web3Provider: React.FC = ({ children }) => {
   const [address, setAddress] = useState("");
+  const [displayAddress, setDisplayAddress] = useState("");
   const [chainId, setChainId] = useState(0);
   const [networkId, setNetworkId] = useState(0);
   const web3 = useRef<Web3>(
     new Web3(Web3.givenProvider || "ws://localhost:8545")
   );
   const web3Modal = useRef<Web3Modal>();
+  const switchAddress = useCallback(
+    (accounts: string[]) => {
+      setAddress(accounts[0]);
+      lookupAddress(accounts[0], web3.current).then((d) =>
+        setDisplayAddress(d)
+      );
+    },
+    [setAddress, setDisplayAddress]
+  );
 
   const connectWallet = useCallback(() => {
     if (!web3Modal.current) return Promise.resolve();
@@ -49,9 +64,7 @@ export const Web3Provider: React.FC = ({ children }) => {
           provider.on("close", async () => {
             await web3Modal.current?.clearCachedProvider();
           });
-          provider.on("accountsChanged", (accounts: string[]) => {
-            setAddress(accounts[0]);
-          });
+          provider.on("accountsChanged", switchAddress);
           provider.on("chainChanged", async (chainId: number) => {
             const networkId = await web3.current.eth.net.getId();
             setNetworkId(networkId);
@@ -73,11 +86,15 @@ export const Web3Provider: React.FC = ({ children }) => {
         ]);
       })
       .then(([addresses, chain, network]) => {
-        setAddress(addresses[0]);
         setChainId(chain);
         setNetworkId(network);
+        switchAddress(addresses);
       });
-  }, [web3, setAddress, setChainId, setNetworkId]);
+  }, [web3, setChainId, setNetworkId, switchAddress]);
+  const disconnectWallet = useCallback(async () => {
+    await web3Modal.current?.clearCachedProvider();
+    window.location.reload();
+  }, []);
   useEffect(() => {
     web3Modal.current = new Web3Modal({
       cacheProvider: true,
@@ -89,7 +106,15 @@ export const Web3Provider: React.FC = ({ children }) => {
   }, [connectWallet, web3Modal]);
   return (
     <Web3Context.Provider
-      value={{ address, web3, chainId, connectWallet, networkId }}
+      value={{
+        address,
+        web3,
+        chainId,
+        connectWallet,
+        networkId,
+        displayAddress,
+        disconnectWallet,
+      }}
     >
       {children}
     </Web3Context.Provider>

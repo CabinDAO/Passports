@@ -1,5 +1,7 @@
 import axios from "axios";
 import Web3 from "web3";
+// @ts-ignore They don't have a types file available -.-
+import namehash from "@ensdomains/eth-ens-namehash";
 
 export const ipfsAdd = (s: string | Blob) => {
   const formData = new FormData();
@@ -23,6 +25,16 @@ export const resolveAddress = (addr: string, web3: Web3) =>
     : addr.startsWith("0x")
     ? Promise.resolve(addr)
     : Promise.resolve("");
+
+export const lookupAddress = async (
+  addr: string,
+  web3: Web3
+): Promise<string> => {
+  const lookup = addr.toLowerCase().substr(2) + ".addr.reverse";
+  const ResolverContract = await web3.eth.ens.resolver(lookup);
+  const nh = namehash.hash(lookup);
+  return await ResolverContract.methods.name(nh).call();
+};
 
 export const getWeb3 = (networkName: string) =>
   new Web3(
