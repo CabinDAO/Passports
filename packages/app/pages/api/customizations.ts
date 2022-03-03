@@ -18,27 +18,21 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const urlCol = collection(db, "customizations");
-        getDocs(
-          query(urlCol, where("contractAddr", "in", req.body.addresses))
-        ).then((memberships) => {
-          const data: { [key: string]: Record<string, string> | undefined } =
-            {};
-          memberships.forEach((doc) => {
-            const docData = doc.data();
-            data[docData["contractAddr"]] = docData;
+        getDocs(query(urlCol, where("contractAddr", "in", req.body.addresses)))
+          .then((memberships) => {
+            const data: { [key: string]: Record<string, string> | undefined } =
+              {};
+            memberships.forEach((doc) => {
+              const docData = doc.data();
+              data[docData["contractAddr"]] = docData;
+            });
+            res.status(200).json({ customizations: data });
+          })
+          .catch((e) => {
+            res.status(500).json({ message: e.message });
           });
-          res.status(200).json({ customizations: data });
-        }).catch((e) => {
-            console.error("Failure to get customizations. Error:");
-            console.error(e);
-            console.error("Config:");
-            console.error(firebaseConfig);
-        });
       } catch (e) {
-        console.error("Failure to get customizations. Error:");
-        console.error(e);
-        console.error("Config:");
-        console.error(firebaseConfig);
+        res.status(500).json({ message: (e as Error).message });
       }
       break;
     default:
