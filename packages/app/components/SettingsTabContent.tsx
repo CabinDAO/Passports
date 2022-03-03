@@ -110,18 +110,15 @@ const SettingsTagContent = () => {
       });
   }, [setLoading, setIsStaked, address, contractInstance, web3]);
   return (
-    <>
-      <h1>Settings</h1>
-      <div>
-        {loading ? (
-          <span>Loading...</span>
-        ) : isStaked ? (
-          <Button onClick={unstake}>Remove Stake</Button>
-        ) : (
-          <Button onClick={stake}>Stake</Button>
-        )}
-      </div>
-    </>
+    <div>
+      {loading ? (
+        <span>Loading...</span>
+      ) : isStaked ? (
+        <Button onClick={unstake}>Remove Stake</Button>
+      ) : (
+        <Button onClick={stake}>Stake</Button>
+      )}
+    </div>
   );
 };
 

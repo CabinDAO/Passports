@@ -12,6 +12,8 @@
     "@cabindao/nft-passport-contracts": "^0.11.0",
     "@cabindao/topo": "^0.4.1",
     "@cabindao/topo-theme": "^0.1.0",
+    "@ensdomains/ens": "^0.6.2",
+    "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@walletconnect/web3-provider": "^1.7.1",
     "axios": "^0.24.0",
     "firebase": "^9.6.4",

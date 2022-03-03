@@ -135,7 +135,6 @@ const UsersTabContent = () => {
 
     return (
         <>
-            <h1>Users</h1>
             <SmallBox>
                 {(Object.keys(membershipDetails).length > 0) ?
                     <Select
