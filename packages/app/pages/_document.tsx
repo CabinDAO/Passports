@@ -1,10 +1,6 @@
 import React from "react";
 import NextDocument, { Html, Head, Main, NextScript } from "next/document";
-import { styled, getCssText } from "../stitches.config";
-
-const Body = styled('body', {
-  background: "$sand",
-})
+import { getCssText } from "../stitches.config";
 
 export default class Document extends NextDocument {
   render() {
@@ -17,10 +13,10 @@ export default class Document extends NextDocument {
             dangerouslySetInnerHTML={{ __html: getCssText() }}
           />
         </Head>
-        <Body>
+        <body>
           <Main />
           <NextScript />
-        </Body>
+        </body>
       </Html>
     );
   }
