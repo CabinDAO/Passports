@@ -31,9 +31,13 @@ export const lookupAddress = async (
   web3: Web3
 ): Promise<string> => {
   const lookup = addr.toLowerCase().substr(2) + ".addr.reverse";
-  const ResolverContract = await web3.eth.ens.resolver(lookup);
-  const nh = namehash.hash(lookup);
-  return await ResolverContract.methods.name(nh).call();
+  return web3.eth.ens
+    .resolver(lookup)
+    .then((ResolverContract) => {
+      const nh = namehash.hash(lookup);
+      return ResolverContract.methods.name(nh).call();
+    })
+    .catch(() => addr);
 };
 
 export const getWeb3 = (networkName: string) =>

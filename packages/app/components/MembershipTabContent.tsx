@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Contract, ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import {
@@ -10,6 +16,7 @@ import {
   Toast,
   Checkbox,
 } from "@cabindao/topo";
+import Image from "next/image";
 import { styled } from "../stitches.config";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
@@ -18,6 +25,7 @@ import {
   getAbiFromJson,
   networkNameById,
 } from "../components/constants";
+import ClipSVG from "../components/icons/Clip.svg";
 import {
   Link1Icon,
   Pencil2Icon,
@@ -26,11 +34,7 @@ import {
   ArrowUpIcon,
   OpacityIcon,
 } from "@radix-ui/react-icons";
-import {
-  useAddress,
-  useChainId,
-  useWeb3,
-} from "../components/Web3Context";
+import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import axios from "axios";
 import { ipfsAdd, resolveAddress } from "../components/utils";
 import IpfsImage from "../components/IpfsImage";
@@ -46,6 +50,8 @@ const MembershipCardContainer = styled("div", {
   marginRight: "8px",
   marginBottom: "8px",
   verticalAlign: "top",
+  border: "1px solid $forest",
+  borderRadius: "10px",
 });
 
 const MembershipContainer = styled("div", {
@@ -62,7 +68,20 @@ const MembershipHeader = styled("h2", {
   },
 });
 
-const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
+const ModalInput = styled(Input, {
+  paddingLeft: 8,
+  marginBottom: "24px",
+  border: "1px solid $forest",
+  borderRadius: 5,
+  fontWeight: 600,
+  width: "100%",
+});
+
+const ModalContent = styled("div", {
+  color: "$forest",
+  marginTop: "-8px",
+  width: "400px",
+});
 
 const ModalLabel = styled(`h2`, { marginBottom: 32 });
 
@@ -231,56 +250,60 @@ const MembershipCard = (props: IMembershipCardProps) => {
                 );
             }}
           >
-            <ModalLabel>{`${passport.name} (${passport.symbol})`}</ModalLabel>
-            <ModalInput
-              label={"Redirect URL"}
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
-            <ModalInputBox>
-              <ModalInputLabel htmlFor="bcolor">Brand color:</ModalInputLabel>
-              <input
-                type="color"
-                id="bcolor"
-                name="bcolor"
-                value={brandColor || "#fdf3e7"}
-                onChange={(e) => setBrandColor(e.target.value)}
-              ></input>
-            </ModalInputBox>
-            <ModalInputBox>
-              <ModalInputLabel htmlFor="acolor">Accent color:</ModalInputLabel>
-              <input
-                type="color"
-                id="acolor"
-                name="acolor"
-                value={accColor || "#324841"}
-                onChange={(e) => setAccColor(e.target.value)}
-              ></input>
-            </ModalInputBox>
-            <ModalInput
-              label={"Button Text"}
-              value={buttonTxt}
-              onChange={(e) => setButtonTxt(e.target.value)}
-            />
-            <ModalInputBox>
-              <Label label={logoCid ? "Change Logo" : "Upload Logo"}>
+            <ModalContent>
+              <ModalLabel>{`${passport.name} (${passport.symbol})`}</ModalLabel>
+              <ModalInput
+                label={"Redirect URL"}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+              <ModalInputBox>
+                <ModalInputLabel htmlFor="bcolor">Brand color:</ModalInputLabel>
                 <input
-                  type={"file"}
-                  onChange={async (e) => {
-                    if (e.target.files) {
-                      setFileLoading(true);
-                      const file = e.target.files[0];
-                      if (file) {
-                        return ipfsAdd(file)
-                          .then(setLogoCid)
-                          .finally(() => setFileLoading(false));
+                  type="color"
+                  id="bcolor"
+                  name="bcolor"
+                  value={brandColor || "#fdf3e7"}
+                  onChange={(e) => setBrandColor(e.target.value)}
+                ></input>
+              </ModalInputBox>
+              <ModalInputBox>
+                <ModalInputLabel htmlFor="acolor">
+                  Accent color:
+                </ModalInputLabel>
+                <input
+                  type="color"
+                  id="acolor"
+                  name="acolor"
+                  value={accColor || "#324841"}
+                  onChange={(e) => setAccColor(e.target.value)}
+                ></input>
+              </ModalInputBox>
+              <ModalInput
+                label={"Button Text"}
+                value={buttonTxt}
+                onChange={(e) => setButtonTxt(e.target.value)}
+              />
+              <ModalInputBox>
+                <Label label={logoCid ? "Change Logo" : "Upload Logo"}>
+                  <input
+                    type={"file"}
+                    onChange={async (e) => {
+                      if (e.target.files) {
+                        setFileLoading(true);
+                        const file = e.target.files[0];
+                        if (file) {
+                          return ipfsAdd(file)
+                            .then(setLogoCid)
+                            .finally(() => setFileLoading(false));
+                        }
                       }
-                    }
-                  }}
-                />
-              </Label>
-              {fileLoading && "Loading..."}
-            </ModalInputBox>
+                    }}
+                  />
+                </Label>
+                {fileLoading && "Loading..."}
+              </ModalInputBox>
+            </ModalContent>
           </Modal>
           <Modal
             isOpen={shareIsOpen}
@@ -485,9 +508,111 @@ const MembershipCard = (props: IMembershipCardProps) => {
 
 const AdditionalFieldRow = styled("div", {
   display: "flex",
+  justifyContent: "space-between",
   alignItems: "center",
   "& input": {
     marginRight: "8px",
+  },
+});
+
+const CreateMembershipContainer = styled("div", {
+  borderRadius: "48px",
+  border: "1px solid $forest",
+  background: "rgba(29, 43, 42, 0.05)",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: "72px",
+  fontWeight: 600,
+});
+
+const CreateMembershipHeader = styled("h1", {
+  fontSize: "24px",
+  lineHeight: "31.2px",
+  fontFamily: "$mono",
+});
+
+const ShortInputContainer = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+  "> div": {
+    marginRight: "16px",
+    "&:last-child": {
+      marginRight: 0,
+    },
+  },
+});
+
+const SummaryRow = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+});
+
+const SummaryCellContainer = styled("div", {
+  display: "flex",
+  flexDirection: "column",
+});
+
+const SummaryCellValue = styled("span", {
+  color: "#8B9389",
+  fontFamily: "$sans",
+  fontSize: 16,
+  lineHeight: "24px",
+  fontWeight: 500,
+  marginBottom: "24px",
+  display: "inline-block",
+  cursor: "inherit",
+});
+
+const SummaryCell = ({
+  field,
+  value,
+  grow = 1,
+}: {
+  field: string;
+  value: string;
+  grow?: number;
+}) => (
+  <SummaryCellContainer style={{ width: `${grow * 100}%` }}>
+    <Label label={field} />
+    <SummaryCellValue>{value}</SummaryCellValue>
+  </SummaryCellContainer>
+);
+
+const UnderlinedLabel = styled("label", {
+  textDecoration: "underline",
+  fontSize: "14px",
+  lineHeight: "27px",
+  fontWeight: 600,
+  fontFamily: "$sans",
+  marginBottom: "24px",
+  display: "inline-block",
+  cursor: "pointer",
+});
+
+const MembershipImageLabel = styled("label", {
+  textTransform: "uppercase",
+  fontSize: "14px",
+  lineHeight: "18px",
+  fontWeight: 600,
+  fontFamily: "$mono",
+  marginBottom: "24px",
+});
+
+const FileInput = styled("div", {
+  cursor: "pointer",
+  "> span": {
+    marginRight: "10px",
+  },
+});
+
+const MembershipImageContainer = styled("div", {
+  "> span": {
+    border: "1px solid $forest !important",
+    width: "100% !important",
+    height: "176px !important",
+    borderRadius: "20px",
   },
 });
 
@@ -510,6 +635,7 @@ const CreateMembershipModal = ({
   const address = useAddress();
   const web3 = useWeb3();
   const [stage, setStage] = useState(0);
+  const [fileName, setFileName] = useState("");
   const [cid, setCid] = useState("");
   const [additionalFields, setAdditionalFields] = useState<
     { key: string; value: string }[]
@@ -578,186 +704,204 @@ const CreateMembershipModal = ({
       setStage(1);
       return true;
     },
-    () => {
-      setStage(2);
-      return true;
-    },
-    () => {
-      setStage(3);
-      return true;
-    },
     onFinalConfirm,
   ];
+  const stageTitles = ["New Membership Type", "Review"];
   const [fileLoading, setFileLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   return (
-    <>
-      <Button onClick={open} type="primary" disabled={!address}>
-        Create New Membership Type
+    <CreateMembershipContainer>
+      <CreateMembershipHeader>
+        Get started using memberships
+      </CreateMembershipHeader>
+      <Button onClick={open} type="primary" disabled={!address} tone={"wheat"}>
+        Create new membership
       </Button>
       <Modal
         isOpen={isOpen}
         setIsOpen={setIsOpen}
-        title="New Membership Type"
+        title={stageTitles[stage]}
         onConfirm={stageConfirms[stage]}
         confirmText={stage === stageConfirms.length - 1 ? "Create" : "Next"}
       >
-        {stage === 0 && (
-          <>
-            <ModalInput
-              label={"Name"}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <ModalInput
-              label={"Symbol"}
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-            />
-            <ModalInput
-              label={"Quantity"}
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              type={"number"}
-            />
-            <ModalInput
-              label={"Price"}
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              type={"number"}
-            />
-            <ModalInput
-              label={"Royalty %"}
-              value={royaltyPcnt}
-              onChange={(e) => setRoyaltyPcnt(e.target.value)}
-              type={"number"}
-            />
-            <Label
-              label="Funds Claimable"
-              description="If checked, your users pay less gas and you could claim your funds whenever you want as they are stored in the contract. If unchecked, you are paid immediately when users buy a passport."
-            >
-              <Checkbox
-                checked={claimable}
-                onCheckedChange={(b) =>
-                  b === "indeterminate" ? setClaimable(false) : setClaimable(b)
-                }
+        <ModalContent>
+          {stage === 0 && (
+            <>
+              <ModalInput
+                label={"Name"}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter membership name"
               />
-            </Label>
-            <Label
-              label="Private Passport"
-              description="If checked, only an authorized lst of addresses can mint the passort. This list can be managed from the Manage Tab"
-            >
-              <Checkbox
-                checked={isPrivate}
-                onCheckedChange={(b) =>
-                  b === "indeterminate" ? setIsPrivate(false) : setIsPrivate(b)
-                }
+              <ModalInput
+                label={"Symbol"}
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="Enter membership symbol"
               />
-            </Label>
-          </>
-        )}
-        {stage === 1 && (
-          <>
-            <Label label={"Upload Thumbnail"}>
-              <input
-                type={"file"}
-                onChange={async (e) => {
-                  if (e.target.files) {
-                    setFileLoading(true);
-                    const file = e.target.files[0];
-                    if (file) {
-                      return ipfsAdd(file)
-                        .then(setCid)
-                        .finally(() => setFileLoading(false));
-                    }
-                  }
-                }}
-              />
-            </Label>
-            {fileLoading && "Loading..."}
-          </>
-        )}
-        {stage === 2 && (
-          <>
-            <h2>Additional Metadata</h2>
-            {additionalFields.map((a, i) => (
-              <AdditionalFieldRow key={i}>
+              <ShortInputContainer>
                 <ModalInput
-                  label={"Key"}
-                  value={a.key}
-                  onChange={(e) =>
-                    setAdditionalFields(
-                      additionalFields.map((field, j) =>
-                        j === i
-                          ? { value: field.value, key: e.target.value }
-                          : field
-                      )
-                    )
-                  }
+                  label={"Quantity"}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  type={"number"}
+                  placeholder="Ex. 100"
                 />
                 <ModalInput
-                  label={"Value"}
-                  value={a.value}
-                  onChange={(e) =>
-                    setAdditionalFields(
-                      additionalFields.map((field, j) =>
-                        j === i
-                          ? { value: e.target.value, key: field.key }
-                          : field
-                      )
-                    )
-                  }
+                  label={"Price"}
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  type={"number"}
+                  placeholder="Ex. 2 ETH"
                 />
-                <Button
-                  leftIcon={<TrashIcon />}
+                <ModalInput
+                  label={"Royalty %"}
+                  value={royaltyPcnt}
+                  onChange={(e) => setRoyaltyPcnt(e.target.value)}
+                  type={"number"}
+                  placeholder={"Ex. 2%"}
+                />
+              </ShortInputContainer>
+              {!!additionalFields.length && (
+                <>
+                  <hr style={{ marginBottom: 24 }} />
+                  {additionalFields.map((a, i) => (
+                    <AdditionalFieldRow key={i}>
+                      <ModalInput
+                        label={"New Field"}
+                        placeholder={"Metadata"}
+                        value={a.key}
+                        onChange={(e) =>
+                          setAdditionalFields(
+                            additionalFields.map((field, j) =>
+                              j === i
+                                ? { value: field.value, key: e.target.value }
+                                : field
+                            )
+                          )
+                        }
+                      />
+                      <ModalInput
+                        label={"Field Value"}
+                        value={a.value}
+                        placeholder={"Value"}
+                        onChange={(e) =>
+                          setAdditionalFields(
+                            additionalFields.map((field, j) =>
+                              j === i
+                                ? { value: e.target.value, key: field.key }
+                                : field
+                            )
+                          )
+                        }
+                      />
+                      <Button
+                        type={"link"}
+                        tone={"wheat"}
+                        onClick={() =>
+                          setAdditionalFields(
+                            additionalFields.filter((field, j) => j !== i)
+                          )
+                        }
+                      >
+                        <TrashIcon />
+                      </Button>
+                    </AdditionalFieldRow>
+                  ))}
+                </>
+              )}
+              <div>
+                <UnderlinedLabel
                   onClick={() =>
                     setAdditionalFields([
                       ...additionalFields,
                       { key: "", value: "" },
                     ])
                   }
+                >
+                  Add extra fields
+                </UnderlinedLabel>
+              </div>
+              <MembershipImageLabel>Membership Image</MembershipImageLabel>
+              <FileInput onClick={() => fileRef.current?.click()}>
+                <input
+                  ref={fileRef}
+                  type={"file"}
+                  onChange={async (e) => {
+                    if (e.target.files) {
+                      setFileLoading(true);
+                      const file = e.target.files[0];
+                      if (file) {
+                        return ipfsAdd(file)
+                          .then(setCid)
+                          .then(() => setFileName(file.name))
+                          .finally(() => setFileLoading(false));
+                      }
+                    }
+                  }}
+                  style={{ display: "none" }}
                 />
-              </AdditionalFieldRow>
-            ))}
-            <Button
-              onClick={() =>
-                setAdditionalFields([
-                  ...additionalFields,
-                  { key: "", value: "" },
-                ])
-              }
-            >
-              Add Field
-            </Button>
-          </>
-        )}
-        {stage === 3 && (
-          <>
-            <h2>Details</h2>
-            <p>
-              <b>Name:</b> {name}
-            </p>
-            <p>
-              <b>Symbol:</b> {symbol}
-            </p>
-            <p>
-              <b>Quantity:</b> {quantity}
-            </p>
-            <p>
-              <b>Price:</b> {price} ETH
-            </p>
-            <p>
-              <b>Royalty:</b> {royaltyPcnt}%
-            </p>
-            {additionalFields.map((a) => (
-              <p key={a.key}>
-                <b>{a.key}:</b> {a.value}
-              </p>
-            ))}
-            {cid && <IpfsImage cid={cid} />}
-          </>
-        )}
+                <Image {...ClipSVG} alt={"file"} />
+                {fileLoading ? (
+                  <SummaryCellValue>Loading...</SummaryCellValue>
+                ) : fileName ? (
+                  <SummaryCellValue>{fileName}</SummaryCellValue>
+                ) : (
+                  <UnderlinedLabel>Upload an image</UnderlinedLabel>
+                )}
+              </FileInput>
+            </>
+          )}
+          {stage === 1 && (
+            <>
+              <SummaryRow>
+                <SummaryCell field="Name" value={name} grow={2} />
+                <SummaryCell field="Symbol" value={symbol} />
+              </SummaryRow>
+              <SummaryRow>
+                <SummaryCell field="Quantity" value={quantity} />
+                <SummaryCell field="Price" value={`${price} ETH`} />
+                <SummaryCell field="Royalty" value={`${royaltyPcnt}%`} />
+              </SummaryRow>
+              {cid && (
+                <>
+                  <Label>Membership Image</Label>
+                  <MembershipImageContainer>
+                    <IpfsImage cid={cid} height={"100%"} width={"100%"} />
+                  </MembershipImageContainer>
+                </>
+              )}
+              <Label
+                label="Funds Claimable"
+                description="If checked, your users pay less gas and you could claim your funds whenever you want as they are stored in the contract. If unchecked, you are paid immediately when users buy a passport."
+              >
+                <Checkbox
+                  checked={claimable}
+                  onCheckedChange={(b) =>
+                    b === "indeterminate"
+                      ? setClaimable(false)
+                      : setClaimable(b)
+                  }
+                />
+              </Label>
+              <Label
+                label="Private Passport"
+                description="If checked, only an authorized lst of addresses can mint the passort. This list can be managed from the Manage Tab"
+              >
+                <Checkbox
+                  checked={isPrivate}
+                  onCheckedChange={(b) =>
+                    b === "indeterminate"
+                      ? setIsPrivate(false)
+                      : setIsPrivate(b)
+                  }
+                />
+              </Label>
+            </>
+          )}
+        </ModalContent>
       </Modal>
-    </>
+    </CreateMembershipContainer>
   );
 };
 
@@ -819,12 +963,10 @@ const MembershipTabContent = () => {
   }, [contractInstance, address]);
   return (
     <>
-      <div>
-        <CreateMembershipModal
-          contractInstance={contractInstance}
-          onSuccess={(m) => setMemberships([...memberships, m])}
-        />
-      </div>
+      <CreateMembershipModal
+        contractInstance={contractInstance}
+        onSuccess={(m) => setMemberships([...memberships, m])}
+      />
       <MembershipContainer>
         {memberships.map((m) => (
           <MembershipCard

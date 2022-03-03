@@ -21,6 +21,7 @@ import { networkNameById } from "../components/constants";
 
 const DRAWER_WIDTH = 200;
 const HEADER_HEIGHT = 64;
+const PAGE_MARGIN = 64;
 
 const TabContainer = styled("div", {
   margin: "12px 0",
@@ -87,14 +88,13 @@ const CabinLink = styled("div", {
 
 const PageContent = styled("div", {
   background: "$sand",
-  padding: "64px",
+  padding: `${PAGE_MARGIN}px`,
 });
 
 const PageHeader = styled("header", {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: 16,
   marginLeft: DRAWER_WIDTH,
   height: HEADER_HEIGHT,
   width: `calc(100% - ${DRAWER_WIDTH}px)`,
@@ -109,18 +109,19 @@ const PageHeaderH1 = styled("h1", {
 });
 
 const PageMain = styled("main", {
-  height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+  height: `calc(100vh - ${HEADER_HEIGHT + 2*PAGE_MARGIN}px)`,
   flex: 1,
   display: "flex",
   flexDirection: "column",
   marginLeft: DRAWER_WIDTH,
+  padding: `40px 0`,
   width: `calc(100% - 255px)`,
 });
 
 const NetworkIndicator = styled("span", {
   height: "27px",
   borderRadius: "13.5px",
-  background: "#A2FFB3",
+  background: "$green200",
   padding: "8px",
   marginRight: "16px",
   textTransform: "capitalize",
@@ -130,7 +131,7 @@ const NetworkIndicator = styled("span", {
   display: "inline-flex",
   alignItems: "center",
   span: {
-    background: "#324841",
+    background: "$forest",
     height: "8px",
     width: "8px",
     borderRadius: "4px",
@@ -181,7 +182,9 @@ const HomeContent = () => {
             </Button>
           </span>
         ) : (
-          <Button onClick={connectWallet} tone={"wheat"}>Connect wallet</Button>
+          <Button onClick={connectWallet} tone={"wheat"}>
+            Connect wallet
+          </Button>
         )}
       </PageHeader>
       <DashboardSidebar>
