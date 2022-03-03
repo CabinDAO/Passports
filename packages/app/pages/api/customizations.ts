@@ -28,6 +28,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             data[docData["contractAddr"]] = docData;
           });
           res.status(200).json({ customizations: data });
+        }).catch((e) => {
+            console.error("Failure to get customizations. Error:");
+            console.error(e);
+            console.error("Config:");
+            console.error(firebaseConfig);
         });
       } catch (e) {
         console.error("Failure to get customizations. Error:");
