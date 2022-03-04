@@ -3,8 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
 import React, { useCallback, useMemo } from "react";
-import { Button } from "@cabindao/topo";
-import { styled } from "../stitches.config";
+import { Button, styled } from "@cabindao/topo";
 import {
   useAddress,
   useChainId,

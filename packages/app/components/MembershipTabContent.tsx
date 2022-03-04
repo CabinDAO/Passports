@@ -15,9 +15,9 @@ import {
   Box,
   Toast,
   Checkbox,
+  styled,
 } from "@cabindao/topo";
 import Image from "next/image";
-import { styled } from "../stitches.config";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import {

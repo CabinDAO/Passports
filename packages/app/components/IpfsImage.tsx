@@ -1,6 +1,6 @@
 import { shimmer, toBase64 } from "./constants";
 import Image from "next/image";
-import { styled } from "../stitches.config";
+import { styled } from "@cabindao/topo";
 
 const StyledImage = styled(Image, {
     borderRadius: '20px',

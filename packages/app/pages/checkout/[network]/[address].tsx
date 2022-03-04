@@ -1,14 +1,12 @@
 import { GetServerSideProps } from "next";
 import { getAbiFromJson, networkIdByName } from "../../../components/constants";
 import type { ContractSendMethod } from "web3-eth-contract";
-import Web3 from "web3";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
-import { styled } from "../../../stitches.config";
 import BN from "bn.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import IpfsImage from "../../../components/IpfsImage";
-import { Checkbox, Label } from "@cabindao/topo";
+import { Checkbox, Label, styled } from "@cabindao/topo";
 import { getWeb3 } from "../../../components/utils";
 import {
   useAddress,

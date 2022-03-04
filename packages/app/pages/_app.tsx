@@ -1,4 +1,4 @@
-import { globalCss } from "../stitches.config";
+import { globalCss } from "@cabindao/topo";
 import type { AppProps } from "next/app";
 
 const globalStyles = globalCss({
