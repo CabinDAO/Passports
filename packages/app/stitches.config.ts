@@ -1,10 +1,10 @@
-import { createStitches, globalCss, keyframes } from "@stitches/react";
+import { createStitches } from "@stitches/react";
 import { theme, media, utils } from "@cabindao/topo-theme";
 
-export const { styled, css, getCssText } = createStitches({
-  theme,
-  media,
-  utils,
-});
-
-export { globalCss, keyframes };
+export const { styled, css, getCssText, globalCss, keyframes } = createStitches(
+  {
+    theme,
+    media,
+    utils,
+  }
+);
