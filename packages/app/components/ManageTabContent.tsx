@@ -6,6 +6,7 @@ import {
   Modal,
   Select,
   Toast,
+  styled,
 } from "@cabindao/topo";
 import { useEffect, useMemo, useState } from "react";
 import type { Contract, ContractSendMethod } from "web3-eth-contract";
@@ -13,7 +14,6 @@ import { contractAddressesByNetworkId, getAbiFromJson } from "./constants";
 import { useAddress, useChainId, useWeb3 } from "./Web3Context";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
-import { styled } from "../stitches.config";
 import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
 import Papa from "papaparse";
