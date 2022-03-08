@@ -2,13 +2,6 @@ import { shimmer, toBase64 } from "./constants";
 import Image from "next/image";
 import { styled } from "@cabindao/topo";
 
-const StyledImage = styled(Image, {
-    borderRadius: '20px',
-    border: "1px solid $forest",
-    width: "100%",
-    height: "176px",
-})
-
 const IpfsImage = ({
   cid,
   height,
@@ -19,7 +12,7 @@ const IpfsImage = ({
   width?: string | number;
 }) => {
   return (
-    <StyledImage
+    <Image
       src={`https://ipfs.io/ipfs/${cid}`}
       alt={"thumbnail"}
       width={height || 300}

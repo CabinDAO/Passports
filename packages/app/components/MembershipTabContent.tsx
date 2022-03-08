@@ -16,6 +16,7 @@ import {
   Toast,
   Checkbox,
   styled,
+  theme,
 } from "@cabindao/topo";
 import Image from "next/image";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
@@ -28,11 +29,12 @@ import {
 import ClipSVG from "../components/icons/Clip.svg";
 import {
   Link1Icon,
+  Pencil1Icon,
   Pencil2Icon,
   Share1Icon,
   TrashIcon,
-  ArrowUpIcon,
   OpacityIcon,
+  ExitIcon,
 } from "@radix-ui/react-icons";
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import axios from "axios";
@@ -41,30 +43,73 @@ import IpfsImage from "../components/IpfsImage";
 import Papa from "papaparse";
 import BN from "bn.js";
 
+const ViewMembershipContainer = styled("div", {
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+});
+
+const ViewMembershipFooter = styled("div", {
+  width: "100%",
+  textAlign: "right",
+});
+
 const MembershipCardContainer = styled("div", {
-  background: "$sand",
-  width: 350,
-  minHeight: 512,
-  padding: 16,
+  background: "$forest",
+  color: "$sand",
+  width: 272,
+  padding: "18px 24px 24px",
   display: "inline-block",
   marginRight: "8px",
   marginBottom: "8px",
   verticalAlign: "top",
-  border: "1px solid $forest",
-  borderRadius: "10px",
+  border: "1px solid $sprout",
+  borderRadius: "20px",
 });
 
 const MembershipContainer = styled("div", {
   padding: "16px 0",
+  flexGrow: 1,
 });
 
-const MembershipHeader = styled("h2", {
+const MembershipHeader = styled("div", {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  "& button": {
-    marginLeft: "4px",
-    marginTop: "4px",
+  marginBottom: "16px",
+});
+
+const MembershipName = styled("h1", {
+  fontWeight: 600,
+  fontFamily: "$mono",
+  textTransform: "uppercase",
+  lineHeight: "23px",
+  fontSize: "18px",
+  margin: 0,
+});
+
+const MembershipCardDivider = styled("hr", {
+  background: "$sprout",
+  margin: "16px 0",
+  height: "1px",
+  border: 0,
+});
+
+const MembershipCardRow = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+  marginBottom: "10px",
+  fontSize: "14px",
+  fontFamily: "$mono",
+  alignItems: "center",
+});
+
+const MembershipCardValue = styled("span", {
+  color: "#ffffff",
+  fontWeight: 500,
+  fontFamily: "$sans",
+  "& > button": {
+    height: "16px",
   },
 });
 
@@ -110,12 +155,6 @@ interface IMembershipProps {
 interface IMembershipCardProps extends IMembershipProps {
   customization: Record<string, string>;
 }
-
-const BalanceLine = styled("p", {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-});
 
 const MembershipCard = (props: IMembershipCardProps) => {
   const [passport, setPassport] = useState({
@@ -199,10 +238,20 @@ const MembershipCard = (props: IMembershipCardProps) => {
   return (
     <MembershipCardContainer>
       <MembershipHeader>
-        <span>{passport.name}</span>
+        <CardImageContainer>
+          {thumbnail ? (
+            <IpfsImage cid={thumbnail} height={"100%"} width={"100%"} />
+          ) : (
+            <Image
+              src={"/vercel.svg"}
+              alt={"stock photo"}
+              height={"100%"}
+              width={"100&"}
+            />
+          )}
+        </CardImageContainer>
         <div>
           <Button
-            leftIcon={<Link1Icon />}
             onClick={() => {
               window.navigator.clipboard.writeText(
                 `${window.location.origin}/checkout/${
@@ -211,21 +260,21 @@ const MembershipCard = (props: IMembershipCardProps) => {
               );
               setToastMessage("Copied checkout link!");
             }}
-          />
-          <Button
-            leftIcon={<Share1Icon />}
-            onClick={() => setShareIsOpen(true)}
-          />
-          <Button leftIcon={<Pencil2Icon />} onClick={open} />
-          <Button
-            leftIcon={<ArrowUpIcon />}
-            onClick={() => setSupplyIsOpen(true)}
-          />
-          <Button
-            leftIcon={<OpacityIcon />}
-            onClick={() => setAirDropIsOpen(true)}
-          />
+            type="icon"
+          >
+            <Link1Icon width={20} height={20} color={theme.colors.wheat} />
+          </Button>
+          <Button onClick={() => setShareIsOpen(true)} type="icon">
+            <Share1Icon width={20} height={20} color={theme.colors.wheat} />
+          </Button>
+          <Button onClick={open} type="icon">
+            <Pencil2Icon width={20} height={20} color={theme.colors.wheat} />
+          </Button>
+          <Button onClick={() => setAirDropIsOpen(true)} type="icon">
+            <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
+          </Button>
           <Modal
+            hideCloseIcon
             isOpen={isOpen}
             setIsOpen={setIsOpen}
             title="Customize Checkout"
@@ -306,6 +355,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
             </ModalContent>
           </Modal>
           <Modal
+            hideCloseIcon
             isOpen={shareIsOpen}
             setIsOpen={setShareIsOpen}
             title="Grant Access to Membership"
@@ -342,37 +392,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
             />
           </Modal>
           <Modal
-            isOpen={supplyIsOpen}
-            setIsOpen={setSupplyIsOpen}
-            title="Change Supply"
-            onConfirm={() => {
-              const contract = new web3.eth.Contract(
-                getAbiFromJson(passportJson)
-              );
-              contract.options.address = passport.address;
-              return new Promise<void>((resolve, reject) =>
-                contract.methods
-                  .setSupply(newSupply)
-                  .send({ from: address })
-                  .on("receipt", () => {
-                    setPassport({
-                      ...passport,
-                      supply: newSupply,
-                    });
-                    resolve();
-                  })
-                  .on("error", reject)
-              );
-            }}
-          >
-            <ModalInput
-              label={"New Supply"}
-              value={newSupply}
-              onChange={(e) => setNewSupply(Number(e.target.value))}
-              type={"number"}
-            />
-          </Modal>
-          <Modal
+            hideCloseIcon
             isOpen={airDropIsOpen}
             setIsOpen={setAirDropIsOpen}
             title="Airdrop Passports"
@@ -456,46 +476,86 @@ const MembershipCard = (props: IMembershipCardProps) => {
           </Modal>
         </div>
       </MembershipHeader>
-      <h6>{passport.symbol}</h6>
+      <MembershipName>
+        {passport.name}
+        <br />({passport.symbol})
+      </MembershipName>
+      <MembershipCardDivider />
       {passport.claimable && (
-        <BalanceLine>
-          <span>
-            <b>Balance:</b> {balance} ETH
-          </span>
-          <Button
-            disabled={balance === "0"}
-            onClick={() => {
+        <MembershipCardRow>
+          <span>BALANCE</span>
+          <MembershipCardValue>
+            {balance} ETH
+            <Button
+              type={"icon"}
+              disabled={balance === "0"}
+              onClick={() => {
+                const contract = new web3.eth.Contract(
+                  getAbiFromJson(passportJson)
+                );
+                contract.options.address = passport.address;
+                (contract.methods.claimEth() as ContractSendMethod)
+                  .send({ from: address })
+                  .on("receipt", () => {
+                    setToastMessage(`Successfully Claimed ${balance} ETH!`);
+                    setBalance("0");
+                  });
+              }}
+            >
+              <ExitIcon color={theme.colors.sprout} />
+            </Button>
+          </MembershipCardValue>
+        </MembershipCardRow>
+      )}
+      <MembershipCardRow>
+        <span>SUPPLY</span>
+        <MembershipCardValue>
+          {passport.supply}
+          <Button onClick={() => setSupplyIsOpen(true)} type={"icon"}>
+            <Pencil1Icon color={theme.colors.wheat} width={10} height={10} />
+          </Button>
+          <Modal
+            hideCloseIcon
+            isOpen={supplyIsOpen}
+            setIsOpen={setSupplyIsOpen}
+            title="Change Supply"
+            onConfirm={() => {
               const contract = new web3.eth.Contract(
                 getAbiFromJson(passportJson)
               );
               contract.options.address = passport.address;
-              (contract.methods.claimEth() as ContractSendMethod)
-                .send({ from: address })
-                .on("receipt", () => {
-                  setToastMessage(`Successfully Claimed ${balance} ETH!`);
-                  setBalance("0");
-                });
+              return new Promise<void>((resolve, reject) =>
+                contract.methods
+                  .setSupply(newSupply)
+                  .send({ from: address })
+                  .on("receipt", () => {
+                    setPassport({
+                      ...passport,
+                      supply: newSupply,
+                    });
+                    resolve();
+                  })
+                  .on("error", reject)
+              );
             }}
           >
-            Claim
-          </Button>
-        </BalanceLine>
-      )}
-      <p>
-        <b>Supply:</b> {passport.supply}
-      </p>
-      <p>
-        <b>Price:</b> {passport.price} ETH
-      </p>
-      <p>
-        <b>Royalty:</b> {passport.royaltyPcnt}%
-      </p>
-      {Object.entries(fields).map((f) => (
-        <p key={f[0]}>
-          <b>{f[0]}:</b> {f[1]}
-        </p>
-      ))}
-      {thumbnail && <IpfsImage cid={thumbnail} />}
+            <ModalInput
+              label={"New Supply"}
+              value={newSupply}
+              onChange={(e) => setNewSupply(Number(e.target.value))}
+              type={"number"}
+            />
+          </Modal>
+        </MembershipCardValue>
+      </MembershipCardRow>
+      <MembershipCardRow>
+        <span>PRICE</span>
+        <MembershipCardValue>{passport.price} ETH</MembershipCardValue>
+      </MembershipCardRow>
+      <MembershipCardRow>
+        <span>ROYALTY</span>
+        <MembershipCardValue>{passport.royaltyPcnt}%</MembershipCardValue>
+      </MembershipCardRow>
       <Toast
         isOpen={!!toastMessage}
         onClose={() => setToastMessage("")}
@@ -607,6 +667,15 @@ const FileInput = styled("div", {
   },
 });
 
+const CardImageContainer = styled("div", {
+  "> span": {
+    border: "1px solid $forest !important",
+    width: "80px !important",
+    height: "56px !important",
+    borderRadius: "20px",
+  },
+});
+
 const MembershipImageContainer = styled("div", {
   "> span": {
     border: "1px solid $forest !important",
@@ -710,14 +779,12 @@ const CreateMembershipModal = ({
   const [fileLoading, setFileLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   return (
-    <CreateMembershipContainer>
-      <CreateMembershipHeader>
-        Get started using memberships
-      </CreateMembershipHeader>
+    <>
       <Button onClick={open} type="primary" disabled={!address} tone={"wheat"}>
         Create new membership
       </Button>
       <Modal
+        hideCloseIcon
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         title={stageTitles[stage]}
@@ -901,7 +968,7 @@ const CreateMembershipModal = ({
           )}
         </ModalContent>
       </Modal>
-    </CreateMembershipContainer>
+    </>
   );
 };
 
@@ -963,19 +1030,35 @@ const MembershipTabContent = () => {
   }, [contractInstance, address]);
   return (
     <>
-      <CreateMembershipModal
-        contractInstance={contractInstance}
-        onSuccess={(m) => setMemberships([...memberships, m])}
-      />
-      <MembershipContainer>
-        {memberships.map((m) => (
-          <MembershipCard
-            key={`${chainId}-${m.address}`}
-            {...m}
-            customization={customizations[m.address] || {}}
+      {memberships.length ? (
+        <ViewMembershipContainer>
+          <MembershipContainer>
+            {memberships.map((m) => (
+              <MembershipCard
+                key={`${chainId}-${m.address}`}
+                {...m}
+                customization={customizations[m.address] || {}}
+              />
+            ))}
+          </MembershipContainer>
+          <ViewMembershipFooter>
+            <CreateMembershipModal
+              contractInstance={contractInstance}
+              onSuccess={(m) => setMemberships([...memberships, m])}
+            />
+          </ViewMembershipFooter>
+        </ViewMembershipContainer>
+      ) : (
+        <CreateMembershipContainer>
+          <CreateMembershipHeader>
+            Get started using memberships
+          </CreateMembershipHeader>
+          <CreateMembershipModal
+            contractInstance={contractInstance}
+            onSuccess={(m) => setMemberships([...memberships, m])}
           />
-        ))}
-      </MembershipContainer>
+        </CreateMembershipContainer>
+      )}
     </>
   );
 };
