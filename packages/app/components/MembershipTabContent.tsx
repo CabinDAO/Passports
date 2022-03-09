@@ -17,6 +17,7 @@ import {
   Checkbox,
   styled,
   theme,
+  Tooltip,
 } from "@cabindao/topo";
 import Image from "next/image";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
@@ -251,28 +252,36 @@ const MembershipCard = (props: IMembershipCardProps) => {
           )}
         </CardImageContainer>
         <div>
-          <Button
-            onClick={() => {
-              window.navigator.clipboard.writeText(
-                `${window.location.origin}/checkout/${
-                  networkNameById[Number(networkId)]
-                }/${passport.address}`
-              );
-              setToastMessage("Copied checkout link!");
-            }}
-            type="icon"
-          >
-            <Link1Icon width={20} height={20} color={theme.colors.wheat} />
-          </Button>
-          <Button onClick={() => setShareIsOpen(true)} type="icon">
-            <Share1Icon width={20} height={20} color={theme.colors.wheat} />
-          </Button>
-          <Button onClick={open} type="icon">
-            <Pencil2Icon width={20} height={20} color={theme.colors.wheat} />
-          </Button>
-          <Button onClick={() => setAirDropIsOpen(true)} type="icon">
-            <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
-          </Button>
+          <Tooltip content={"Copy checkout link"}>
+            <Button
+              onClick={() => {
+                window.navigator.clipboard.writeText(
+                  `${window.location.origin}/checkout/${
+                    networkNameById[Number(networkId)]
+                  }/${passport.address}`
+                );
+                setToastMessage("Copied checkout link!");
+              }}
+              type="icon"
+            >
+              <Link1Icon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={"Share membership"}>
+            <Button onClick={() => setShareIsOpen(true)} type="icon">
+              <Share1Icon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={"Customize checkout"}>
+            <Button onClick={open} type="icon">
+              <Pencil2Icon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={"Airdrop membership"}>
+            <Button onClick={() => setAirDropIsOpen(true)} type="icon">
+              <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
           <Modal
             hideCloseIcon
             isOpen={isOpen}
