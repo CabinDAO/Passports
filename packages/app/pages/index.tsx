@@ -17,6 +17,7 @@ import UsersTabContent from "../components/UsersTabContent";
 import SettingsTabContent from "../components/SettingsTabContent";
 import ManageTabContent from "../components/ManageTabContent";
 import { networkNameById } from "../components/constants";
+import AnalyticsTabContent from "../components/AnalyticsTabContent";
 
 const DRAWER_WIDTH = 200;
 const HEADER_HEIGHT = 64;
@@ -196,6 +197,7 @@ const HomeContent = () => {
           <Tab to={"memberships"}>Memberships</Tab>
           <Tab to={"users"}>Users</Tab>
           <Tab to={"manage"}>Manage</Tab>
+          <Tab to={"analytics"}>Analytics</Tab>
           <Tab to={"settings"}>Settings</Tab>
         </LinkContainer>
       </DashboardSidebar>
@@ -204,6 +206,7 @@ const HomeContent = () => {
         {tab === "users" && <UsersTabContent />}
         {tab === "manage" && <ManageTabContent />}
         {tab === "settings" && <SettingsTabContent />}
+        {tab === "analytics" && <AnalyticsTabContent />}
       </PageMain>
     </PageContent>
   );
