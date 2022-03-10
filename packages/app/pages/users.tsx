@@ -1,11 +1,12 @@
 import { Box, Label, Select } from "@cabindao/topo";
 import { useEffect, useMemo, useState } from "react";
 import type { Contract, ContractSendMethod } from "web3-eth-contract";
-import { contractAddressesByNetworkId, getAbiFromJson } from "./constants";
-import { useAddress, useChainId, useWeb3 } from "./Web3Context";
+import { contractAddressesByNetworkId, getAbiFromJson } from "../components/constants";
+import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import { styled } from "@cabindao/topo";
+import Layout from "../components/Layout";
 
 interface MembershipDetail {
   name: string;
@@ -190,4 +191,12 @@ const UsersTabContent = () => {
   );
 };
 
-export default UsersTabContent;
+const UsersPage = () => {
+  return (
+    <Layout>
+      <UsersTabContent />
+    </Layout>
+  )
+}
+
+export default UsersPage;
