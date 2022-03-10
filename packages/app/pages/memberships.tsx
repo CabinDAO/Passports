@@ -43,6 +43,7 @@ import { ipfsAdd, resolveAddress } from "../components/utils";
 import IpfsImage from "../components/IpfsImage";
 import Papa from "papaparse";
 import BN from "bn.js";
+import Layout from "../components/Layout";
 
 const ViewMembershipContainer = styled("div", {
   display: "flex",
@@ -1072,4 +1073,12 @@ const MembershipTabContent = () => {
   );
 };
 
-export default MembershipTabContent;
+const MembershipPage = () => {
+  return (
+    <Layout>
+      <MembershipTabContent />
+    </Layout>
+  )
+}
+
+export default MembershipPage;
