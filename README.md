@@ -81,9 +81,9 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
 1. Notice that a bunch of accounts with addresses were printed. Copy the private key of one of them.
 1. Create a local `packages/contracts/.env` file and add `PRIVATE_KEY=0x12341234` to the top of the file. Replace `0x12341234` with the private key that you pasted.
 1. Open another terminal tab and build the contracts with `npm run build`
-1. Deploy the newly build contracts to your local network with `npm run migrate:local`. Copy the address that the PassportFactory was deployed to.
+1. Deploy the newly build contracts to your local network with `npm run migrate:local`.
 1. Navigate to the `packages/app` directory.
-1. Create another `.env` file at `packages/app.env`. Add `NEXT_PUBLIC_LOCAL_PASSPORT_FACTORY_ADDRESS=0x12341234` to the top of the file. Replace `0x12341234` with the address that you copied after step 3.
+1. Create another `.env` file at `packages/app/.env`. Reach out to a current contributor for the enviroment variable values to be able to access firebase. 
 1. Run the webapp locally by running `npm run dev` from the `packages/app` directory.
 1. Once on the browser, add the new network to your wallet. In Metamask, you could do this by going to Settings > Networks > Add Network and fill out the following data:
    - Network Name: Localhost

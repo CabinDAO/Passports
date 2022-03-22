@@ -8,31 +8,34 @@ import {
   where,
 } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { firebaseConfig } from "../../components/constants";
+import { firebaseConfig } from "../../../components/constants";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
-    case "POST":
+    case "GET":
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
-      const urlCol = collection(db, "customizations");
+      const urlCol = collection(db, "admin_stamps");
       return getDocs(
-        query(urlCol, where("contractAddr", "in", req.body.addresses))
+        query(
+          urlCol,
+          where("address", "==", req.query.address),
+          where("chain", "==", req.query.chain)
+        )
       )
         .then((memberships) => {
-          const data: { [key: string]: Record<string, string> | undefined } =
-            {};
-          memberships.forEach((doc) => {
-            const docData = doc.data();
-            data[docData["contractAddr"]] = docData;
+          res.status(200).json({
+            addresses: memberships.docs.map((doc) => {
+              const docData = doc.data();
+              return docData["contract"] as string;
+            }),
           });
-          res.status(200).json({ customizations: data });
         })
         .catch((e) => {
           res.status(500).json({ message: e.message });
         });
     default:
-      res.setHeader("Allow", ["POST"]);
+      res.setHeader("Allow", ["GET"]);
       res.status(405).end(`Method ${req.method} Not Allowed`);
       break;
   }

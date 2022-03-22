@@ -8,6 +8,7 @@ import { fail } from "assert";
 
 use(solidity);
 
+/*
 describe("PassportFactory", function () {
   let owner: SignerWithAddress | undefined;
   let dao1: SignerWithAddress | undefined;
@@ -51,3 +52,4 @@ describe("PassportFactory", function () {
     });
   });
 });
+*/

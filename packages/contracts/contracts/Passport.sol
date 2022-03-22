@@ -251,4 +251,12 @@ contract Passport is ERC721, AccessControlEnumerable {
 
         emit Airdrop(msg.sender, accounts.length);
     }
+
+    function grantAdmin(address account) public {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to denote another admin"
+        );
+        _setupRole(DEFAULT_ADMIN_ROLE, account);
+    }
 }

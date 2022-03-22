@@ -46,3 +46,17 @@ export const getWeb3 = (networkName: string) =>
       ? "http://localhost:8545"
       : `https://eth-${networkName}.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
   );
+
+export const getAllManagedMemberships = ({
+  web3, // web3 is unused for now - but we might need it when we migrate from firebase to the graph or some other blockchain indexer
+  chainId,
+  from,
+}: {
+  web3: Web3;
+  chainId: number;
+  from: string;
+}) => {
+  return axios
+    .get(`/api/admin/stamps?address=${from}&chain=${chainId}`)
+    .then((s) => s.data.addresses as string[]);
+};

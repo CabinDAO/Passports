@@ -20,13 +20,8 @@ import {
   Tooltip,
 } from "@cabindao/topo";
 import Image from "next/image";
-import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
-import {
-  contractAddressesByNetworkId,
-  getAbiFromJson,
-  networkNameById,
-} from "../components/constants";
+import { getAbiFromJson, networkNameById } from "../components/constants";
 import ClipSVG from "../components/icons/Clip.svg";
 import {
   Link1Icon,
@@ -39,7 +34,11 @@ import {
 } from "@radix-ui/react-icons";
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import axios from "axios";
-import { ipfsAdd, resolveAddress } from "../components/utils";
+import {
+  getAllManagedMemberships,
+  ipfsAdd,
+  resolveAddress,
+} from "../components/utils";
 import IpfsImage from "../components/IpfsImage";
 import Papa from "papaparse";
 import BN from "bn.js";
@@ -371,16 +370,15 @@ const MembershipCard = (props: IMembershipCardProps) => {
             title="Grant Access to Membership"
             onConfirm={async () => {
               const contract = new web3.eth.Contract(
-                getAbiFromJson(passportFactoryJson)
+                getAbiFromJson(passportJson)
               );
-              contract.options.address =
-                contractAddressesByNetworkId[networkId]?.passportFactory || "";
+              contract.options.address = passport.address;
               return resolveAddress(userAddress, web3)
                 .then((ethAddress) =>
                   ethAddress
                     ? new Promise<void>((resolve, reject) =>
                         contract.methods
-                          .grantPassport(passport.address, ethAddress)
+                          .grantAdmin(ethAddress)
                           .send({ from: address })
                           .on("receipt", () => {
                             setUserAddress("");
@@ -696,10 +694,8 @@ const MembershipImageContainer = styled("div", {
 });
 
 const CreateMembershipModal = ({
-  contractInstance,
   onSuccess,
 }: {
-  contractInstance: Contract;
   onSuccess: (m: IMembershipProps) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -713,6 +709,7 @@ const CreateMembershipModal = ({
   const [isPrivate, setIsPrivate] = useState(false);
   const address = useAddress();
   const web3 = useWeb3();
+  const chainId = useChainId();
   const [stage, setStage] = useState(0);
   const [fileName, setFileName] = useState("");
   const [cid, setCid] = useState("");
@@ -730,9 +727,11 @@ const CreateMembershipModal = ({
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price, "ether");
       const royalty = (Number(royaltyPcnt) * 100) | 0;
-      return new Promise<void>((resolve, reject) =>
-        contractInstance.methods
-          .create(
+      const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
+      return contract
+        .deploy({
+          data: "", // WHAT
+          arguments: [
             name,
             symbol,
             quantity,
@@ -740,28 +739,28 @@ const CreateMembershipModal = ({
             metadataHash,
             royalty,
             claimable,
-            isPrivate
-          )
-          .send({ from: address })
-          .on("receipt", (receipt: TransactionReceipt) => {
-            const address =
-              (receipt.events?.["PassportDeployed"]?.returnValues
-                ?.passport as string) || "";
-            onSuccess({
-              address,
-              symbol,
-              name,
-              supply: Number(quantity),
-              price,
-              metadataHash,
-              claimable,
-              royaltyPcnt: royalty / 100,
-              isPrivate,
-            });
-            resolve();
-          })
-          .on("error", reject)
-      );
+            isPrivate,
+          ],
+        })
+        .send({ from: address })
+        .then((c) => {
+          const contract = c.options.address;
+          return axios
+            .post(`/api/stamp`, { address, contract, chain: chainId })
+            .then(() =>
+              onSuccess({
+                address: contract,
+                symbol,
+                name,
+                supply: Number(quantity),
+                price,
+                metadataHash,
+                claimable,
+                royaltyPcnt: royalty / 100,
+                isPrivate,
+              })
+            );
+        });
     });
   }, [
     symbol,
@@ -769,7 +768,6 @@ const CreateMembershipModal = ({
     quantity,
     price,
     royaltyPcnt,
-    contractInstance,
     web3,
     address,
     onSuccess,
@@ -777,6 +775,7 @@ const CreateMembershipModal = ({
     cid,
     claimable,
     isPrivate,
+    chainId,
   ]);
   const stageConfirms = [
     () => {
@@ -1008,19 +1007,10 @@ const MembershipTabContent = () => {
         .catch(console.error);
     }
   }, [memberships, setCustomizations]);
-  const contractInstance = useMemo<Contract>(() => {
-    const contract = new web3.eth.Contract(getAbiFromJson(passportFactoryJson));
-    contract.options.address =
-      contractAddressesByNetworkId[chainId]?.passportFactory || "";
-    return contract;
-  }, [web3, chainId]);
   useEffect(() => {
-    if (contractInstance.options.address) {
-      (contractInstance.methods.getMemberships() as ContractSendMethod)
-        .call({
-          from: address,
-        })
-        .then((r: string[]) => {
+    if (address && chainId) {
+      getAllManagedMemberships({ web3, chainId, from: address })
+        .then((r) => {
           setMemberships(
             r.map((address) => ({
               address,
@@ -1037,7 +1027,7 @@ const MembershipTabContent = () => {
         })
         .catch(console.error);
     }
-  }, [contractInstance, address]);
+  }, [web3, chainId, address]);
   return (
     <>
       {memberships.length ? (
@@ -1053,7 +1043,6 @@ const MembershipTabContent = () => {
           </MembershipContainer>
           <ViewMembershipFooter>
             <CreateMembershipModal
-              contractInstance={contractInstance}
               onSuccess={(m) => setMemberships([...memberships, m])}
             />
           </ViewMembershipFooter>
@@ -1064,7 +1053,6 @@ const MembershipTabContent = () => {
             Get started using memberships
           </CreateMembershipHeader>
           <CreateMembershipModal
-            contractInstance={contractInstance}
             onSuccess={(m) => setMemberships([...memberships, m])}
           />
         </CreateMembershipContainer>
@@ -1078,7 +1066,7 @@ const MembershipPage = () => {
     <Layout>
       <MembershipTabContent />
     </Layout>
-  )
-}
+  );
+};
 
 export default MembershipPage;
