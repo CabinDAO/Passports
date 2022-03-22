@@ -1,16 +1,12 @@
 import { AbiType, StateMutabilityType, AbiItem } from "web3-utils";
 import {
-  GOERLI_PASSPORT_FACTORY_ADDRESS,
   GOERLI_STAKING_ADDRESS,
   GOERLI_TEST_TOKEN_ADDRESS,
   KOVAN_STAKING_ADDRESS,
-  KOVAN_PASSPORT_FACTORY_ADDRESS,
   KOVAN_TEST_TOKEN_ADDRESS,
-  RINKEBY_PASSPORT_FACTORY_ADDRESS,
   RINKEBY_STAKING_ADDRESS,
   RINKEBY_TEST_TOKEN_ADDRESS,
   ROPSTEN_STAKING_ADDRESS,
-  ROPSTEN_PASSPORT_FACTORY_ADDRESS,
   ROPSTEN_TEST_TOKEN_ADDRESS,
 } from "@cabindao/nft-passport-contracts/artifacts/addresses";
 
@@ -37,31 +33,25 @@ export const networkIdByName = Object.fromEntries(
 );
 
 export const contractAddressesByNetworkId: {
-  [id: number]: { passportFactory: string; staking: string; token?: string };
+  [id: number]: { staking: string; token?: string };
 } = {
   [LOCALHOST_NETWORK_ID]: {
-    passportFactory:
-      process.env.NEXT_PUBLIC_LOCAL_PASSPORT_FACTORY_ADDRESS || "",
     staking: process.env.NEXT_PUBLIC_LOCAL_STAKING_ADDRESS || "",
     token: process.env.NEXT_PUBLIC_LOCAL_TEST_TOKEN_ADDRESS || "",
   },
   [KOVAN_NETWORK_ID]: {
-    passportFactory: KOVAN_PASSPORT_FACTORY_ADDRESS,
     staking: KOVAN_STAKING_ADDRESS,
     token: KOVAN_TEST_TOKEN_ADDRESS,
   },
   [ROPSTEN_NETWORK_ID]: {
-    passportFactory: ROPSTEN_PASSPORT_FACTORY_ADDRESS,
     staking: ROPSTEN_STAKING_ADDRESS,
     token: ROPSTEN_TEST_TOKEN_ADDRESS,
   },
   [GOERLI_NETWORK_ID]: {
-    passportFactory: GOERLI_PASSPORT_FACTORY_ADDRESS,
     staking: GOERLI_STAKING_ADDRESS,
     token: GOERLI_TEST_TOKEN_ADDRESS,
   },
   [RINKEBY_NETWORK_ID]: {
-    passportFactory: RINKEBY_PASSPORT_FACTORY_ADDRESS,
     staking: RINKEBY_STAKING_ADDRESS,
     token: RINKEBY_TEST_TOKEN_ADDRESS,
   },

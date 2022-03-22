@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
@@ -11,37 +11,35 @@ contract Passport is ERC721, AccessControlEnumerable {
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    address private _cabindao = 0x8dca852d10c3CfccB88584281eC1Ef2d335253Fd;
+    address private immutable _cabindao =
+        0x8dca852d10c3CfccB88584281eC1Ef2d335253Fd;
     address public owner;
     uint256 public price;
-    uint256 public supply;
+    uint256 public mintIndex;
+    uint256 public maxSupply;
     string public metadataHash;
     bool public isPrivate;
     uint256 public royaltyPercent;
     address public royaltyRecipient;
-    bool public claimable;
     event Purchase(address owner, uint256 price, uint256 id, string uri);
 
     constructor(
-        address _owner,
         string memory _name,
         string memory _symbol,
         uint256 _supply,
         uint256 _price,
         string memory _metadataHash,
         uint256 _royaltyPercent,
-        bool _claimable,
         bool _isPrivate
     ) ERC721(_name, _symbol) {
-        owner = _owner;
+        owner = msg.sender;
         price = _price;
-        supply = _supply;
+        maxSupply = _supply;
         metadataHash = _metadataHash;
         royaltyPercent = _royaltyPercent;
-        royaltyRecipient = _owner;
-        claimable = _claimable;
+        royaltyRecipient = msg.sender;
         isPrivate = _isPrivate;
-        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /// @inheritdoc	ERC165
@@ -90,25 +88,20 @@ contract Passport is ERC721, AccessControlEnumerable {
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to set supply"
         );
-        supply = value;
+        require(value > mintIndex, "New supply must be higher than mint index");
+        maxSupply = value;
     }
 
-    function buy(uint256 _id) external payable {
-        require(supply > 0, "Error, no more supply of this membership");
-        require(msg.value >= price, "Error, Token costs more");
+    function buy() external payable {
+        require(
+            maxSupply > mintIndex,
+            "Error, no more supply of this membership"
+        );
+        require(msg.value == price, "Error, Token costs more");
         require(
             !isPrivate || isMinter(msg.sender),
             "Address is not allowed to mint"
         );
-
-        if (!claimable) {
-            uint256 ownerPayment = (msg.value * 39) / 40;
-            (bool success1, ) = payable(owner).call{value: ownerPayment}("");
-            require(
-                success1,
-                "Address: unable to send value, recipient may have reverted"
-            );
-        }
 
         uint256 cabinPayment = msg.value / 40;
         (bool success2, ) = payable(_cabindao).call{value: cabinPayment}("");
@@ -117,10 +110,8 @@ contract Passport is ERC721, AccessControlEnumerable {
             "Address: unable to send value, recipient may have reverted"
         );
 
-        unchecked {
-            supply -= 1;
-        }
-        _mint(msg.sender, _id);
+        mintIndex += 1;
+        _mint(msg.sender, mintIndex);
     }
 
     function get()
@@ -131,20 +122,20 @@ contract Passport is ERC721, AccessControlEnumerable {
             string memory,
             uint256,
             uint256,
+            uint256,
             string memory,
             uint256,
-            bool,
             bool
         )
     {
         return (
             name(),
             symbol(),
-            supply,
+            maxSupply,
+            mintIndex,
             price,
             metadataHash,
             royaltyPercent,
-            claimable,
             isPrivate
         );
     }
@@ -159,11 +150,11 @@ contract Passport is ERC721, AccessControlEnumerable {
         );
     }
 
-    event Received(address, uint256);
+    // event Received(address, uint256);
 
-    receive() external payable {
-        emit Received(msg.sender, msg.value);
-    }
+    // receive() external payable {
+    //     emit Received(msg.sender, msg.value);
+    // }
 
     /**
      * @dev A method to verify if the account belongs to the minter role
@@ -178,7 +169,7 @@ contract Passport is ERC721, AccessControlEnumerable {
      * @dev Add accounts to the minter role. Restricted to admins.
      * @param accounts The members to add as a member.
      */
-    function addMinters(address[] memory accounts) public virtual {
+    function addMinters(address[] calldata accounts) public virtual {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to add accounts as minters"
@@ -192,7 +183,7 @@ contract Passport is ERC721, AccessControlEnumerable {
      * @dev Remove accounts from the minter role. Restricted to admins.
      * @param accounts The member to remove.
      */
-    function removeMinters(address[] memory accounts) public virtual {
+    function removeMinters(address[] calldata accounts) public virtual {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to remove accounts as minters"
@@ -222,33 +213,33 @@ contract Passport is ERC721, AccessControlEnumerable {
      * @dev Airdrop tokens to a list of address. Restricted to admins.
      * @param accounts The members to which token need to be airdropped.
      */
-    function airdrop(address[] memory accounts, uint256[] memory _tokenIds)
-        external
-    {
+    function airdrop(address[] calldata accounts) external {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to airdrop NFTs"
         );
         require(
-            supply >= accounts.length,
-            "Error, number of accounts exceeds supply"
+            maxSupply - mintIndex >= accounts.length,
+            "Error, number of accounts exceeds available supply"
         );
         require(
             !isPrivate || isMinter(msg.sender),
             "Address is not allowed to mint"
         );
-        require(
-            accounts.length == _tokenIds.length,
-            "Number of accounts should match number of token IDs"
-        );
 
         for (uint256 i; i < accounts.length; i++) {
-            uint256 _id = _tokenIds[i];
-
-            _mint(accounts[i], _id);
-            supply = supply - 1;
+            mintIndex += 1;
+            _mint(accounts[i], mintIndex);
         }
 
         emit Airdrop(msg.sender, accounts.length);
+    }
+
+    function grantAdmin(address account) public {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to denote another admin"
+        );
+        _setupRole(DEFAULT_ADMIN_ROLE, account);
     }
 }

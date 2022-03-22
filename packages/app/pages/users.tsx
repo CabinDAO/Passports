@@ -1,12 +1,12 @@
 import { Box, Label, Select } from "@cabindao/topo";
-import { useEffect, useMemo, useState } from "react";
-import type { Contract, ContractSendMethod } from "web3-eth-contract";
-import { contractAddressesByNetworkId, getAbiFromJson } from "../components/constants";
+import { useEffect, useState } from "react";
+import type { ContractSendMethod } from "web3-eth-contract";
+import { getAbiFromJson } from "../components/constants";
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
-import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import { styled } from "@cabindao/topo";
 import Layout from "../components/Layout";
+import { getAllManagedMemberships } from "../components/utils";
 
 interface MembershipDetail {
   name: string;
@@ -53,28 +53,19 @@ const UsersTabContent = () => {
   const web3 = useWeb3();
   const chainId = useChainId();
   const [selectedOption, setSelectedOption] = useState<string>("");
-  const contractInstance = useMemo<Contract>(() => {
-    const contract = new web3.eth.Contract(getAbiFromJson(passportFactoryJson));
-    contract.options.address =
-      contractAddressesByNetworkId[chainId]?.passportFactory || "";
-    return contract;
-  }, [web3, chainId]);
 
   useEffect(() => {
     // Get all memberships assosciated with wallet
-    if (contractInstance.options.address) {
+    if (address && chainId) {
       setShowLoading(true);
-      (contractInstance.methods.getMemberships() as ContractSendMethod)
-        .call({
-          from: address,
-        })
-        .then((r: string[]) => {
+      getAllManagedMemberships({ web3, chainId, from: address })
+        .then((r) => {
           setMAddresses(r);
         })
         .catch(console.error)
         .finally(() => setShowLoading(false));
     }
-  }, [contractInstance, address, setMAddresses]);
+  }, [web3, chainId, address, setMAddresses]);
 
   useEffect(() => {
     if (selectedOption) {
@@ -196,7 +187,7 @@ const UsersPage = () => {
     <Layout>
       <UsersTabContent />
     </Layout>
-  )
-}
+  );
+};
 
 export default UsersPage;

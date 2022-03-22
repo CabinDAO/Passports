@@ -9,15 +9,14 @@ import {
   styled,
 } from "@cabindao/topo";
 import { useEffect, useMemo, useState } from "react";
-import type { Contract, ContractSendMethod } from "web3-eth-contract";
-import { contractAddressesByNetworkId, getAbiFromJson } from "../components/constants";
+import type { ContractSendMethod } from "web3-eth-contract";
+import { getAbiFromJson } from "../components/constants";
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
-import passportFactoryJson from "@cabindao/nft-passport-contracts/artifacts/contracts/PassportFactory.sol/PassportFactory.json";
 import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
 import Papa from "papaparse";
-import { resolveAddress } from "../components/utils";
+import { getAllManagedMemberships, resolveAddress } from "../components/utils";
 import Layout from "../components/Layout";
 
 const SmallBox = styled(Box, {
@@ -84,21 +83,12 @@ const ManageTabContent = () => {
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [bulkAddrList, setBulkAddrList] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState("");
-  const contractInstance = useMemo<Contract>(() => {
-    const contract = new web3.eth.Contract(getAbiFromJson(passportFactoryJson));
-    contract.options.address =
-      contractAddressesByNetworkId[chainId]?.passportFactory || "";
-    return contract;
-  }, [web3, chainId]);
 
   useEffect(() => {
     // Get all memberships assosciated with wallet
-    if (contractInstance.options.address) {
+    if (address && chainId) {
       setShowLoading(true);
-      (contractInstance.methods.getMemberships() as ContractSendMethod)
-        .call({
-          from: address,
-        })
+      getAllManagedMemberships({ web3, from: address, chainId })
         .then((r: string[]) => {
           setMAddresses(r);
         })
@@ -119,8 +109,8 @@ const ManageTabContent = () => {
                     data[mAddr] = {
                       name: p[0],
                       symbol: p[1],
-                      supply: p[2],
-                      price: web3.utils.fromWei(p[3], "ether"),
+                      supply: p[2] - p[3],
+                      price: web3.utils.fromWei(p[4], "ether"),
                     };
                     return data;
                   } else {
@@ -147,7 +137,7 @@ const ManageTabContent = () => {
         )
         .finally(() => setShowLoading(false));
     }
-  }, [contractInstance, address, setMAddresses, mAddresses, web3]);
+  }, [address, setMAddresses, mAddresses, web3, chainId]);
 
   useEffect(() => {
     // Get list of allowed minters for selected private passports
@@ -377,7 +367,7 @@ const ManagePage = () => {
     <Layout>
       <ManageTabContent />
     </Layout>
-  )
-}
+  );
+};
 
 export default ManagePage;
