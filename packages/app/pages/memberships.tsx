@@ -730,7 +730,7 @@ const CreateMembershipModal = ({
       const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
       return contract
         .deploy({
-          data: "", // WHAT
+          data: passportJson.bytecode,
           arguments: [
             name,
             symbol,
