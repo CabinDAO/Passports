@@ -24,15 +24,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             tokenId,
             signature,
             signatureMessage,
-            pass: {
-              type: "generic",
+            platform: "apple",
+            pass: {   
               description,
             },
           };
-          return axios.post("https://api.ethpass.xyz/api/v0/pass", body, {
+          return axios.post("https://api.ethpass.xyz/api/v0/passes", body, {
             headers: {
               "X-API-KEY": process.env.ETHPASS_API_KEY || "",
-              "x-api-scope": "pass.com.ethpass",
             },
           });
         })
