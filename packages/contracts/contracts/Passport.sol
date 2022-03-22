@@ -11,7 +11,8 @@ contract Passport is ERC721, AccessControlEnumerable {
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    address immutable private _cabindao = 0x8dca852d10c3CfccB88584281eC1Ef2d335253Fd;
+    address private immutable _cabindao =
+        0x8dca852d10c3CfccB88584281eC1Ef2d335253Fd;
     address public owner;
     uint256 public price;
     uint256 public mintIndex;
@@ -92,7 +93,10 @@ contract Passport is ERC721, AccessControlEnumerable {
     }
 
     function buy() external payable {
-        require(maxSupply > mintIndex, "Error, no more supply of this membership");
+        require(
+            maxSupply > mintIndex,
+            "Error, no more supply of this membership"
+        );
         require(msg.value == price, "Error, Token costs more");
         require(
             !isPrivate || isMinter(msg.sender),
@@ -209,9 +213,7 @@ contract Passport is ERC721, AccessControlEnumerable {
      * @dev Airdrop tokens to a list of address. Restricted to admins.
      * @param accounts The members to which token need to be airdropped.
      */
-    function airdrop(address[] calldata accounts)
-        external
-    {
+    function airdrop(address[] calldata accounts) external {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to airdrop NFTs"
