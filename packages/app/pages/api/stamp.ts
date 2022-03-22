@@ -2,24 +2,21 @@ import { initializeApp } from "firebase/app";
 import {
   collection,
   doc,
-  getDocs,
   getFirestore,
-  query,
   setDoc,
-  where,
 } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { firebaseConfig } from "../../../components/constants";
+import { firebaseConfig } from "../../components/constants";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
     case "POST":
-      const { address, contract, chain } = req.body;
+      const { address, contract, chain, token } = req.body;
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
-      const urlCol = collection(db, "admin_stamps");
+      const urlCol = collection(db, "stamps");
       const contractDoc = doc(urlCol);
-      return setDoc(contractDoc, { address, contract, chain })
+      return setDoc(contractDoc, { address, contract, chain, token })
         .then(() => {
           res.status(200).json({ success: true });
         })

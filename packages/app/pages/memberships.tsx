@@ -148,7 +148,6 @@ interface IMembershipProps {
   supply: number;
   price: string;
   metadataHash: string;
-  claimable: boolean;
   royaltyPcnt: number;
   isPrivate: boolean;
 }
@@ -165,7 +164,6 @@ const MembershipCard = (props: IMembershipCardProps) => {
     supply: props.supply,
     price: props.price,
     metadataHash: props.metadataHash,
-    claimable: props.claimable,
     royaltyPcnt: props.royaltyPcnt,
   });
   const web3 = useWeb3();
@@ -187,6 +185,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const [fileLoading, setFileLoading] = useState(false);
   const [metadata, setMetadata] = useState<Record<string, string>>({});
   const [balance, setBalance] = useState("0");
+  const chainId = useChainId();
   useEffect(() => {
     if (!passport.name) {
       const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
@@ -196,11 +195,10 @@ const MembershipCard = (props: IMembershipCardProps) => {
           address: passport.address,
           name: p[0],
           symbol: p[1],
-          supply: p[2],
-          price: web3.utils.fromWei(p[3], "ether"),
-          metadataHash: p[4],
-          claimable: p[6],
-          royaltyPcnt: p[5] / 100,
+          supply: p[2] - p[3],
+          price: web3.utils.fromWei(p[4], "ether"),
+          metadataHash: p[5],
+          royaltyPcnt: p[6] / 100,
         });
         setNewSupply(Number(p[2]));
       });
@@ -221,19 +219,10 @@ const MembershipCard = (props: IMembershipCardProps) => {
         }
       });
     }
-    if (passport.claimable) {
-      web3.eth
-        .getBalance(passport.address)
-        .then((v) => setBalance(web3.utils.fromWei(v, "ether")));
-    }
-  }, [
-    metadata,
-    passport.metadataHash,
-    passport.claimable,
-    web3,
-    passport.address,
-    setBalance,
-  ]);
+    web3.eth
+      .getBalance(passport.address)
+      .then((v) => setBalance(web3.utils.fromWei(v, "ether")));
+  }, [metadata, passport.metadataHash, web3, passport.address, setBalance]);
   const { thumbnail, ...fields } = metadata;
   const [toastMessage, setToastMessage] = useState("");
   return (
@@ -381,8 +370,16 @@ const MembershipCard = (props: IMembershipCardProps) => {
                           .grantAdmin(ethAddress)
                           .send({ from: address })
                           .on("receipt", () => {
-                            setUserAddress("");
-                            resolve();
+                            axios
+                              .post("/api/admin/stamp", {
+                                address: ethAddress,
+                                contract: passport.address,
+                                chain: chainId,
+                              })
+                              .then(() => {
+                                setUserAddress("");
+                                resolve();
+                              });
                           })
                           .on("error", reject)
                       )
@@ -416,15 +413,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
                   (addrList) =>
                     new Promise<void>((resolve, reject) =>
                       contract.methods
-                        .airdrop(
-                          addrList,
-                          addrList.map((addr) => {
-                            return new BN(
-                              web3.utils.randomHex(32).replace(/^0x/, ""),
-                              "hex"
-                            );
-                          })
-                        )
+                        .airdrop(addrList)
                         .send({
                           from: address,
                         })
@@ -489,32 +478,30 @@ const MembershipCard = (props: IMembershipCardProps) => {
         <br />({passport.symbol})
       </MembershipName>
       <MembershipCardDivider />
-      {passport.claimable && (
-        <MembershipCardRow>
-          <span>BALANCE</span>
-          <MembershipCardValue>
-            {balance} ETH
-            <Button
-              type={"icon"}
-              disabled={balance === "0"}
-              onClick={() => {
-                const contract = new web3.eth.Contract(
-                  getAbiFromJson(passportJson)
-                );
-                contract.options.address = passport.address;
-                (contract.methods.claimEth() as ContractSendMethod)
-                  .send({ from: address })
-                  .on("receipt", () => {
-                    setToastMessage(`Successfully Claimed ${balance} ETH!`);
-                    setBalance("0");
-                  });
-              }}
-            >
-              <ExitIcon color={theme.colors.sprout} />
-            </Button>
-          </MembershipCardValue>
-        </MembershipCardRow>
-      )}
+      <MembershipCardRow>
+        <span>BALANCE</span>
+        <MembershipCardValue>
+          {balance} ETH
+          <Button
+            type={"icon"}
+            disabled={balance === "0"}
+            onClick={() => {
+              const contract = new web3.eth.Contract(
+                getAbiFromJson(passportJson)
+              );
+              contract.options.address = passport.address;
+              (contract.methods.claimEth() as ContractSendMethod)
+                .send({ from: address })
+                .on("receipt", () => {
+                  setToastMessage(`Successfully Claimed ${balance} ETH!`);
+                  setBalance("0");
+                });
+            }}
+          >
+            <ExitIcon color={theme.colors.wheat} />
+          </Button>
+        </MembershipCardValue>
+      </MembershipCardRow>
       <MembershipCardRow>
         <span>SUPPLY</span>
         <MembershipCardValue>
@@ -704,7 +691,6 @@ const CreateMembershipModal = ({
   const [symbol, setSymbol] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
-  const [claimable, setClaimable] = useState(false);
   const [royaltyPcnt, setRoyaltyPcnt] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const address = useAddress();
@@ -738,7 +724,6 @@ const CreateMembershipModal = ({
             weiPrice,
             metadataHash,
             royalty,
-            claimable,
             isPrivate,
           ],
         })
@@ -746,7 +731,7 @@ const CreateMembershipModal = ({
         .then((c) => {
           const contract = c.options.address;
           return axios
-            .post(`/api/stamp`, { address, contract, chain: chainId })
+            .post(`/api/admin/stamp`, { address, contract, chain: chainId })
             .then(() =>
               onSuccess({
                 address: contract,
@@ -755,7 +740,6 @@ const CreateMembershipModal = ({
                 supply: Number(quantity),
                 price,
                 metadataHash,
-                claimable,
                 royaltyPcnt: royalty / 100,
                 isPrivate,
               })
@@ -773,7 +757,6 @@ const CreateMembershipModal = ({
     onSuccess,
     additionalFields,
     cid,
-    claimable,
     isPrivate,
     chainId,
   ]);
@@ -948,19 +931,6 @@ const CreateMembershipModal = ({
                 </>
               )}
               <Label
-                label="Funds Claimable"
-                description="If checked, your users pay less gas and you could claim your funds whenever you want as they are stored in the contract. If unchecked, you are paid immediately when users buy a passport."
-              >
-                <Checkbox
-                  checked={claimable}
-                  onCheckedChange={(b) =>
-                    b === "indeterminate"
-                      ? setClaimable(false)
-                      : setClaimable(b)
-                  }
-                />
-              </Label>
-              <Label
                 label="Private Passport"
                 description="If checked, only an authorized lst of addresses can mint the passort. This list can be managed from the Manage Tab"
               >
@@ -1019,7 +989,6 @@ const MembershipTabContent = () => {
               supply: 0,
               price: "0",
               metadataHash: "",
-              claimable: false,
               royaltyPcnt: 0,
               isPrivate: false,
             }))

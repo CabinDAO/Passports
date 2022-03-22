@@ -20,7 +20,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         query(
           urlCol,
           where("address", "==", req.query.address),
-          where("chain", "==", req.query.chain)
+          where("chain", "==", Number(req.query.chain))
         )
       )
         .then((memberships) => {

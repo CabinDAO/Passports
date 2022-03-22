@@ -109,8 +109,8 @@ const ManageTabContent = () => {
                     data[mAddr] = {
                       name: p[0],
                       symbol: p[1],
-                      supply: p[2],
-                      price: web3.utils.fromWei(p[3], "ether"),
+                      supply: p[2] - p[3],
+                      price: web3.utils.fromWei(p[4], "ether"),
                     };
                     return data;
                   } else {

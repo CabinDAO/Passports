@@ -207,21 +207,27 @@ const CheckoutPageContent = ({
       address
     );
     return new Promise<string>((resolve, reject) =>
-      (
-        contract.methods.buy(
-          new BN(web3.utils.randomHex(32).replace(/^0x/, ""), "hex")
-        ) as ContractSendMethod
-      )
+      (contract.methods.buy() as ContractSendMethod)
         .send({
           from: account,
           value: web3.utils.toWei(price, "ether"),
         })
         .on("receipt", (receipt) => {
           const tokenId =
-            (receipt.events?.["Transfer"]?.returnValues?.tokenId as string) || "";
-          setLoading(false);
-          setSupply(supply - 1);
-          resolve(tokenId);
+            (receipt.events?.["Transfer"]?.returnValues?.tokenId as string) ||
+            "";
+          axios
+            .post("/api/stamp", {
+              token: tokenId,
+              chain: chainId,
+              address: account,
+              contract: address,
+            })
+            .then(() => {
+              setLoading(false);
+              setSupply(supply - 1);
+              resolve(tokenId);
+            });
         })
         .on("error", reject)
     )
@@ -264,6 +270,7 @@ const CheckoutPageContent = ({
     customization,
     generateApplePass,
     account,
+    chainId,
   ]);
   return (
     <AppContainer>
@@ -358,9 +365,9 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
         address,
         name: p[0],
         symbol: p[1],
-        supply: p[2],
-        price: web3.utils.fromWei(p[3], "ether"),
-        metadataHash: p[4],
+        supply: p[2] - p[3],
+        price: web3.utils.fromWei(p[4], "ether"),
+        metadataHash: p[5],
         network,
       },
     }))
