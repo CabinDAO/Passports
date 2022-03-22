@@ -2,11 +2,9 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Staking is Ownable {
-    using SafeMath for uint256;
     address[] internal stakeholders;
     mapping(address => uint256) internal indices;
     mapping(address => uint256) internal stakes;
@@ -24,7 +22,7 @@ contract Staking is Ownable {
             indices[msg.sender] = stakeholders.length;
             stakeholders.push(msg.sender);
         }
-        stakes[msg.sender] = stakes[msg.sender].add(_stake);
+        stakes[msg.sender] = stakes[msg.sender] + _stake;
         emit StakeCreated();
     }
 
@@ -35,7 +33,7 @@ contract Staking is Ownable {
             _stake <= stakes[msg.sender],
             "Cannot remove more than allocated stake"
         );
-        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
+        stakes[msg.sender] = stakes[msg.sender] - _stake;
         if (stakes[msg.sender] == 0) {
             uint256 s = indices[msg.sender];
             address addressToMove = stakeholders[stakeholders.length - 1];
