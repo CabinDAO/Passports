@@ -192,7 +192,7 @@ const HomeContent: React.FC = ({ children }) => {
           <Tab to={"memberships"}>Memberships</Tab>
           <Tab to={"users"}>Users</Tab>
           <Tab to={"manage"}>Manage</Tab>
-          <Tab to={"settings"}>Settings</Tab>
+          {/*<Tab to={"settings"}>Settings</Tab>*/}
         </LinkContainer>
       </DashboardSidebar>
       <PageMain>{children}</PageMain>

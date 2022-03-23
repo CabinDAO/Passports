@@ -9,6 +9,7 @@ import {
   getAllManagedMemberships,
   getStampContract,
 } from "../components/utils";
+import axios from "axios";
 
 interface MembershipDetail {
   name: string;
@@ -45,20 +46,17 @@ const TableData = styled("td", {
   padding: "10px",
 });
 
+const TokenId = styled("span", {
+  margin: "0 4px",
+});
+
 const UsersTabContent = () => {
   const [mAddresses, setMAddresses] = useState<
     Awaited<ReturnType<typeof getAllManagedMemberships>>
   >([]);
-  const versionByAddress = useMemo(
-    () =>
-      Object.fromEntries(
-        mAddresses.map(({ address, version }) => [address, version])
-      ),
-    [mAddresses]
-  );
   const [membershipDetails, setMembershipDetails] =
     useState<MembershipDetailMap>({});
-  const [users, setUsers] = useState<{ [key: string]: number }>({});
+  const [users, setUsers] = useState<{ [key: string]: number[] }>({});
   const [showLoading, setShowLoading] = useState<boolean>(false);
   const address = useAddress();
   const web3 = useWeb3();
@@ -81,41 +79,14 @@ const UsersTabContent = () => {
   useEffect(() => {
     if (selectedOption) {
       setShowLoading(true);
-      getStampContract({
-        web3,
-        address: selectedOption,
-        version: versionByAddress[selectedOption],
-      }).then((contract) =>
-        contract
-          .getPastEvents("Transfer", {
-            filter: {
-              _from: "0x0000000000000000000000000000000000000000",
-            },
-            fromBlock: 0,
-          })
-
-          .then((events) => {
-            const tokenIds = events.map((event) => event.returnValues.tokenId);
-            return tokenIds;
-          })
-          .then((tokenIds) => {
-            // Get the owner of each of these bought tokens
-            const ownerPromises = tokenIds.map((tokenId) => {
-              return contract.methods.ownerOf(tokenId).call();
-            });
-            Promise.all(ownerPromises)
-              .then((ownerAddrs) => {
-                const owners: { [key: string]: number } = {};
-                ownerAddrs.forEach((ownerAddr) => {
-                  owners[ownerAddr] = owners[ownerAddr] + 1 || 1;
-                });
-                setUsers(owners);
-              })
-              .finally(() => setShowLoading(false));
-          })
-      );
+      axios
+        .get(`/api/stamps?contract=${selectedOption}&chain=${chainId}`)
+        .then((r) => {
+          setUsers(r.data);
+        })
+        .finally(() => setShowLoading(false));
     }
-  }, [selectedOption, setUsers, web3, versionByAddress]);
+  }, [selectedOption, setUsers, chainId]);
 
   useEffect(() => {
     // Get details of all memberships to populate dropdown
@@ -182,13 +153,17 @@ const UsersTabContent = () => {
               <Table>
                 <tr>
                   <TableHeader>Address</TableHeader>
-                  <TableHeader>Passports owned</TableHeader>
+                  <TableHeader>Stamps Owned</TableHeader>
                 </tr>
                 {Object.keys(users).map((user) => {
                   return (
                     <tr key={user}>
                       <TableData>{user}</TableData>
-                      <TableData>{users[user]}</TableData>
+                      <TableData>
+                        {users[user].map((u) => (
+                          <TokenId key={u}>{u}</TokenId>
+                        ))}
+                      </TableData>
                     </tr>
                   );
                 })}
