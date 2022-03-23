@@ -1,10 +1,5 @@
 import { initializeApp } from "firebase/app";
-import {
-  collection,
-  doc,
-  getFirestore,
-  setDoc,
-} from "firebase/firestore/lite";
+import { collection, doc, getFirestore, setDoc } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { firebaseConfig } from "../../components/constants";
 
@@ -16,7 +11,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const db = getFirestore(app);
       const urlCol = collection(db, "stamps");
       const contractDoc = doc(urlCol);
-      return setDoc(contractDoc, { address, contract, chain, token })
+      return setDoc(contractDoc, {
+        address: address.toLowerCase(),
+        contract: contract.toLowerCase(),
+        chain: Number(chain),
+        token: Number(token),
+      })
         .then(() => {
           res.status(200).json({ success: true });
         })

@@ -21,11 +21,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         getDocs(
           query(
             adminStampsCol,
-            where("address", "==", req.query.address),
+            where("address", "==", (req.query.address as string).toLowerCase()),
             where("chain", "==", Number(req.query.chain))
           )
         ),
-        getDocs(query(versionsCol, where("contract", "==", "stamp"))),
+        getDocs(
+          query(
+            versionsCol,
+            where("contract", "==", "stamp"),
+            where("chain", "==", Number(req.query.chain))
+          )
+        ),
       ])
         .then(([memberships, versions]) => {
           const versionByContract = Object.fromEntries(
@@ -36,10 +42,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           res.status(200).json({
             contracts: memberships.docs.map((doc) => {
               const docData = doc.data();
-              const contract = docData["contract"] as string;
+              const address = docData["contract"] as string;
               return {
-                contract,
-                version: versionByContract[contract],
+                address,
+                version: versionByContract[address],
               };
             }),
           });

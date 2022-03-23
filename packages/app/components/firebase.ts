@@ -9,7 +9,7 @@ import {
 import { getStorage, list, ref, getBytes } from "firebase/storage";
 import { firebaseConfig } from "./constants";
 
-export const getVersionByAddress = (address: string) => {
+export const getVersionByAddress = (address: string, chain: number) => {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const versionsCol = collection(db, "versions");
@@ -17,7 +17,8 @@ export const getVersionByAddress = (address: string) => {
     query(
       versionsCol,
       where("contract", "==", "stamp"),
-      where("address", "==", address)
+      where("address", "==", address),
+      where("chain", "==", chain)
     )
   ).then((d) =>
     d.docs.length ? (d.docs[0].data()["version"] as string) : "0.0.0"
@@ -29,12 +30,10 @@ export const getAbi = (contract: string, version: string) => {
   const storage = getStorage(app);
   const versionToUse = version
     ? Promise.resolve(version)
-    : list(ref(storage, "abis/production")).then((versions) => {
-        const version = versions.items
-          .filter((i) => i.name.endsWith(`${contract}.json`))
+    : list(ref(storage, "abis/production"), {}).then((versions) => {
+        const version = versions.prefixes
           .map((i) => {
-            const [version] = i.name.split("/");
-            const [major, minor, patch] = version
+            const [major, minor, patch] = i.name
               .split(".")
               .map((s) => Number(s));
             return {
@@ -48,11 +47,11 @@ export const getAbi = (contract: string, version: string) => {
             if (a.minor !== b.minor) return b.minor - a.minor;
             else return b.patch - a.patch;
           })[0];
-        return version;
+        return `${version.major}.${version.minor}.${version.patch}`;
       });
-  return versionToUse
-    .then((version) =>
-      getBytes(ref(storage, `abis/production/${version}/${contract}.json`))
+  return versionToUse.then((version) =>
+    getBytes(ref(storage, `abis/production/${version}/${contract}.json`)).then(
+      (bytes) => ({ ...JSON.parse(Buffer.from(bytes).toString()), version })
     )
-    .then((bytes) => JSON.parse(Buffer.from(bytes).toString()));
+  );
 };

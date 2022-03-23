@@ -13,7 +13,7 @@ import {
   Web3Provider,
 } from "../../../components/Web3Context";
 import QRCode from "qrcode";
-import { getVersionByAddress } from "../../../components/firebase";
+import { getAbi, getVersionByAddress } from "../../../components/firebase";
 
 type QueryParams = {
   network: string;
@@ -363,13 +363,12 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
 ) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
-  return getVersionByAddress(address)
+  return getVersionByAddress(address, networkIdByName[network])
     .then((version) =>
-      getStampContract({
-        web3,
-        address,
-        version,
-      })
+      getAbi("stamp", version)
+        .then((stampJson) => {
+          return new web3.eth.Contract(getAbiFromJson(stampJson), address);
+        })
         .then((contract) =>
           (contract.methods.get() as ContractSendMethod).call()
         )
