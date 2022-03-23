@@ -4,6 +4,7 @@ on:
     branches: main
     paths:
       - "packages/contracts/package.json"
+      - "packages/contracts/scripts/**"
       - ".github/workflows/contracts.yaml"
 
 env:
