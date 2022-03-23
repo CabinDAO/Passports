@@ -104,6 +104,10 @@ const StampCardRow = styled("div", {
   alignItems: "center",
 });
 
+const StampCardKey = styled("span", {
+  textTransform: "uppercase",
+});
+
 const StampCardValue = styled("span", {
   color: "#ffffff",
   fontWeight: 500,
@@ -147,7 +151,7 @@ interface IStampProps {
   supply: number;
   price: string;
   metadataHash: string;
-  royaltyPcnt: number;
+  royalty: number;
   isPrivate: boolean;
   version: string;
 }
@@ -156,82 +160,137 @@ interface IStampCardProps extends IStampProps {
   customization: Record<string, string>;
 }
 
-const StampCard = (props: IStampCardProps) => {
-  const [passport, setPassport] = useState({
-    address: props.address,
-    name: props.name,
-    symbol: props.symbol,
-    supply: props.supply,
-    price: props.price,
-    metadataHash: props.metadataHash,
-    royaltyPcnt: props.royaltyPcnt,
-    version: props.version,
-  });
+const EditableStampCardRow = ({
+  field,
+  stamp,
+  setStamp,
+  decorator = ''
+}: {
+  field: keyof IStampProps;
+  stamp: IStampProps;
+  setStamp: (s: IStampProps) => void;
+  decorator?: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const web3 = useWeb3();
+  const address = useAddress();
+  const [value, setValue] = useState(stamp[field] || 0);
+  return (
+    <StampCardRow>
+      <StampCardKey>{field}</StampCardKey>
+      <StampCardValue>
+        {stamp[field]}{decorator}
+        <Button onClick={() => setIsOpen(true)} type={"icon"}>
+          <Pencil1Icon color={theme.colors.wheat} width={10} height={10} />
+        </Button>
+        <Modal
+          hideCloseIcon
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          title={`Change ${field}`}
+          onConfirm={() => {
+            getStampContract({
+              web3,
+              address: stamp.address,
+              version: stamp.version,
+            }).then(
+              (contract) =>
+                new Promise<void>((resolve, reject) =>
+                  contract.methods[
+                    `set${field.slice(0, 1).toUpperCase()}${field.slice(1)}`
+                  ](value)
+                    .send({ from: address })
+                    .on("receipt", () => {
+                      setStamp({
+                        ...stamp,
+                        [field]: value,
+                      });
+                      resolve();
+                    })
+                    .on("error", reject)
+                )
+            );
+          }}
+        >
+          <ModalInput
+            label={`New ${field}`}
+            value={value.toString()}
+            onChange={(e) => setValue(Number(e.target.value))}
+            type={"number"}
+          />
+        </Modal>
+      </StampCardValue>
+    </StampCardRow>
+  );
+};
+
+const StampCard = ({customization, ...props}: IStampCardProps) => {
+  const [stamp, setStamp] = useState(props);
   const web3 = useWeb3();
   const address = useAddress();
   const networkId = useChainId();
   const [shareIsOpen, setShareIsOpen] = useState(false);
   const [userAddress, setUserAddress] = useState("");
-  const [newSupply, setNewSupply] = useState(passport.supply);
+  const [newSupply, setNewSupply] = useState(stamp.supply);
   const [isOpen, setIsOpen] = useState(false);
-  const [supplyIsOpen, setSupplyIsOpen] = useState(false);
   const [airDropIsOpen, setAirDropIsOpen] = useState(false);
   const [airdropAddrList, setAirdropAddrList] = useState<string[]>([]);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
-  const [url, setUrl] = useState(props.customization.redirect_url);
-  const [brandColor, setBrandColor] = useState(props.customization.brand_color);
-  const [accColor, setAccColor] = useState(props.customization.accent_color);
-  const [buttonTxt, setButtonTxt] = useState(props.customization.button_txt);
-  const [logoCid, setLogoCid] = useState(props.customization.logo_cid);
+  const [url, setUrl] = useState(customization.redirect_url);
+  const [brandColor, setBrandColor] = useState(customization.brand_color);
+  const [accColor, setAccColor] = useState(customization.accent_color);
+  const [buttonTxt, setButtonTxt] = useState(customization.button_txt);
+  const [logoCid, setLogoCid] = useState(customization.logo_cid);
   const [fileLoading, setFileLoading] = useState(false);
   const [metadata, setMetadata] = useState<Record<string, string>>({});
   const [balance, setBalance] = useState("0");
   const chainId = useChainId();
   useEffect(() => {
-    if (!passport.name) {
+    if (!stamp.name) {
       getStampContract({
         web3,
-        address: passport.address,
-        version: passport.version,
+        address: stamp.address,
+        version: stamp.version,
       })
         .then((contract) =>
           (contract.methods.get() as ContractSendMethod).call()
         )
         .then((p) => {
           const supply = Number(p[2]) - Number(p[3]);
-          setPassport({
-            address: passport.address,
+          setStamp({
+            address: stamp.address,
             name: p[0],
             symbol: p[1],
             supply,
             price: web3.utils.fromWei(p[4], "ether"),
             metadataHash: p[5],
-            royaltyPcnt: p[6] / 100,
-            version: passport.version,
+            royalty: p[6] / 100,
+            version: stamp.version,
+            isPrivate: p[7],
           });
           setNewSupply(supply);
         });
     }
-  }, [setPassport, passport, web3, setNewSupply]);
+  }, [setStamp, stamp, web3, setNewSupply]);
   useEffect(() => {
-    setUrl(props.customization.redirect_url);
-    setBrandColor(props.customization.brand_color);
-    setAccColor(props.customization.accent_color);
-    setButtonTxt(props.customization.button_txt);
-    setLogoCid(props.customization.logo_cid);
-  }, [props.customization]);
+    setUrl(customization.redirect_url);
+    setBrandColor(customization.brand_color);
+    setAccColor(customization.accent_color);
+    setButtonTxt(customization.button_txt);
+    setLogoCid(customization.logo_cid);
+  }, [customization]);
   useEffect(() => {
-    if (!Object.keys(metadata).length && passport.metadataHash) {
-      axios.get(`https://ipfs.io/ipfs/${passport.metadataHash}`).then((r) => {
+    if (!Object.keys(metadata).length && stamp.metadataHash) {
+      axios.get(`https://ipfs.io/ipfs/${stamp.metadataHash}`).then((r) => {
         if (Object.keys(r.data).length) {
           setMetadata(r.data);
         }
       });
     }
     web3.eth
-      .getBalance(passport.address)
+      .getBalance(stamp.address)
       .then((v) => setBalance(web3.utils.fromWei(v, "ether")));
-  }, [metadata, passport.metadataHash, web3, passport.address, setBalance]);
+  }, [metadata, stamp.metadataHash, web3, stamp.address, setBalance]);
   const { thumbnail, ...fields } = metadata;
   const [toastMessage, setToastMessage] = useState("");
   return (
@@ -252,13 +311,14 @@ const StampCard = (props: IStampCardProps) => {
         <div>
           <Tooltip content={"Copy checkout link"}>
             <Button
-              onClick={() => {
+              onClick={(e) => {
                 window.navigator.clipboard.writeText(
                   `${window.location.origin}/checkout/${
                     networkNameById[Number(networkId)]
-                  }/${passport.address}`
+                  }/${stamp.address}`
                 );
                 setToastMessage("Copied checkout link!");
+                e.stopPropagation();
               }}
               type="icon"
             >
@@ -288,7 +348,7 @@ const StampCard = (props: IStampCardProps) => {
             onConfirm={() => {
               let upsertData: Record<string, string> = {
                 redirect_url: url,
-                contractAddr: passport.address,
+                contractAddr: stamp.address,
                 brand_color: brandColor,
                 accent_color: accColor,
                 button_txt: buttonTxt,
@@ -298,16 +358,14 @@ const StampCard = (props: IStampCardProps) => {
                 .post("/api/updateCustomization", {
                   data: upsertData,
                 })
-                .then(() =>
-                  setToastMessage("Successfully updated stamp data!")
-                )
+                .then(() => setToastMessage("Successfully updated stamp data!"))
                 .catch((e) =>
                   setToastMessage(`ERROR: ${e.response?.data || e.message}`)
                 );
             }}
           >
             <ModalContent>
-              <ModalLabel>{`${passport.name} (${passport.symbol})`}</ModalLabel>
+              <ModalLabel>{`${stamp.name} (${stamp.symbol})`}</ModalLabel>
               <ModalInput
                 label={"Redirect URL"}
                 value={url}
@@ -370,8 +428,8 @@ const StampCard = (props: IStampCardProps) => {
               return Promise.all([
                 getStampContract({
                   web3,
-                  address: passport.address,
-                  version: passport.version,
+                  address: stamp.address,
+                  version: stamp.version,
                 }),
                 resolveAddress(userAddress, web3),
               ])
@@ -385,9 +443,9 @@ const StampCard = (props: IStampCardProps) => {
                             axios
                               .post("/api/admin/stamp", {
                                 address: ethAddress,
-                                contract: passport.address,
+                                contract: stamp.address,
                                 chain: chainId,
-                                version: passport.version,
+                                version: stamp.version,
                               })
                               .then(() => {
                                 setUserAddress("");
@@ -417,8 +475,8 @@ const StampCard = (props: IStampCardProps) => {
             onConfirm={() => {
               return getStampContract({
                 web3,
-                address: passport.address,
-                version: passport.version,
+                address: stamp.address,
+                version: stamp.version,
               })
                 .then((contract) =>
                   Promise.all(
@@ -433,9 +491,9 @@ const StampCard = (props: IStampCardProps) => {
                           })
                           .on("receipt", (receipt: TransactionReceipt) => {
                             setToastMessage("Airdrop Successful!");
-                            setPassport({
-                              ...passport,
-                              supply: passport.supply - addrList.length,
+                            setStamp({
+                              ...stamp,
+                              supply: stamp.supply - addrList.length,
                             });
                             setAirDropIsOpen(false);
                             resolve();
@@ -489,22 +547,22 @@ const StampCard = (props: IStampCardProps) => {
         </div>
       </StampHeader>
       <StampName>
-        {passport.name}
-        <br />({passport.symbol})
+        {stamp.name}
+        <br />({stamp.symbol})
       </StampName>
       <StampCardDivider />
       <StampCardRow>
         <span>BALANCE</span>
         <StampCardValue>
-          {balance} ETH
+          {((Number(balance) * 39) / 40).toFixed(2)} ETH
           <Button
             type={"icon"}
             disabled={balance === "0"}
-            onClick={() => {
+            onClick={(e) => {
               getStampContract({
                 web3,
-                address: passport.address,
-                version: passport.version,
+                address: stamp.address,
+                version: stamp.version,
               }).then((contract) =>
                 (contract.methods.claimEth() as ContractSendMethod)
                   .send({ from: address })
@@ -513,64 +571,16 @@ const StampCard = (props: IStampCardProps) => {
                     setBalance("0");
                   })
               );
+              e.stopPropagation();
             }}
           >
             <ExitIcon color={theme.colors.wheat} />
           </Button>
         </StampCardValue>
       </StampCardRow>
-      <StampCardRow>
-        <span>SUPPLY</span>
-        <StampCardValue>
-          {passport.supply}
-          <Button onClick={() => setSupplyIsOpen(true)} type={"icon"}>
-            <Pencil1Icon color={theme.colors.wheat} width={10} height={10} />
-          </Button>
-          <Modal
-            hideCloseIcon
-            isOpen={supplyIsOpen}
-            setIsOpen={setSupplyIsOpen}
-            title="Change Supply"
-            onConfirm={() => {
-              getStampContract({
-                web3,
-                address: passport.address,
-                version: passport.version,
-              }).then(
-                (contract) =>
-                  new Promise<void>((resolve, reject) =>
-                    contract.methods
-                      .setSupply(newSupply)
-                      .send({ from: address })
-                      .on("receipt", () => {
-                        setPassport({
-                          ...passport,
-                          supply: newSupply,
-                        });
-                        resolve();
-                      })
-                      .on("error", reject)
-                  )
-              );
-            }}
-          >
-            <ModalInput
-              label={"New Supply"}
-              value={newSupply}
-              onChange={(e) => setNewSupply(Number(e.target.value))}
-              type={"number"}
-            />
-          </Modal>
-        </StampCardValue>
-      </StampCardRow>
-      <StampCardRow>
-        <span>PRICE</span>
-        <StampCardValue>{passport.price} ETH</StampCardValue>
-      </StampCardRow>
-      <StampCardRow>
-        <span>ROYALTY</span>
-        <StampCardValue>{passport.royaltyPcnt}%</StampCardValue>
-      </StampCardRow>
+      <EditableStampCardRow field={"supply"} stamp={stamp} setStamp={setStamp} />
+      <EditableStampCardRow field={"price"} stamp={stamp} setStamp={setStamp} decorator={" ETH"} />
+      <EditableStampCardRow field={"royalty"} stamp={stamp} setStamp={setStamp} decorator={"%"} />
       <Toast
         isOpen={!!toastMessage}
         onClose={() => setToastMessage("")}
@@ -676,9 +686,13 @@ const StampImageLabel = styled("label", {
 });
 
 const FileInput = styled("div", {
+  color: "#8B9389",
   cursor: "pointer",
+  textOverflow: "ellipsis",
+  overflow: "hidden",
   "> span": {
-    marginRight: "10px",
+    marginRight: "10px !important",
+    display: "inline",
   },
 });
 
@@ -736,7 +750,7 @@ const CreateStampModal = ({
       return axios.get(`/api/abi?contract=stamp`).then((r) => {
         const passportJson = r.data;
         const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-        contract
+        return contract
           .deploy({
             data: passportJson.bytecode,
             arguments: [
@@ -752,23 +766,23 @@ const CreateStampModal = ({
           })
           .send({ from: address })
           .then((c) => {
-            const contract = c.options.address;
+            const contractAddress = c.options.address;
             return axios
               .post(`/api/admin/stamp`, {
                 address,
-                contract,
+                contract: contractAddress,
                 chain: chainId,
                 version: passportJson.version,
               })
               .then(() =>
                 onSuccess({
-                  address: contract,
+                  address: contractAddress,
                   symbol,
                   name,
                   supply: Number(quantity),
                   price,
                   metadataHash,
-                  royaltyPcnt: royalty / 100,
+                  royalty: royalty / 100,
                   isPrivate,
                   version: passportJson.version as string,
                 })
@@ -1019,7 +1033,7 @@ const StampTabContent = () => {
               supply: 0,
               price: "0",
               metadataHash: "",
-              royaltyPcnt: 0,
+              royalty: 0,
               isPrivate: false,
               version,
             }))
@@ -1042,19 +1056,13 @@ const StampTabContent = () => {
             ))}
           </StampContainer>
           <ViewStampFooter>
-            <CreateStampModal
-              onSuccess={(m) => setStamps([...stamps, m])}
-            />
+            <CreateStampModal onSuccess={(m) => setStamps([...stamps, m])} />
           </ViewStampFooter>
         </ViewStampContainer>
       ) : (
         <CreateStampContainer>
-          <CreateStampHeader>
-            Get started using stamps
-          </CreateStampHeader>
-          <CreateStampModal
-            onSuccess={(m) => setStamps([...stamps, m])}
-          />
+          <CreateStampHeader>Get started using stamps</CreateStampHeader>
+          <CreateStampModal onSuccess={(m) => setStamps([...stamps, m])} />
         </CreateStampContainer>
       )}
     </>

@@ -25,11 +25,11 @@ export const networkNameById: {
   [ROPSTEN_NETWORK_ID]: "ropsten",
   [MAINNET_NETWORK_ID]: "ethereum",
   [RINKEBY_NETWORK_ID]: "rinkeby",
-  [GOERLI_NETWORK_ID]: "goerly"
+  [GOERLI_NETWORK_ID]: "goerly",
 };
 
 export const networkIdByName = Object.fromEntries(
-  Object.entries(networkNameById).map(([id, name]) => [name, id])
+  Object.entries(networkNameById).map(([id, name]) => [name, Number(id)])
 );
 
 export const contractAddressesByNetworkId: {
@@ -75,9 +75,9 @@ export const getAbiFromJson = (json: {
  */
 export const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_PROJECT_ID+".firebaseapp.com",
+  authDomain: process.env.FIREBASE_PROJECT_ID + ".firebaseapp.com",
   projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_PROJECT_ID+".appspot.com",
+  storageBucket: process.env.FIREBASE_PROJECT_ID + ".appspot.com",
   messagingSenderId: process.env.FIREBASE_MSSG_SENDER,
   appId: process.env.FIREBASE_APP_ID,
 };
@@ -97,6 +97,6 @@ export const shimmer = (w: number, h: number) => `
 </svg>`;
 
 export const toBase64 = (str: string) =>
-typeof window === 'undefined'
-  ? Buffer.from(str).toString('base64')
-  : window.btoa(str);
+  typeof window === "undefined"
+    ? Buffer.from(str).toString("base64")
+    : window.btoa(str);

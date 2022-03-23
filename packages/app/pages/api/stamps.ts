@@ -18,26 +18,28 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return getDocs(
         query(
           urlCol,
-          where("contract", "==", req.query.address),
+          where("contract", "==", (req.query.contract as string).toLowerCase()),
           where("chain", "==", Number(req.query.chain))
         )
       )
         .then((stamps) => {
           res.status(200).json({
-            users: stamps.docs.map((doc) => {
-              const docData = doc.data();
-              return {
-                address: docData["address"] as string,
-                token: docData["token"] as number,
-              };
-            }).reduce((p, c) => {
+            users: stamps.docs
+              .map((doc) => {
+                const docData = doc.data();
+                return {
+                  address: docData["address"] as string,
+                  token: docData["token"] as number,
+                };
+              })
+              .reduce((p, c) => {
                 if (p[c.address]) {
-                    p[c.address].push(c.token);
+                  p[c.address].push(c.token);
                 } else {
-                    p[c.address] = [c.token]
+                  p[c.address] = [c.token];
                 }
                 return p;
-            }, {} as Record<string, number[]>),
+              }, {} as Record<string, number[]>),
           });
         })
         .catch((e) => {

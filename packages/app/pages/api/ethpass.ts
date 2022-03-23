@@ -11,7 +11,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const { address, network, tokenId, signature, signatureMessage } =
         typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       const web3 = getWeb3(network);
-      return getVersionByAddress(address)
+      return getVersionByAddress(address, networkIdByName[network])
         .then((version) =>
           getAbi("stamp", version).then((stampJson) => {
             const contract = new web3.eth.Contract(

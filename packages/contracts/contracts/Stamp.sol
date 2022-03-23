@@ -58,11 +58,6 @@ contract Stamp is ERC721, AccessControlEnumerable {
             super.supportsInterface(interfaceId);
     }
 
-    /// @notice Called with the sale price to determine how much royalty
-    //          is owed and to whom.
-    /// @param value - the sale price of the NFT asset specified by _tokenId
-    /// @return receiver - address of who should be sent the royalty payment
-    /// @return royaltyAmount - the royalty payment amount for value sale price
     function royaltyInfo(uint256, uint256 value)
         external
         view
@@ -72,10 +67,6 @@ contract Stamp is ERC721, AccessControlEnumerable {
         royaltyAmount = (value * royaltyPercent) / 10000;
     }
 
-    /// @notice Allows to set the royalties on the contract
-    /// @dev This function in a real contract should be protected with a onlyOwner (or equivalent) modifier
-    /// @param recipient recipient of the royalties
-    /// @param value royalties value (between 0 and 10000)
     function setRoyalties(address recipient, uint256 value) public {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
@@ -83,6 +74,15 @@ contract Stamp is ERC721, AccessControlEnumerable {
         );
         require(value <= 10000, "ERC2981Royalties: Too high");
         royaltyRecipient = recipient;
+        royaltyPercent = value;
+    }
+
+    function setRoyalty(uint256 value) public {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to set royalties"
+        );
+        require(value <= 10000, "ERC2981Royalties: Too high");
         royaltyPercent = value;
     }
 

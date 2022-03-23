@@ -22,8 +22,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const contractDoc = doc(adminStampsCol);
       const versionDoc = doc(versionCol);
       return Promise.all([
-        setDoc(contractDoc, { address, contract, chain }),
-        setDoc(versionDoc, { address: contract, version, contract: "stamp", chain }),
+        setDoc(contractDoc, {
+          address: address.toLowerCase(),
+          contract: contract.toLowerCase(),
+          chain,
+        }),
+        setDoc(versionDoc, {
+          address: contract.toLowerCase(),
+          version,
+          contract: "stamp",
+          chain,
+        }),
       ])
         .then(() => {
           res.status(200).json({ success: true });

@@ -8,18 +8,20 @@ import Layout from "../components/Layout";
 import {
   getAllManagedStamps,
   getStampContract,
+  lookupAddress,
 } from "../components/utils";
 import axios from "axios";
 
-interface MembershipDetail {
+interface StampDetail {
   name: string;
   symbol: string;
   supply: number;
   price: string;
+  remaining: number;
 }
 
-interface MembershipDetailMap {
-  [key: string]: MembershipDetail;
+interface StampDetailMap {
+  [key: string]: StampDetail;
 }
 
 const SmallBox = styled(Box, {
@@ -54,8 +56,7 @@ const UsersTabContent = () => {
   const [mAddresses, setMAddresses] = useState<
     Awaited<ReturnType<typeof getAllManagedStamps>>
   >([]);
-  const [membershipDetails, setMembershipDetails] =
-    useState<MembershipDetailMap>({});
+  const [stampDetails, setStampDetails] = useState<StampDetailMap>({});
   const [users, setUsers] = useState<{ [key: string]: number[] }>({});
   const [showLoading, setShowLoading] = useState<boolean>(false);
   const address = useAddress();
@@ -64,7 +65,6 @@ const UsersTabContent = () => {
   const [selectedOption, setSelectedOption] = useState<string>("");
 
   useEffect(() => {
-    // Get all memberships assosciated with wallet
     if (address && chainId) {
       setShowLoading(true);
       getAllManagedStamps({ web3, chainId, from: address })
@@ -81,15 +81,19 @@ const UsersTabContent = () => {
       setShowLoading(true);
       axios
         .get(`/api/stamps?contract=${selectedOption}&chain=${chainId}`)
-        .then((r) => {
-          setUsers(r.data);
-        })
+        .then((r) =>
+          Promise.all(
+            Object.entries(r.data.users).map(([addr, ids]) =>
+              lookupAddress(addr, web3).then((addr) => [addr, ids])
+            )
+          )
+        )
+        .then((entries) => setUsers(Object.fromEntries(entries)))
         .finally(() => setShowLoading(false));
     }
-  }, [selectedOption, setUsers, chainId]);
+  }, [selectedOption, setUsers, chainId, web3]);
 
   useEffect(() => {
-    // Get details of all memberships to populate dropdown
     if (mAddresses.length > 0) {
       setShowLoading(true);
       const promises = mAddresses.map((mAddr) => {
@@ -102,12 +106,13 @@ const UsersTabContent = () => {
             (contract.methods.get() as ContractSendMethod).call()
           )
           .then((p) => {
-            const data: MembershipDetailMap = {};
+            const data: StampDetailMap = {};
             data[mAddr.address] = {
               name: p[0],
               symbol: p[1],
               supply: p[2],
               price: web3.utils.fromWei(p[3], "ether"),
+              remaining: Number(p[2]) - Number(p[3]),
             };
             return data;
           });
@@ -115,31 +120,31 @@ const UsersTabContent = () => {
       Promise.all(promises)
         .then((values) => {
           const data = Object.assign({}, ...values);
-          setMembershipDetails(data);
+          setStampDetails(data);
         })
         .finally(() => setShowLoading(false));
     } else {
-      setMembershipDetails({});
+      setStampDetails({});
     }
   }, [mAddresses, web3]);
 
   return (
     <>
       <SmallBox>
-        {Object.keys(membershipDetails).length > 0 ? (
+        {Object.keys(stampDetails).length > 0 ? (
           <Select
-            label="Choose Membership Type:"
-            options={Object.keys(membershipDetails).map((addr) => {
+            label="Choose Stamp:"
+            options={Object.keys(stampDetails).map((addr) => {
               return {
                 key: addr,
-                label: `${membershipDetails[addr]["name"]} (${membershipDetails[addr]["symbol"]})`,
+                label: `${stampDetails[addr]["name"]} (${stampDetails[addr]["symbol"]})`,
               };
             })}
             onChange={(val) => setSelectedOption(val)}
             disabled={false}
           />
         ) : (
-          <div>Please create some Membership Types first!</div>
+          <div>Please create some Stamps first!</div>
         )}
       </SmallBox>
       {showLoading ? <Label label={`Loading...`} /> : null}
@@ -147,26 +152,33 @@ const UsersTabContent = () => {
         {selectedOption ? (
           <>
             <Label
-              label={`Remaining supply: ${membershipDetails[selectedOption]["supply"]}`}
+              label={`Total supply: ${stampDetails[selectedOption]["supply"]}`}
+            />
+            <Label
+              label={`Remaining supply: ${stampDetails[selectedOption]["remaining"]}`}
             />
             {Object.keys(users).length > 0 ? (
               <Table>
-                <tr>
-                  <TableHeader>Address</TableHeader>
-                  <TableHeader>Stamps Owned</TableHeader>
-                </tr>
-                {Object.keys(users).map((user) => {
-                  return (
-                    <tr key={user}>
-                      <TableData>{user}</TableData>
-                      <TableData>
-                        {users[user].map((u) => (
-                          <TokenId key={u}>{u}</TokenId>
-                        ))}
-                      </TableData>
-                    </tr>
-                  );
-                })}
+                <thead>
+                  <tr>
+                    <TableHeader>Address</TableHeader>
+                    <TableHeader>Stamp Ids</TableHeader>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(users).map((user) => {
+                    return (
+                      <tr key={user}>
+                        <TableData>{user}</TableData>
+                        <TableData>
+                          {users[user].map((u) => (
+                            <TokenId key={u}>{u}</TokenId>
+                          ))}
+                        </TableData>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </Table>
             ) : null}
           </>
