@@ -15,7 +15,7 @@ import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
 import Papa from "papaparse";
 import {
-  getAllManagedMemberships,
+  getAllManagedStamps,
   resolveAddress,
   getStampContract,
 } from "../components/utils";
@@ -71,7 +71,7 @@ interface MembershipDetailMap {
 
 const ManageTabContent = () => {
   const [mAddresses, setMAddresses] = useState<
-    Awaited<ReturnType<typeof getAllManagedMemberships>>
+    Awaited<ReturnType<typeof getAllManagedStamps>>
   >([]);
   const versionByAddress = useMemo(
     () =>
@@ -99,7 +99,7 @@ const ManageTabContent = () => {
     // Get all memberships assosciated with wallet
     if (address && chainId) {
       setShowLoading(true);
-      getAllManagedMemberships({ web3, from: address, chainId })
+      getAllManagedStamps({ web3, from: address, chainId })
         .then((r) => {
           setMAddresses(r);
         })

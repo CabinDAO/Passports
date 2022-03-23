@@ -189,7 +189,7 @@ const HomeContent: React.FC = ({ children }) => {
               <a>Cabin</a>
             </Link>
           </CabinLink>
-          <Tab to={"memberships"}>Memberships</Tab>
+          <Tab to={"stamps"}>Stamps</Tab>
           <Tab to={"users"}>Users</Tab>
           <Tab to={"manage"}>Manage</Tab>
           {/*<Tab to={"settings"}>Settings</Tab>*/}

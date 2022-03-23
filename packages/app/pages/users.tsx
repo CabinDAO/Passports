@@ -6,7 +6,7 @@ import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import { styled } from "@cabindao/topo";
 import Layout from "../components/Layout";
 import {
-  getAllManagedMemberships,
+  getAllManagedStamps,
   getStampContract,
 } from "../components/utils";
 import axios from "axios";
@@ -52,7 +52,7 @@ const TokenId = styled("span", {
 
 const UsersTabContent = () => {
   const [mAddresses, setMAddresses] = useState<
-    Awaited<ReturnType<typeof getAllManagedMemberships>>
+    Awaited<ReturnType<typeof getAllManagedStamps>>
   >([]);
   const [membershipDetails, setMembershipDetails] =
     useState<MembershipDetailMap>({});
@@ -67,7 +67,7 @@ const UsersTabContent = () => {
     // Get all memberships assosciated with wallet
     if (address && chainId) {
       setShowLoading(true);
-      getAllManagedMemberships({ web3, chainId, from: address })
+      getAllManagedStamps({ web3, chainId, from: address })
         .then((r) => {
           setMAddresses(r);
         })

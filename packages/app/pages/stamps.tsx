@@ -34,7 +34,7 @@ import {
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import axios from "axios";
 import {
-  getAllManagedMemberships,
+  getAllManagedStamps,
   getStampContract,
   ipfsAdd,
   resolveAddress,
@@ -43,18 +43,18 @@ import IpfsImage from "../components/IpfsImage";
 import Papa from "papaparse";
 import Layout from "../components/Layout";
 
-const ViewMembershipContainer = styled("div", {
+const ViewStampContainer = styled("div", {
   display: "flex",
   flexDirection: "column",
   height: "100%",
 });
 
-const ViewMembershipFooter = styled("div", {
+const ViewStampFooter = styled("div", {
   width: "100%",
   textAlign: "right",
 });
 
-const MembershipCardContainer = styled("div", {
+const StampCardContainer = styled("div", {
   background: "$forest",
   color: "$sand",
   width: 272,
@@ -67,19 +67,19 @@ const MembershipCardContainer = styled("div", {
   borderRadius: "20px",
 });
 
-const MembershipContainer = styled("div", {
+const StampContainer = styled("div", {
   padding: "16px 0",
   flexGrow: 1,
 });
 
-const MembershipHeader = styled("div", {
+const StampHeader = styled("div", {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
   marginBottom: "16px",
 });
 
-const MembershipName = styled("h1", {
+const StampName = styled("h1", {
   fontWeight: 600,
   fontFamily: "$mono",
   textTransform: "uppercase",
@@ -88,14 +88,14 @@ const MembershipName = styled("h1", {
   margin: 0,
 });
 
-const MembershipCardDivider = styled("hr", {
+const StampCardDivider = styled("hr", {
   background: "$sprout",
   margin: "16px 0",
   height: "1px",
   border: 0,
 });
 
-const MembershipCardRow = styled("div", {
+const StampCardRow = styled("div", {
   display: "flex",
   justifyContent: "space-between",
   marginBottom: "10px",
@@ -104,7 +104,7 @@ const MembershipCardRow = styled("div", {
   alignItems: "center",
 });
 
-const MembershipCardValue = styled("span", {
+const StampCardValue = styled("span", {
   color: "#ffffff",
   fontWeight: 500,
   fontFamily: "$sans",
@@ -140,7 +140,7 @@ const ModalInputLabel = styled(`label`, {
   marginRight: 10,
 });
 
-interface IMembershipProps {
+interface IStampProps {
   address: string;
   name: string;
   symbol: string;
@@ -152,11 +152,11 @@ interface IMembershipProps {
   version: string;
 }
 
-interface IMembershipCardProps extends IMembershipProps {
+interface IStampCardProps extends IStampProps {
   customization: Record<string, string>;
 }
 
-const MembershipCard = (props: IMembershipCardProps) => {
+const StampCard = (props: IStampCardProps) => {
   const [passport, setPassport] = useState({
     address: props.address,
     name: props.name,
@@ -235,8 +235,8 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const { thumbnail, ...fields } = metadata;
   const [toastMessage, setToastMessage] = useState("");
   return (
-    <MembershipCardContainer>
-      <MembershipHeader>
+    <StampCardContainer>
+      <StampHeader>
         <CardImageContainer>
           {thumbnail ? (
             <IpfsImage cid={thumbnail} height={"100%"} width={"100%"} />
@@ -265,7 +265,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
               <Link1Icon width={20} height={20} color={theme.colors.wheat} />
             </Button>
           </Tooltip>
-          <Tooltip content={"Share membership"}>
+          <Tooltip content={"Share Stamp Ownership"}>
             <Button onClick={() => setShareIsOpen(true)} type="icon">
               <Share1Icon width={20} height={20} color={theme.colors.wheat} />
             </Button>
@@ -275,7 +275,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
               <Pencil2Icon width={20} height={20} color={theme.colors.wheat} />
             </Button>
           </Tooltip>
-          <Tooltip content={"Airdrop membership"}>
+          <Tooltip content={"Airdrop stamps"}>
             <Button onClick={() => setAirDropIsOpen(true)} type="icon">
               <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
             </Button>
@@ -299,7 +299,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
                   data: upsertData,
                 })
                 .then(() =>
-                  setToastMessage("Successfully updated membership data!")
+                  setToastMessage("Successfully updated stamp data!")
                 )
                 .catch((e) =>
                   setToastMessage(`ERROR: ${e.response?.data || e.message}`)
@@ -365,7 +365,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
             hideCloseIcon
             isOpen={shareIsOpen}
             setIsOpen={setShareIsOpen}
-            title="Grant Access to Membership"
+            title="Grant Access to Stamp"
             onConfirm={async () => {
               return Promise.all([
                 getStampContract({
@@ -487,15 +487,15 @@ const MembershipCard = (props: IMembershipCardProps) => {
             ) : null}
           </Modal>
         </div>
-      </MembershipHeader>
-      <MembershipName>
+      </StampHeader>
+      <StampName>
         {passport.name}
         <br />({passport.symbol})
-      </MembershipName>
-      <MembershipCardDivider />
-      <MembershipCardRow>
+      </StampName>
+      <StampCardDivider />
+      <StampCardRow>
         <span>BALANCE</span>
-        <MembershipCardValue>
+        <StampCardValue>
           {balance} ETH
           <Button
             type={"icon"}
@@ -517,11 +517,11 @@ const MembershipCard = (props: IMembershipCardProps) => {
           >
             <ExitIcon color={theme.colors.wheat} />
           </Button>
-        </MembershipCardValue>
-      </MembershipCardRow>
-      <MembershipCardRow>
+        </StampCardValue>
+      </StampCardRow>
+      <StampCardRow>
         <span>SUPPLY</span>
-        <MembershipCardValue>
+        <StampCardValue>
           {passport.supply}
           <Button onClick={() => setSupplyIsOpen(true)} type={"icon"}>
             <Pencil1Icon color={theme.colors.wheat} width={10} height={10} />
@@ -561,23 +561,23 @@ const MembershipCard = (props: IMembershipCardProps) => {
               type={"number"}
             />
           </Modal>
-        </MembershipCardValue>
-      </MembershipCardRow>
-      <MembershipCardRow>
+        </StampCardValue>
+      </StampCardRow>
+      <StampCardRow>
         <span>PRICE</span>
-        <MembershipCardValue>{passport.price} ETH</MembershipCardValue>
-      </MembershipCardRow>
-      <MembershipCardRow>
+        <StampCardValue>{passport.price} ETH</StampCardValue>
+      </StampCardRow>
+      <StampCardRow>
         <span>ROYALTY</span>
-        <MembershipCardValue>{passport.royaltyPcnt}%</MembershipCardValue>
-      </MembershipCardRow>
+        <StampCardValue>{passport.royaltyPcnt}%</StampCardValue>
+      </StampCardRow>
       <Toast
         isOpen={!!toastMessage}
         onClose={() => setToastMessage("")}
         message={toastMessage}
         intent={toastMessage.startsWith("ERROR") ? "error" : "success"}
       />
-    </MembershipCardContainer>
+    </StampCardContainer>
   );
 };
 
@@ -590,7 +590,7 @@ const AdditionalFieldRow = styled("div", {
   },
 });
 
-const CreateMembershipContainer = styled("div", {
+const CreateStampContainer = styled("div", {
   borderRadius: "48px",
   border: "1px solid $forest",
   background: "rgba(29, 43, 42, 0.05)",
@@ -602,7 +602,7 @@ const CreateMembershipContainer = styled("div", {
   fontWeight: 600,
 });
 
-const CreateMembershipHeader = styled("h1", {
+const CreateStampHeader = styled("h1", {
   fontSize: "24px",
   lineHeight: "31.2px",
   fontFamily: "$mono",
@@ -666,7 +666,7 @@ const UnderlinedLabel = styled("label", {
   cursor: "pointer",
 });
 
-const MembershipImageLabel = styled("label", {
+const StampImageLabel = styled("label", {
   textTransform: "uppercase",
   fontSize: "14px",
   lineHeight: "18px",
@@ -691,7 +691,7 @@ const CardImageContainer = styled("div", {
   },
 });
 
-const MembershipImageContainer = styled("div", {
+const StampImageContainer = styled("div", {
   "> span": {
     border: "1px solid $forest !important",
     width: "100% !important",
@@ -700,10 +700,10 @@ const MembershipImageContainer = styled("div", {
   },
 });
 
-const CreateMembershipModal = ({
+const CreateStampModal = ({
   onSuccess,
 }: {
-  onSuccess: (m: IMembershipProps) => void;
+  onSuccess: (m: IStampProps) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
@@ -797,13 +797,13 @@ const CreateMembershipModal = ({
     },
     onFinalConfirm,
   ];
-  const stageTitles = ["New Membership Type", "Review"];
+  const stageTitles = ["New Stamp Type", "Review"];
   const [fileLoading, setFileLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   return (
     <>
       <Button onClick={open} type="primary" disabled={!address} tone={"wheat"}>
-        Create new membership
+        Create new stamp
       </Button>
       <Modal
         hideCloseIcon
@@ -820,13 +820,13 @@ const CreateMembershipModal = ({
                 label={"Name"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter membership name"
+                placeholder="Enter stamp name"
               />
               <ModalInput
                 label={"Symbol"}
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
-                placeholder="Enter membership symbol"
+                placeholder="Enter stamp symbol"
               />
               <ShortInputContainer>
                 <ModalInput
@@ -911,7 +911,7 @@ const CreateMembershipModal = ({
                   Add extra fields
                 </UnderlinedLabel>
               </div>
-              <MembershipImageLabel>Membership Image</MembershipImageLabel>
+              <StampImageLabel>Stamp Image</StampImageLabel>
               <FileInput onClick={() => fileRef.current?.click()}>
                 <input
                   ref={fileRef}
@@ -954,10 +954,10 @@ const CreateMembershipModal = ({
               </SummaryRow>
               {cid && (
                 <>
-                  <Label>Membership Image</Label>
-                  <MembershipImageContainer>
+                  <Label>Stamp Image</Label>
+                  <StampImageContainer>
                     <IpfsImage cid={cid} height={"100%"} width={"100%"} />
-                  </MembershipImageContainer>
+                  </StampImageContainer>
                 </>
               )}
               <Label
@@ -981,8 +981,8 @@ const CreateMembershipModal = ({
   );
 };
 
-const MembershipTabContent = () => {
-  const [memberships, setMemberships] = useState<IMembershipProps[]>([]);
+const StampTabContent = () => {
+  const [stamps, setStamps] = useState<IStampProps[]>([]);
   const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
@@ -991,11 +991,11 @@ const MembershipTabContent = () => {
   >({});
   useEffect(() => {
     // Fetch the relevant redirection URLs on page load.
-    const membershipAddrs = memberships.map((m) => m.address);
-    if (memberships.length > 0) {
+    const stampAddrs = stamps.map((m) => m.address);
+    if (stamps.length > 0) {
       axios
         .post("/api/customizations", {
-          addresses: membershipAddrs,
+          addresses: stampAddrs,
         })
         .then(
           (result: {
@@ -1006,12 +1006,12 @@ const MembershipTabContent = () => {
         )
         .catch(console.error);
     }
-  }, [memberships, setCustomizations]);
+  }, [stamps, setCustomizations]);
   useEffect(() => {
     if (address && chainId) {
-      getAllManagedMemberships({ web3, chainId, from: address })
+      getAllManagedStamps({ web3, chainId, from: address })
         .then((r) => {
-          setMemberships(
+          setStamps(
             r.map(({ address, version }) => ({
               address,
               name: "",
@@ -1030,43 +1030,43 @@ const MembershipTabContent = () => {
   }, [web3, chainId, address]);
   return (
     <>
-      {memberships.length ? (
-        <ViewMembershipContainer>
-          <MembershipContainer>
-            {memberships.map((m) => (
-              <MembershipCard
+      {stamps.length ? (
+        <ViewStampContainer>
+          <StampContainer>
+            {stamps.map((m) => (
+              <StampCard
                 key={`${chainId}-${m.address}`}
                 {...m}
                 customization={customizations[m.address] || {}}
               />
             ))}
-          </MembershipContainer>
-          <ViewMembershipFooter>
-            <CreateMembershipModal
-              onSuccess={(m) => setMemberships([...memberships, m])}
+          </StampContainer>
+          <ViewStampFooter>
+            <CreateStampModal
+              onSuccess={(m) => setStamps([...stamps, m])}
             />
-          </ViewMembershipFooter>
-        </ViewMembershipContainer>
+          </ViewStampFooter>
+        </ViewStampContainer>
       ) : (
-        <CreateMembershipContainer>
-          <CreateMembershipHeader>
-            Get started using memberships
-          </CreateMembershipHeader>
-          <CreateMembershipModal
-            onSuccess={(m) => setMemberships([...memberships, m])}
+        <CreateStampContainer>
+          <CreateStampHeader>
+            Get started using stamps
+          </CreateStampHeader>
+          <CreateStampModal
+            onSuccess={(m) => setStamps([...stamps, m])}
           />
-        </CreateMembershipContainer>
+        </CreateStampContainer>
       )}
     </>
   );
 };
 
-const MembershipPage = () => {
+const StampsPage = () => {
   return (
     <Layout>
-      <MembershipTabContent />
+      <StampTabContent />
     </Layout>
   );
 };
 
-export default MembershipPage;
+export default StampsPage;

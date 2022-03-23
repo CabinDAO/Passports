@@ -24,7 +24,7 @@ const firebaseApp = initializeApp(firebaseConfig);
 
 // Get a reference to the storage service, which is used to create references in your storage bucket
 const storage = getStorage(firebaseApp);
-const file = fs.readFileSync("artifacts/contracts/Passport.sol/Passport.json");
+const file = fs.readFileSync("artifacts/contracts/Stamp.sol/Stamp.json");
 const packageJsonVersion = JSON.parse(
   fs.readFileSync("package.json").toString()
 ).version;

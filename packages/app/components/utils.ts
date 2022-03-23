@@ -48,7 +48,7 @@ export const getWeb3 = (networkName: string) =>
       : `https://eth-${networkName}.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
   );
 
-export const getAllManagedMemberships = ({
+export const getAllManagedStamps = ({
   web3, // web3 is unused for now - but we might need it when we migrate from firebase to the graph or some other blockchain indexer
   chainId,
   from,
