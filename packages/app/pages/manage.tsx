@@ -58,15 +58,15 @@ const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
 
 const ModalInputBox = styled(Box, { marginBottom: 25, marginTop: 20 });
 
-interface MembershipDetail {
+interface StampDetail {
   name: string;
   symbol: string;
   supply: number;
   price: string;
 }
 
-interface MembershipDetailMap {
-  [key: string]: MembershipDetail;
+interface StampDetailMap {
+  [key: string]: StampDetail;
 }
 
 const ManageTabContent = () => {
@@ -80,8 +80,8 @@ const ManageTabContent = () => {
       ),
     [mAddresses]
   );
-  const [membershipDetails, setMembershipDetails] =
-    useState<MembershipDetailMap>({});
+  const [stampDetails, setStampDetails] =
+    useState<StampDetailMap>({});
   const [showLoading, setShowLoading] = useState<boolean>(false);
   const [allowedUsers, setAllowedUsers] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState<boolean>(false);
@@ -96,7 +96,6 @@ const ManageTabContent = () => {
   const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
-    // Get all memberships assosciated with wallet
     if (address && chainId) {
       setShowLoading(true);
       getAllManagedStamps({ web3, from: address, chainId })
@@ -104,7 +103,6 @@ const ManageTabContent = () => {
           setMAddresses(r);
         })
         .then(() => {
-          // Get details of all private memberships to populate dropdown
           if (mAddresses.length > 0) {
             setShowLoading(true);
             const promises = mAddresses.map((mAddr) => {
@@ -118,7 +116,7 @@ const ManageTabContent = () => {
                 )
                 .then((p) => {
                   if (p[7]) {
-                    const data: MembershipDetailMap = {};
+                    const data: StampDetailMap = {};
                     data[mAddr.address] = {
                       name: p[0],
                       symbol: p[1],
@@ -134,15 +132,15 @@ const ManageTabContent = () => {
             Promise.all(promises)
               .then((values) => {
                 const data = Object.assign({}, ...values);
-                setMembershipDetails(data);
+                setStampDetails(data);
               })
               .catch((e) => {
                 setToastMessage(`ERROR: ${e.response?.data || e.message}`);
-                setMembershipDetails({});
+                setStampDetails({});
               })
               .finally(() => setShowLoading(false));
           } else {
-            setMembershipDetails({});
+            setStampDetails({});
           }
         })
         .catch((e) =>
@@ -326,20 +324,20 @@ const ManageTabContent = () => {
         </ModalInputBox>
       </Modal>
       <SmallBox>
-        {Object.keys(membershipDetails).length > 0 ? (
+        {Object.keys(stampDetails).length > 0 ? (
           <Select
-            label="Choose Private Passport:"
-            options={Object.keys(membershipDetails).map((addr) => {
+            label="Choose Private Stamp:"
+            options={Object.keys(stampDetails).map((addr) => {
               return {
                 key: addr,
-                label: `${membershipDetails[addr]["name"]} (${membershipDetails[addr]["symbol"]})`,
+                label: `${stampDetails[addr]["name"]} (${stampDetails[addr]["symbol"]})`,
               };
             })}
             disabled={false}
             onChange={(val) => setSelectedOption(val)}
           />
         ) : (
-          <div>Please create some Private Passports first!</div>
+          <div>Please create some Private Stamps first!</div>
         )}
       </SmallBox>
       {showLoading ? <Label label={`Loading...`} /> : null}
