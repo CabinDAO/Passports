@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 /**
- * The Passport contract is an ERC721 that represents member access for DAOs.
+ * The Stamp contract is an ERC721 that represents member access for DAOs.
  */
-contract Passport is ERC721, AccessControlEnumerable {
+contract Stamp is ERC721, AccessControlEnumerable {
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -21,6 +21,7 @@ contract Passport is ERC721, AccessControlEnumerable {
     bool public isPrivate;
     uint256 public royaltyPercent;
     address public royaltyRecipient;
+    uint256 public maxOwned;
     event Purchase(address owner, uint256 price, uint256 id, string uri);
 
     constructor(
@@ -30,7 +31,8 @@ contract Passport is ERC721, AccessControlEnumerable {
         uint256 _price,
         string memory _metadataHash,
         uint256 _royaltyPercent,
-        bool _isPrivate
+        bool _isPrivate,
+        uint256 _maxOwned
     ) ERC721(_name, _symbol) {
         owner = msg.sender;
         price = _price;
@@ -39,6 +41,7 @@ contract Passport is ERC721, AccessControlEnumerable {
         royaltyPercent = _royaltyPercent;
         royaltyRecipient = msg.sender;
         isPrivate = _isPrivate;
+        maxOwned = _maxOwned;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -92,22 +95,40 @@ contract Passport is ERC721, AccessControlEnumerable {
         maxSupply = value;
     }
 
-    function buy() external payable {
+    function setPrice(uint256 value) public {
         require(
-            maxSupply > mintIndex,
-            "Error, no more supply of this membership"
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to set price"
+        );
+        price = value;
+    }
+
+    function setMetadataHash(string memory value) public {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to set new metadata"
+        );
+        metadataHash = value;
+    }
+
+    function setMaxOwned(uint256 value) public {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to set price"
+        );
+        price = value;
+    }
+
+    function buy() external payable {
+        require(maxSupply > mintIndex, "Error, no more supply of this stamp");
+        require(
+            maxOwned > balanceOf(msg.sender),
+            "Error, User already owns the maximum number of this stamp"
         );
         require(msg.value == price, "Error, Token costs more");
         require(
             !isPrivate || isMinter(msg.sender),
             "Address is not allowed to mint"
-        );
-
-        uint256 cabinPayment = msg.value / 40;
-        (bool success2, ) = payable(_cabindao).call{value: cabinPayment}("");
-        require(
-            success2,
-            "Address: unable to send value, recipient may have reverted"
         );
 
         mintIndex += 1;
@@ -125,7 +146,8 @@ contract Passport is ERC721, AccessControlEnumerable {
             uint256,
             string memory,
             uint256,
-            bool
+            bool,
+            uint256
         )
     {
         return (
@@ -136,16 +158,22 @@ contract Passport is ERC721, AccessControlEnumerable {
             price,
             metadataHash,
             royaltyPercent,
-            isPrivate
+            isPrivate,
+            maxOwned
         );
     }
 
     function claimEth() public {
-        (bool success, ) = payable(owner).call{value: address(this).balance}(
-            ""
-        );
+        uint256 ownerPayment = (address(this).balance * 39) / 40;
+        uint256 cabinPayment = address(this).balance / 40;
+        (bool success, ) = payable(owner).call{value: ownerPayment}("");
         require(
             success,
+            "Address: unable to send value, recipient may have reverted"
+        );
+        (bool success2, ) = payable(_cabindao).call{value: cabinPayment}("");
+        require(
+            success2,
             "Address: unable to send value, recipient may have reverted"
         );
     }

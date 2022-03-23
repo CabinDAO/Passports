@@ -3,7 +3,7 @@ import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
 import { getWeb3 } from "../../components/utils";
 import { getAbiFromJson, networkIdByName } from "../../components/constants";
-import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
+import { getAbi, getVersionByAddress } from "../../components/firebase";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
@@ -11,12 +11,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const { address, network, tokenId, signature, signatureMessage } =
         typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       const web3 = getWeb3(network);
-      const contract = new web3.eth.Contract(
-        getAbiFromJson(passportJson),
-        address
-      );
-      return (contract.methods.symbol() as ContractSendMethod)
-        .call()
+      return getVersionByAddress(address)
+        .then((version) =>
+          getAbi("stamp", version).then((stampJson) => {
+            const contract = new web3.eth.Contract(
+              getAbiFromJson(stampJson),
+              address
+            );
+            return (contract.methods.symbol() as ContractSendMethod).call();
+          })
+        )
         .then((description) => {
           const body = {
             contractAddress: address,
@@ -25,7 +29,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             signature,
             signatureMessage,
             platform: "apple",
-            pass: {   
+            pass: {
               description,
             },
           };
@@ -36,7 +40,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           });
         })
         .then((r) => {
-          console.log("Successfully created ethpass", r.data.id, 'at', r.data.fileURL);
+          console.log(
+            "Successfully created ethpass",
+            r.data.id,
+            "at",
+            r.data.fileURL
+          );
           return res
             .status(200)
             .json({ fileURL: r.data.fileURL, id: r.data.id });

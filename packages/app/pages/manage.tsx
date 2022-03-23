@@ -10,13 +10,15 @@ import {
 } from "@cabindao/topo";
 import { useEffect, useMemo, useState } from "react";
 import type { ContractSendMethod } from "web3-eth-contract";
-import { getAbiFromJson } from "../components/constants";
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
-import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
 import Papa from "papaparse";
-import { getAllManagedMemberships, resolveAddress } from "../components/utils";
+import {
+  getAllManagedMemberships,
+  resolveAddress,
+  getStampContract,
+} from "../components/utils";
 import Layout from "../components/Layout";
 
 const SmallBox = styled(Box, {
@@ -68,7 +70,16 @@ interface MembershipDetailMap {
 }
 
 const ManageTabContent = () => {
-  const [mAddresses, setMAddresses] = useState<string[]>([]);
+  const [mAddresses, setMAddresses] = useState<
+    Awaited<ReturnType<typeof getAllManagedMemberships>>
+  >([]);
+  const versionByAddress = useMemo(
+    () =>
+      Object.fromEntries(
+        mAddresses.map(({ address, version }) => [address, version])
+      ),
+    [mAddresses]
+  );
   const [membershipDetails, setMembershipDetails] =
     useState<MembershipDetailMap>({});
   const [showLoading, setShowLoading] = useState<boolean>(false);
@@ -89,7 +100,7 @@ const ManageTabContent = () => {
     if (address && chainId) {
       setShowLoading(true);
       getAllManagedMemberships({ web3, from: address, chainId })
-        .then((r: string[]) => {
+        .then((r) => {
           setMAddresses(r);
         })
         .then(() => {
@@ -97,16 +108,18 @@ const ManageTabContent = () => {
           if (mAddresses.length > 0) {
             setShowLoading(true);
             const promises = mAddresses.map((mAddr) => {
-              const contract = new web3.eth.Contract(
-                getAbiFromJson(passportJson)
-              );
-              contract.options.address = mAddr;
-              return (contract.methods.get() as ContractSendMethod)
-                .call()
+              return getStampContract({
+                web3,
+                address: mAddr.address,
+                version: mAddr.version,
+              })
+                .then((contract) =>
+                  (contract.methods.get() as ContractSendMethod).call()
+                )
                 .then((p) => {
                   if (p[7]) {
                     const data: MembershipDetailMap = {};
-                    data[mAddr] = {
+                    data[mAddr.address] = {
                       name: p[0],
                       symbol: p[1],
                       supply: p[2] - p[3],
@@ -143,19 +156,24 @@ const ManageTabContent = () => {
     // Get list of allowed minters for selected private passports
     if (selectedOption) {
       setShowLoading(true);
-      const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-      contract.options.address = selectedOption;
-      (contract.methods.getAllowedMinters() as ContractSendMethod)
-        .call({
-          from: address,
-        })
-        .then((addrs) => setAllowedUsers(addrs))
+      getStampContract({
+        web3,
+        address: selectedOption,
+        version: versionByAddress[selectedOption],
+      })
+        .then((contract) =>
+          (contract.methods.getAllowedMinters() as ContractSendMethod)
+            .call({
+              from: address,
+            })
+            .then((addrs) => setAllowedUsers(addrs))
+        )
         .catch((e) =>
           setToastMessage(`ERROR: ${e.response?.data || e.message}`)
         )
         .finally(() => setShowLoading(false));
     }
-  }, [selectedOption, setAllowedUsers, web3, address]);
+  }, [selectedOption, setAllowedUsers, web3, address, versionByAddress]);
 
   return (
     <>
@@ -164,18 +182,23 @@ const ManageTabContent = () => {
         setIsOpen={setAddOpen}
         title="Add address"
         onConfirm={() => {
-          const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-          contract.options.address = selectedOption;
-          return resolveAddress(sAddr, web3)
+          return Promise.all([
+            resolveAddress(sAddr, web3),
+            getStampContract({
+              web3,
+              address: selectedOption,
+              version: versionByAddress[selectedOption],
+            }),
+          ])
             .then(
-              (addr) =>
+              ([addr, contract]) =>
                 new Promise<void>((resolve, reject) =>
                   contract.methods
                     .addMinters([addr])
                     .send({
                       from: address,
                     })
-                    .on("receipt", (receipt: TransactionReceipt) => {
+                    .on("receipt", () => {
                       setAllowedUsers([...allowedUsers, sAddr]);
                       setAddOpen(false);
                       setSAddr("");
@@ -198,11 +221,16 @@ const ManageTabContent = () => {
         setIsOpen={setRemoveOpen}
         title="Remove address"
         onConfirm={() => {
-          const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-          contract.options.address = selectedOption;
-          return resolveAddress(sAddr, web3)
+          return Promise.all([
+            resolveAddress(sAddr, web3),
+            getStampContract({
+              web3,
+              address: selectedOption,
+              version: versionByAddress[selectedOption],
+            }),
+          ])
             .then(
-              (addr) =>
+              ([addr, contract]) =>
                 new Promise<void>((resolve, reject) =>
                   contract.methods
                     .removeMinters([addr])
@@ -235,27 +263,31 @@ const ManageTabContent = () => {
         setIsOpen={setBulkAddOpen}
         title="Add addresses"
         onConfirm={() => {
-          const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-          contract.options.address = selectedOption;
-          return Promise.all(
-            bulkAddrList.map((addr) => resolveAddress(addr, web3))
-          )
-            .then(
-              (addrList) =>
-                new Promise<void>((resolve, reject) =>
-                  contract.methods
-                    .addMinters(addrList)
-                    .send({
-                      from: address,
-                    })
-                    .on("receipt", (receipt: TransactionReceipt) => {
-                      setAllowedUsers([...bulkAddrList, ...allowedUsers]);
-                      setBulkAddOpen(false);
-                      setBulkAddrList([]);
-                      resolve();
-                    })
-                    .on("error", reject)
-                )
+          return getStampContract({
+            web3,
+            address: selectedOption,
+            version: versionByAddress[selectedOption],
+          })
+            .then((contract) =>
+              Promise.all(
+                bulkAddrList.map((addr) => resolveAddress(addr, web3))
+              ).then(
+                (addrList) =>
+                  new Promise<void>((resolve, reject) =>
+                    contract.methods
+                      .addMinters(addrList)
+                      .send({
+                        from: address,
+                      })
+                      .on("receipt", (receipt: TransactionReceipt) => {
+                        setAllowedUsers([...bulkAddrList, ...allowedUsers]);
+                        setBulkAddOpen(false);
+                        setBulkAddrList([]);
+                        resolve();
+                      })
+                      .on("error", reject)
+                  )
+              )
             )
             .catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
         }}

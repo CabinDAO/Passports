@@ -21,7 +21,7 @@ describe("Stamp", function () {
 
   describe("Deployment", function () {
     it("Should set the right owner", async function () {
-      const factoryContract = await ethers.getContractFactory("Passport", dao1);
+      const factoryContract = await ethers.getContractFactory("Stamp", dao1);
       const contract = await factoryContract.deploy(
         "Creator Cabins",
         "CC",
@@ -29,17 +29,19 @@ describe("Stamp", function () {
         utils.parseEther("1.0"),
         "0xdeadbeef",
         0,
-        false
+        false,
+        1
       );
       await contract.deployed();
       expect(await contract.owner()).to.equal(await dao1?.getAddress());
     });
 
-    it("Should forward royalty to cabin address", async function () {
+    it("Should forward funds to cabin and owner address on claim", async function () {
       const cabinDao = await ethers.getSigner(CABIN_DAO);
       const cabinBalance = await cabinDao.getBalance();
 
-      const factoryContract = await ethers.getContractFactory("Passport", dao1);
+      if (!dao1) fail("dao1 not properly set");
+      const factoryContract = await ethers.getContractFactory("Stamp", dao1);
       const price = utils.parseEther("40.0");
       const contract = await factoryContract.deploy(
         "Creator Cabins",
@@ -48,22 +50,33 @@ describe("Stamp", function () {
         price,
         "0xdeadbeef",
         0,
-        false
+        false,
+        1
       );
       await contract.deployed();
-      if (!member1) fail('member1 not properly set');
+      if (!member1) fail("member1 not properly set");
       const contractToBuy = contract.connect(member1);
-      const receipt = await contractToBuy.buy({
-        from: await member1?.getAddress(),
+      const buyTx = await contractToBuy.buy({
+        from: await member1.getAddress(),
         value: price,
       });
-      await receipt.wait();
+      await buyTx.wait();
+      const ownerBalance = await dao1.getBalance();
+      const contractToClaim = contract.connect(dao1);
+      const claimTx = await contractToClaim.claimEth({
+        from: await dao1.getAddress(),
+      })
+      const claimReceipt = await claimTx.wait();
+      const gasFee = claimReceipt.effectiveGasPrice.mul(claimReceipt.cumulativeGasUsed);
 
-      expect(await waffle.provider.getBalance(contract.address)).to.equal(
+      expect((await dao1.getBalance()).sub(ownerBalance).add(gasFee)).to.equal(
         utils.parseEther("39.0")
       );
       expect((await cabinDao.getBalance()).sub(cabinBalance)).to.equal(
         utils.parseEther("1.0")
+      );
+      expect(await waffle.provider.getBalance(contract.address)).to.equal(
+        utils.parseEther("0.0")
       );
     });
   });

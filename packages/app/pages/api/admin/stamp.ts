@@ -14,12 +14,17 @@ import { firebaseConfig } from "../../../components/constants";
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
     case "POST":
-      const { address, contract, chain } = req.body;
+      const { address, contract, chain, version } = req.body;
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
-      const urlCol = collection(db, "admin_stamps");
-      const contractDoc = doc(urlCol);
-      return setDoc(contractDoc, { address, contract, chain })
+      const adminStampsCol = collection(db, "admin_stamps");
+      const versionCol = collection(db, "versions");
+      const contractDoc = doc(adminStampsCol);
+      const versionDoc = doc(versionCol);
+      return Promise.all([
+        setDoc(contractDoc, { address, contract, chain }),
+        setDoc(versionDoc, { address: contract, version, contract: "stamp", chain }),
+      ])
         .then(() => {
           res.status(200).json({ success: true });
         })

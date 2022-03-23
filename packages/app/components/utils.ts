@@ -2,6 +2,7 @@ import axios from "axios";
 import Web3 from "web3";
 // @ts-ignore They don't have a types file available -.-
 import namehash from "@ensdomains/eth-ens-namehash";
+import { getAbiFromJson } from "./constants";
 
 export const ipfsAdd = (s: string | Blob) => {
   const formData = new FormData();
@@ -57,6 +58,29 @@ export const getAllManagedMemberships = ({
   from: string;
 }) => {
   return axios
-    .get(`/api/admin/stamps?address=${from}&chain=${chainId}`)
-    .then((s) => s.data.addresses as string[]);
+    .get<{ contracts: { address: string; version: string }[] }>(
+      `/api/admin/stamps?address=${from}&chain=${chainId}`
+    )
+    .then((s) => s.data.contracts);
 };
+
+const versionCache: Record<string, Parameters<typeof getAbiFromJson>[0]> = {};
+
+export const getStampContract = ({
+  web3,
+  address,
+  version,
+}: {
+  web3: Web3;
+  address: string;
+  version: string;
+}) =>
+  (versionCache[version]
+    ? Promise.resolve(versionCache[version])
+    : axios.get(`/api/abi?contract=stamp&version=${version}`).then(r => r.data)
+  ).then((r) => {
+    versionCache[version] = r;
+    const contract = new web3.eth.Contract(getAbiFromJson(r));
+    contract.options.address = address;
+    return contract;
+  });

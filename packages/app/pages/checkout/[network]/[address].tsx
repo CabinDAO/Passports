@@ -1,13 +1,11 @@
 import { GetServerSideProps } from "next";
 import { getAbiFromJson, networkIdByName } from "../../../components/constants";
 import type { ContractSendMethod } from "web3-eth-contract";
-import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
-import BN from "bn.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import IpfsImage from "../../../components/IpfsImage";
 import { Checkbox, Label, styled } from "@cabindao/topo";
-import { getWeb3 } from "../../../components/utils";
+import { getStampContract, getWeb3 } from "../../../components/utils";
 import {
   useAddress,
   useChainId,
@@ -15,6 +13,7 @@ import {
   Web3Provider,
 } from "../../../components/Web3Context";
 import QRCode from "qrcode";
+import { getVersionByAddress } from "../../../components/firebase";
 
 type QueryParams = {
   network: string;
@@ -147,6 +146,7 @@ type PageProps = {
   price: string;
   metadataHash: string;
   network: string;
+  version: string;
 };
 
 const CheckoutPageContent = ({
@@ -157,6 +157,7 @@ const CheckoutPageContent = ({
   address,
   metadataHash,
   network,
+  version,
 }: PageProps) => {
   const web3 = useWeb3();
   const account = useAddress();
@@ -202,35 +203,39 @@ const CheckoutPageContent = ({
   const onBuy = useCallback(() => {
     setError("");
     setLoading(true);
-    const contract = new web3.eth.Contract(
-      getAbiFromJson(passportJson),
-      address
-    );
-    return new Promise<string>((resolve, reject) =>
-      (contract.methods.buy() as ContractSendMethod)
-        .send({
-          from: account,
-          value: web3.utils.toWei(price, "ether"),
-        })
-        .on("receipt", (receipt) => {
-          const tokenId =
-            (receipt.events?.["Transfer"]?.returnValues?.tokenId as string) ||
-            "";
-          axios
-            .post("/api/stamp", {
-              token: tokenId,
-              chain: chainId,
-              address: account,
-              contract: address,
-            })
-            .then(() => {
-              setLoading(false);
-              setSupply(supply - 1);
-              resolve(tokenId);
-            });
-        })
-        .on("error", reject)
-    )
+    return getStampContract({
+      web3,
+      address,
+      version,
+    })
+      .then(
+        (contract) =>
+          new Promise<string>((resolve, reject) =>
+            (contract.methods.buy() as ContractSendMethod)
+              .send({
+                from: account,
+                value: web3.utils.toWei(price, "ether"),
+              })
+              .on("receipt", (receipt) => {
+                const tokenId =
+                  (receipt.events?.["Transfer"]?.returnValues
+                    ?.tokenId as string) || "";
+                axios
+                  .post("/api/stamp", {
+                    token: tokenId,
+                    chain: chainId,
+                    address: account,
+                    contract: address,
+                  })
+                  .then(() => {
+                    setLoading(false);
+                    setSupply(supply - 1);
+                    resolve(tokenId);
+                  });
+              })
+              .on("error", reject)
+          )
+      )
       .then((tokenId) => {
         if (generateApplePass && tokenId) {
           const signatureMessage = `Give Passports permission to generate an Apple Wallet Pass for token ${tokenId}`;
@@ -271,6 +276,7 @@ const CheckoutPageContent = ({
     generateApplePass,
     account,
     chainId,
+    version,
   ]);
   return (
     <AppContainer>
@@ -357,20 +363,29 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
 ) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
-  const contract = new web3.eth.Contract(getAbiFromJson(passportJson), address);
-  return (contract.methods.get() as ContractSendMethod)
-    .call()
-    .then((p) => ({
-      props: {
+  return getVersionByAddress(address)
+    .then((version) =>
+      getStampContract({
+        web3,
         address,
-        name: p[0],
-        symbol: p[1],
-        supply: p[2] - p[3],
-        price: web3.utils.fromWei(p[4], "ether"),
-        metadataHash: p[5],
-        network,
-      },
-    }))
+        version,
+      })
+        .then((contract) =>
+          (contract.methods.get() as ContractSendMethod).call()
+        )
+        .then((p) => ({
+          props: {
+            address,
+            name: p[0],
+            symbol: p[1],
+            supply: p[2] - p[3],
+            price: web3.utils.fromWei(p[4], "ether"),
+            metadataHash: p[5],
+            network,
+            version,
+          },
+        }))
+    )
     .catch((e) => {
       console.error(e);
       return {
@@ -382,6 +397,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
           price: "0",
           supply: 0,
           metadataHash: "",
+          version: "0.0.0",
         },
       };
     });

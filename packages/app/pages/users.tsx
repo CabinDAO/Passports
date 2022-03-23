@@ -1,12 +1,14 @@
 import { Box, Label, Select } from "@cabindao/topo";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ContractSendMethod } from "web3-eth-contract";
 import { getAbiFromJson } from "../components/constants";
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
-import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { styled } from "@cabindao/topo";
 import Layout from "../components/Layout";
-import { getAllManagedMemberships } from "../components/utils";
+import {
+  getAllManagedMemberships,
+  getStampContract,
+} from "../components/utils";
 
 interface MembershipDetail {
   name: string;
@@ -44,7 +46,16 @@ const TableData = styled("td", {
 });
 
 const UsersTabContent = () => {
-  const [mAddresses, setMAddresses] = useState<string[]>([]);
+  const [mAddresses, setMAddresses] = useState<
+    Awaited<ReturnType<typeof getAllManagedMemberships>>
+  >([]);
+  const versionByAddress = useMemo(
+    () =>
+      Object.fromEntries(
+        mAddresses.map(({ address, version }) => [address, version])
+      ),
+    [mAddresses]
+  );
   const [membershipDetails, setMembershipDetails] =
     useState<MembershipDetailMap>({});
   const [users, setUsers] = useState<{ [key: string]: number }>({});
@@ -70,50 +81,58 @@ const UsersTabContent = () => {
   useEffect(() => {
     if (selectedOption) {
       setShowLoading(true);
-      const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-      contract.options.address = selectedOption;
-      // Get tokenIds which have been bought
-      contract
-        .getPastEvents("Transfer", {
-          filter: {
-            _from: "0x0000000000000000000000000000000000000000",
-          },
-          fromBlock: 0,
-        })
-        .then((events) => {
-          const tokenIds = events.map((event) => event.returnValues.tokenId);
-          return tokenIds;
-        })
-        .then((tokenIds) => {
-          // Get the owner of each of these bought tokens
-          const ownerPromises = tokenIds.map((tokenId) => {
-            return contract.methods.ownerOf(tokenId).call();
-          });
-          Promise.all(ownerPromises)
-            .then((ownerAddrs) => {
-              const owners: { [key: string]: number } = {};
-              ownerAddrs.forEach((ownerAddr) => {
-                owners[ownerAddr] = owners[ownerAddr] + 1 || 1;
-              });
-              setUsers(owners);
-            })
-            .finally(() => setShowLoading(false));
-        });
+      getStampContract({
+        web3,
+        address: selectedOption,
+        version: versionByAddress[selectedOption],
+      }).then((contract) =>
+        contract
+          .getPastEvents("Transfer", {
+            filter: {
+              _from: "0x0000000000000000000000000000000000000000",
+            },
+            fromBlock: 0,
+          })
+
+          .then((events) => {
+            const tokenIds = events.map((event) => event.returnValues.tokenId);
+            return tokenIds;
+          })
+          .then((tokenIds) => {
+            // Get the owner of each of these bought tokens
+            const ownerPromises = tokenIds.map((tokenId) => {
+              return contract.methods.ownerOf(tokenId).call();
+            });
+            Promise.all(ownerPromises)
+              .then((ownerAddrs) => {
+                const owners: { [key: string]: number } = {};
+                ownerAddrs.forEach((ownerAddr) => {
+                  owners[ownerAddr] = owners[ownerAddr] + 1 || 1;
+                });
+                setUsers(owners);
+              })
+              .finally(() => setShowLoading(false));
+          })
+      );
     }
-  }, [selectedOption, setUsers, web3]);
+  }, [selectedOption, setUsers, web3, versionByAddress]);
 
   useEffect(() => {
     // Get details of all memberships to populate dropdown
     if (mAddresses.length > 0) {
       setShowLoading(true);
       const promises = mAddresses.map((mAddr) => {
-        const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-        contract.options.address = mAddr;
-        return (contract.methods.get() as ContractSendMethod)
-          .call()
+        return getStampContract({
+          web3,
+          address: mAddr.address,
+          version: mAddr.version,
+        })
+          .then((contract) =>
+            (contract.methods.get() as ContractSendMethod).call()
+          )
           .then((p) => {
             const data: MembershipDetailMap = {};
-            data[mAddr] = {
+            data[mAddr.address] = {
               name: p[0],
               symbol: p[1],
               supply: p[2],

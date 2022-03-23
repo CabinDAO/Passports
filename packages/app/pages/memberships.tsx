@@ -20,7 +20,6 @@ import {
   Tooltip,
 } from "@cabindao/topo";
 import Image from "next/image";
-import passportJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Passport.sol/Passport.json";
 import { getAbiFromJson, networkNameById } from "../components/constants";
 import ClipSVG from "../components/icons/Clip.svg";
 import {
@@ -36,12 +35,12 @@ import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import axios from "axios";
 import {
   getAllManagedMemberships,
+  getStampContract,
   ipfsAdd,
   resolveAddress,
 } from "../components/utils";
 import IpfsImage from "../components/IpfsImage";
 import Papa from "papaparse";
-import BN from "bn.js";
 import Layout from "../components/Layout";
 
 const ViewMembershipContainer = styled("div", {
@@ -150,6 +149,7 @@ interface IMembershipProps {
   metadataHash: string;
   royaltyPcnt: number;
   isPrivate: boolean;
+  version: string;
 }
 
 interface IMembershipCardProps extends IMembershipProps {
@@ -165,6 +165,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
     price: props.price,
     metadataHash: props.metadataHash,
     royaltyPcnt: props.royaltyPcnt,
+    version: props.version,
   });
   const web3 = useWeb3();
   const address = useAddress();
@@ -188,20 +189,28 @@ const MembershipCard = (props: IMembershipCardProps) => {
   const chainId = useChainId();
   useEffect(() => {
     if (!passport.name) {
-      const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-      contract.options.address = passport.address;
-      (contract.methods.get() as ContractSendMethod).call().then((p) => {
-        setPassport({
-          address: passport.address,
-          name: p[0],
-          symbol: p[1],
-          supply: p[2] - p[3],
-          price: web3.utils.fromWei(p[4], "ether"),
-          metadataHash: p[5],
-          royaltyPcnt: p[6] / 100,
+      getStampContract({
+        web3,
+        address: passport.address,
+        version: passport.version,
+      })
+        .then((contract) =>
+          (contract.methods.get() as ContractSendMethod).call()
+        )
+        .then((p) => {
+          const supply = Number(p[2]) - Number(p[3]);
+          setPassport({
+            address: passport.address,
+            name: p[0],
+            symbol: p[1],
+            supply,
+            price: web3.utils.fromWei(p[4], "ether"),
+            metadataHash: p[5],
+            royaltyPcnt: p[6] / 100,
+            version: passport.version,
+          });
+          setNewSupply(supply);
         });
-        setNewSupply(Number(p[2]));
-      });
     }
   }, [setPassport, passport, web3, setNewSupply]);
   useEffect(() => {
@@ -358,12 +367,15 @@ const MembershipCard = (props: IMembershipCardProps) => {
             setIsOpen={setShareIsOpen}
             title="Grant Access to Membership"
             onConfirm={async () => {
-              const contract = new web3.eth.Contract(
-                getAbiFromJson(passportJson)
-              );
-              contract.options.address = passport.address;
-              return resolveAddress(userAddress, web3)
-                .then((ethAddress) =>
+              return Promise.all([
+                getStampContract({
+                  web3,
+                  address: passport.address,
+                  version: passport.version,
+                }),
+                resolveAddress(userAddress, web3),
+              ])
+                .then(([contract, ethAddress]) =>
                   ethAddress
                     ? new Promise<void>((resolve, reject) =>
                         contract.methods
@@ -375,6 +387,7 @@ const MembershipCard = (props: IMembershipCardProps) => {
                                 address: ethAddress,
                                 contract: passport.address,
                                 chain: chainId,
+                                version: passport.version,
                               })
                               .then(() => {
                                 setUserAddress("");
@@ -402,35 +415,37 @@ const MembershipCard = (props: IMembershipCardProps) => {
             setIsOpen={setAirDropIsOpen}
             title="Airdrop Passports"
             onConfirm={() => {
-              const contract = new web3.eth.Contract(
-                getAbiFromJson(passportJson)
-              );
-              contract.options.address = passport.address;
-              return Promise.all(
-                airdropAddrList.map((addr) => resolveAddress(addr, web3))
-              )
-                .then(
-                  (addrList) =>
-                    new Promise<void>((resolve, reject) =>
-                      contract.methods
-                        .airdrop(addrList)
-                        .send({
-                          from: address,
-                        })
-                        .on("receipt", (receipt: TransactionReceipt) => {
-                          setToastMessage("Airdrop Successful!");
-                          setPassport({
-                            ...passport,
-                            supply: passport.supply - addrList.length,
-                          });
-                          setAirDropIsOpen(false);
-                          resolve();
-                        })
-                        .on("error", (e: Error) => {
-                          setToastMessage(`ERROR: ${e.message}`);
-                          reject(e);
-                        })
-                    )
+              return getStampContract({
+                web3,
+                address: passport.address,
+                version: passport.version,
+              })
+                .then((contract) =>
+                  Promise.all(
+                    airdropAddrList.map((addr) => resolveAddress(addr, web3))
+                  ).then(
+                    (addrList) =>
+                      new Promise<void>((resolve, reject) =>
+                        contract.methods
+                          .airdrop(addrList)
+                          .send({
+                            from: address,
+                          })
+                          .on("receipt", (receipt: TransactionReceipt) => {
+                            setToastMessage("Airdrop Successful!");
+                            setPassport({
+                              ...passport,
+                              supply: passport.supply - addrList.length,
+                            });
+                            setAirDropIsOpen(false);
+                            resolve();
+                          })
+                          .on("error", (e: Error) => {
+                            setToastMessage(`ERROR: ${e.message}`);
+                            reject(e);
+                          })
+                      )
+                  )
                 )
                 .catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
             }}
@@ -486,16 +501,18 @@ const MembershipCard = (props: IMembershipCardProps) => {
             type={"icon"}
             disabled={balance === "0"}
             onClick={() => {
-              const contract = new web3.eth.Contract(
-                getAbiFromJson(passportJson)
+              getStampContract({
+                web3,
+                address: passport.address,
+                version: passport.version,
+              }).then((contract) =>
+                (contract.methods.claimEth() as ContractSendMethod)
+                  .send({ from: address })
+                  .on("receipt", () => {
+                    setToastMessage(`Successfully Claimed ${balance} ETH!`);
+                    setBalance("0");
+                  })
               );
-              contract.options.address = passport.address;
-              (contract.methods.claimEth() as ContractSendMethod)
-                .send({ from: address })
-                .on("receipt", () => {
-                  setToastMessage(`Successfully Claimed ${balance} ETH!`);
-                  setBalance("0");
-                });
             }}
           >
             <ExitIcon color={theme.colors.wheat} />
@@ -515,22 +532,25 @@ const MembershipCard = (props: IMembershipCardProps) => {
             setIsOpen={setSupplyIsOpen}
             title="Change Supply"
             onConfirm={() => {
-              const contract = new web3.eth.Contract(
-                getAbiFromJson(passportJson)
-              );
-              contract.options.address = passport.address;
-              return new Promise<void>((resolve, reject) =>
-                contract.methods
-                  .setSupply(newSupply)
-                  .send({ from: address })
-                  .on("receipt", () => {
-                    setPassport({
-                      ...passport,
-                      supply: newSupply,
-                    });
-                    resolve();
-                  })
-                  .on("error", reject)
+              getStampContract({
+                web3,
+                address: passport.address,
+                version: passport.version,
+              }).then(
+                (contract) =>
+                  new Promise<void>((resolve, reject) =>
+                    contract.methods
+                      .setSupply(newSupply)
+                      .send({ from: address })
+                      .on("receipt", () => {
+                        setPassport({
+                          ...passport,
+                          supply: newSupply,
+                        });
+                        resolve();
+                      })
+                      .on("error", reject)
+                  )
               );
             }}
           >
@@ -713,38 +733,48 @@ const CreateMembershipModal = ({
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price, "ether");
       const royalty = (Number(royaltyPcnt) * 100) | 0;
-      const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
-      return contract
-        .deploy({
-          data: passportJson.bytecode,
-          arguments: [
-            name,
-            symbol,
-            quantity,
-            weiPrice,
-            metadataHash,
-            royalty,
-            isPrivate,
-          ],
-        })
-        .send({ from: address })
-        .then((c) => {
-          const contract = c.options.address;
-          return axios
-            .post(`/api/admin/stamp`, { address, contract, chain: chainId })
-            .then(() =>
-              onSuccess({
-                address: contract,
-                symbol,
-                name,
-                supply: Number(quantity),
-                price,
-                metadataHash,
-                royaltyPcnt: royalty / 100,
-                isPrivate,
+      return axios.get(`/api/abi?contract=stamp`).then((r) => {
+        const passportJson = r.data;
+        const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
+        contract
+          .deploy({
+            data: passportJson.bytecode,
+            arguments: [
+              name,
+              symbol,
+              quantity,
+              weiPrice,
+              metadataHash,
+              royalty,
+              isPrivate,
+              1,
+            ],
+          })
+          .send({ from: address })
+          .then((c) => {
+            const contract = c.options.address;
+            return axios
+              .post(`/api/admin/stamp`, {
+                address,
+                contract,
+                chain: chainId,
+                version: passportJson.version,
               })
-            );
-        });
+              .then(() =>
+                onSuccess({
+                  address: contract,
+                  symbol,
+                  name,
+                  supply: Number(quantity),
+                  price,
+                  metadataHash,
+                  royaltyPcnt: royalty / 100,
+                  isPrivate,
+                  version: passportJson.version as string,
+                })
+              );
+          });
+      });
     });
   }, [
     symbol,
@@ -982,7 +1012,7 @@ const MembershipTabContent = () => {
       getAllManagedMemberships({ web3, chainId, from: address })
         .then((r) => {
           setMemberships(
-            r.map((address) => ({
+            r.map(({ address, version }) => ({
               address,
               name: "",
               symbol: "",
@@ -991,6 +1021,7 @@ const MembershipTabContent = () => {
               metadataHash: "",
               royaltyPcnt: 0,
               isPrivate: false,
+              version,
             }))
           );
         })

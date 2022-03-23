@@ -40,6 +40,9 @@ jobs:
       - name: Deploy to Goerli
         run: npm run migrate:goerli
         working-directory: packages/contracts
+      - name: Deploy to Firebase
+        run: npm run deploy
+        working-directory: packages/contracts
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
