@@ -3,6 +3,7 @@ import Web3 from "web3";
 // @ts-ignore They don't have a types file available -.-
 import namehash from "@ensdomains/eth-ens-namehash";
 import { getAbiFromJson } from "./constants";
+import b58 from "base-58";
 
 export const ipfsAdd = (s: string | Blob) => {
   const formData = new FormData();
@@ -18,6 +19,14 @@ export const ipfsAdd = (s: string | Blob) => {
       }
     )
     .then((r) => r.data.Hash);
+};
+
+export const ipfsHashToBytes32 = (s: string) => `0x${b58.decode(s).slice(2).toString('hex')}`;
+export const bytes32ToIpfsHash = (s: string) =>  {
+  const hashHex = "1220" + s.slice(2)
+  const hashBytes = Buffer.from(hashHex, 'hex');
+  const hashStr = b58.encode(hashBytes)
+  return hashStr
 };
 
 export const resolveAddress = (addr: string, web3: Web3) =>

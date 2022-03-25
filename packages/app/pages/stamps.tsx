@@ -34,9 +34,11 @@ import {
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import axios from "axios";
 import {
+  bytes32ToIpfsHash,
   getAllManagedStamps,
   getStampContract,
   ipfsAdd,
+  ipfsHashToBytes32,
   resolveAddress,
 } from "../components/utils";
 import IpfsImage from "../components/IpfsImage";
@@ -263,7 +265,7 @@ const StampCard = ({customization, ...props}: IStampCardProps) => {
             symbol: p[1],
             supply,
             price: web3.utils.fromWei(p[4], "ether"),
-            metadataHash: p[5],
+            metadataHash: bytes32ToIpfsHash(p[5]),
             royalty: p[6] / 100,
             version: stamp.version,
             isPrivate: p[7],
@@ -758,7 +760,7 @@ const CreateStampModal = ({
               symbol,
               quantity,
               weiPrice,
-              metadataHash,
+              ipfsHashToBytes32(metadataHash),
               royalty,
               isPrivate,
               1,

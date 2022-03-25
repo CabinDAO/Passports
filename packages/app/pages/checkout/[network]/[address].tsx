@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import IpfsImage from "../../../components/IpfsImage";
 import { Checkbox, Label, styled } from "@cabindao/topo";
-import { getStampContract, getWeb3 } from "../../../components/utils";
+import { bytes32ToIpfsHash, getStampContract, getWeb3 } from "../../../components/utils";
 import {
   useAddress,
   useChainId,
@@ -379,7 +379,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
             symbol: p[1],
             supply: p[2] - p[3],
             price: web3.utils.fromWei(p[4], "ether"),
-            metadataHash: p[5],
+            metadataHash: bytes32ToIpfsHash(p[5]),
             network,
             version,
           },

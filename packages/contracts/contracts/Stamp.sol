@@ -17,7 +17,7 @@ contract Stamp is ERC721, AccessControlEnumerable {
     uint256 public price;
     uint256 public mintIndex;
     uint256 public maxSupply;
-    string public metadataHash;
+    bytes32 public metadataHash;
     bool public isPrivate;
     uint256 public royaltyPercent;
     address public royaltyRecipient;
@@ -29,7 +29,7 @@ contract Stamp is ERC721, AccessControlEnumerable {
         string memory _symbol,
         uint256 _supply,
         uint256 _price,
-        string memory _metadataHash,
+        bytes32 _metadataHash,
         uint256 _royaltyPercent,
         bool _isPrivate,
         uint256 _maxOwned
@@ -103,7 +103,7 @@ contract Stamp is ERC721, AccessControlEnumerable {
         price = value;
     }
 
-    function setMetadataHash(string memory value) public {
+    function setMetadataHash(bytes32 value) public {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to set new metadata"
@@ -131,8 +131,11 @@ contract Stamp is ERC721, AccessControlEnumerable {
             "Address is not allowed to mint"
         );
 
-        mintIndex += 1;
-        _mint(msg.sender, mintIndex);
+        _mint(msg.sender, ++mintIndex);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return string(abi.encodePacked("https://passports.creatorcabins.com/api/stamp?address=", address(this), "&token="));
     }
 
     function get()
@@ -144,7 +147,7 @@ contract Stamp is ERC721, AccessControlEnumerable {
             uint256,
             uint256,
             uint256,
-            string memory,
+            bytes32,
             uint256,
             bool,
             uint256
@@ -202,7 +205,7 @@ contract Stamp is ERC721, AccessControlEnumerable {
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to add accounts as minters"
         );
-        for (uint256 i; i < accounts.length; i++) {
+        for (uint256 i; i < accounts.length; ++i) {
             grantRole(MINTER_ROLE, accounts[i]);
         }
     }
@@ -216,7 +219,7 @@ contract Stamp is ERC721, AccessControlEnumerable {
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Must be admin role to remove accounts as minters"
         );
-        for (uint256 i; i < accounts.length; i++) {
+        for (uint256 i; i < accounts.length; ++i) {
             revokeRole(MINTER_ROLE, accounts[i]);
         }
     }
@@ -255,9 +258,8 @@ contract Stamp is ERC721, AccessControlEnumerable {
             "Address is not allowed to mint"
         );
 
-        for (uint256 i; i < accounts.length; i++) {
-            mintIndex += 1;
-            _mint(accounts[i], mintIndex);
+        for (uint256 i; i < accounts.length; ++i) {
+            _mint(accounts[i], ++mintIndex);
         }
 
         emit Airdrop(msg.sender, accounts.length);

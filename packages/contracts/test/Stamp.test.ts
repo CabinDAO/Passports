@@ -27,7 +27,7 @@ describe("Stamp", function () {
         "CC",
         100,
         utils.parseEther("1.0"),
-        "0xdeadbeef",
+        "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
         0,
         false,
         1
@@ -48,7 +48,7 @@ describe("Stamp", function () {
         "CC",
         100,
         price,
-        "0xdeadbeef",
+        "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
         0,
         false,
         1
@@ -78,6 +78,9 @@ describe("Stamp", function () {
       expect(await waffle.provider.getBalance(contract.address)).to.equal(
         utils.parseEther("0.0")
       );
+      expect(await contract.ownerOf(1)).to.equal(
+        await member1.getAddress()
+      )
     });
   });
 });
