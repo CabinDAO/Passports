@@ -190,7 +190,9 @@ const CheckoutPageContent = ({
   useEffect(() => {
     if (!Object.entries(metadata).length && metadataHash) {
       axios.get(`https://ipfs.io/ipfs/${metadataHash}`).then((r) => {
-        setMetadata(r.data);
+        if (Object.entries(r.data)) {
+          setMetadata(r.data);
+        }
       });
     }
   }, [metadata, metadataHash]);
