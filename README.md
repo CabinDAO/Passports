@@ -8,7 +8,7 @@
 
 ## Quick Links
 
-- [🎤 Staging Environment](https://passports-app.vercel.app/)
+- [🎤 Staging Environment](https://passports.creatorcabins.com)
 - [🙋 Start contributing](#Contributing)
 - [🎯 View Bounties](https://app.clarity.so/cabin/view/3039c279-2ee2-4da2-a604-dc1c23d5010c)
 - [🐞 Report a Bug](https://github.com/CabinDAO/Passports/issues/new)
@@ -45,12 +45,14 @@ In the ethos Web3, this project operates on permissionless contribution. Please 
 
 ## Environments
 
-The setup below outlines how to connect to the local network. Passports are additionally deployed to the following networks:
+The setup below outlines how to connect to the local network. You can additionally use Passports on any of the following test networks:
 
 - Kovan
 - Ropsten
+- Rinkeby
+- Goerli
 
-You could access the app on staging at [https://passports-app.vercel.app](https://passports-app.vercel.app/). Everytime you open a pull request against the main repository, a branch specific environment is also deployed to test your live changes before merging with main.
+You could access the live app at [https://passports.creatorcabins.com](https://passports.creatorcabins.com). Everytime you open a pull request against the main repository, a branch specific environment is also deployed to test your live changes before merging with main.
 
 ## Setup
 
@@ -58,6 +60,9 @@ The project is mostly located in the `/packages` directory. Within that director
 
 1. `/app` - This hosts the source code for the user-facing web app
 1. `/contracts` - This hosts the smart contract source code for passports, published as an NPM package
+
+You will also need some secret environment variable values in order to access our development instances in other services. 
+Please DM @dvargas92495 you email on lastpass so that he could share the secrets with you.
 
 ### Web App Setup
 
@@ -79,11 +84,11 @@ If you are looking to make changes to the smart contracts, it helps to run a loc
 1. Install dependencies with `npm install`
 1. Run a local blockchain with `npm run dev`
 1. Notice that a bunch of accounts with addresses were printed. Copy the private key of one of them.
-1. Create a local `packages/contracts/.env` file and add `PRIVATE_KEY=0x12341234` to the top of the file. Replace `0x12341234` with the private key that you pasted.
+1. Create a local `packages/contracts/.env` file and add `PRIVATE_KEY=0x12341234` to the top of the file. Replace `0x12341234` with the private key that you copied.
 1. Open another terminal tab and build the contracts with `npm run build`
 1. Deploy the newly build contracts to your local network with `npm run migrate:local`.
 1. Navigate to the `packages/app` directory.
-1. Create another `.env` file at `packages/app/.env`. Reach out to a current contributor for the enviroment variable values to be able to access firebase. 
+1. Create another `.env` file at `packages/app/.env`. Add all of the environment variables that were shared with you on lastpass.
 1. Run the webapp locally by running `npm run dev` from the `packages/app` directory.
 1. Once on the browser, add the new network to your wallet. In Metamask, you could do this by going to Settings > Networks > Add Network and fill out the following data:
    - Network Name: Localhost
