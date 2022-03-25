@@ -3,7 +3,7 @@ import Web3 from "web3";
 // @ts-ignore They don't have a types file available -.-
 import namehash from "@ensdomains/eth-ens-namehash";
 import { getAbiFromJson } from "./constants";
-import b58 from "base-58";
+import b58 from "b58";
 
 export const ipfsAdd = (s: string | Blob) => {
   const formData = new FormData();
