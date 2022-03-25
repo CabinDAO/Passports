@@ -17,7 +17,7 @@ export const getVersionByAddress = (address: string, chain: number) => {
     query(
       versionsCol,
       where("contract", "==", "stamp"),
-      where("address", "==", address),
+      where("address", "==", address.toLowerCase()),
       where("chain", "==", chain)
     )
   ).then((d) =>
