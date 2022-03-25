@@ -16,7 +16,7 @@
     "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@walletconnect/web3-provider": "^1.7.1",
     "axios": "^0.24.0",
-    "base-58": "0.0.1",
+    "b58": "^4.0.3",
     "firebase": "^9.6.4",
     "next": "^12.0.7",
     "papaparse": "^5.3.1",
