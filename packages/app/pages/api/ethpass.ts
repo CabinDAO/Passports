@@ -8,7 +8,7 @@ import { getAbi, getVersionByAddress } from "../../components/firebase";
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
     case "POST":
-      const { address, network, tokenId, signature, signatureMessage } =
+      const { address, network, tokenId, signature, signatureMessage, platform } =
         typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       const web3 = getWeb3(network);
       return getVersionByAddress(address, networkIdByName[network])
@@ -28,10 +28,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             tokenId,
             signature,
             signatureMessage,
-            platform: "apple",
-            pass: {
+            platform,
+            templateId: process.env.ETHPASS_TEMPLATE_ID,
+            barcode: { message: "Thanks for participating at Cabin’s first inaugural GUILD GAMES!"},
+            pass: {   
               description,
+              headerFields: [{
+                key: "header1",
+                value: "DEMO PASS",
+                textAlignment: "PKTextAlignmentNatural"
+              }],
             },
+
           };
           return axios.post("https://api.ethpass.xyz/api/v0/passes", body, {
             headers: {

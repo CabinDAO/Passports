@@ -4,8 +4,17 @@ import type { ContractSendMethod } from "web3-eth-contract";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import IpfsImage from "../../../components/IpfsImage";
-import { Checkbox, Label, styled } from "@cabindao/topo";
-import { bytes32ToIpfsHash, getStampContract, getWeb3 } from "../../../components/utils";
+import {
+  Label,
+  Radio,
+  RadioGroup,
+  styled,
+} from "@cabindao/topo";
+import {
+  bytes32ToIpfsHash,
+  getStampContract,
+  getWeb3,
+} from "../../../components/utils";
 import {
   useAddress,
   useChainId,
@@ -134,8 +143,8 @@ const BottomText = styled("p", {
   right: 10,
 });
 
-const CheckBoxContainer = styled("div", {
-  margin: "16px 0",
+const SelectBoxContainer = styled("div", {
+  margin: "32px 0",
 });
 
 type PageProps = {
@@ -173,7 +182,10 @@ const CheckoutPageContent = ({
     {}
   );
   const [metadata, setMetadata] = useState<Record<string, string>>({});
-  const [generateApplePass, setGenerateApplePass] = useState(false);
+  const [walletPassPlatform, setWalletPassPlatform] = useState<string | null>(
+    null
+  );
+
   const [qrFile, setQrfile] = useState("");
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -237,7 +249,7 @@ const CheckoutPageContent = ({
           )
       )
       .then((tokenId) => {
-        if (generateApplePass && tokenId) {
+        if (walletPassPlatform && tokenId) {
           const signatureMessage = `Give Passports permission to generate an Apple Wallet Pass for token ${tokenId}`;
           return web3.eth.personal
             .sign(signatureMessage, account, "")
@@ -248,6 +260,7 @@ const CheckoutPageContent = ({
                 network,
                 signature,
                 signatureMessage,
+                platform: walletPassPlatform,
               })
             )
             .then((r) => setQrfile(r.data.fileURL));
@@ -273,10 +286,10 @@ const CheckoutPageContent = ({
     setSupply,
     supply,
     customization,
-    generateApplePass,
     account,
     chainId,
     version,
+    walletPassPlatform,
   ]);
   return (
     <AppContainer>
@@ -326,19 +339,15 @@ const CheckoutPageContent = ({
               ) || `Buy (${supply} left)`}
             </Button>
           </div>
-          <CheckBoxContainer>
-            <Label label={"Generate Apple Wallet Pass"}>
-              <Checkbox
-                checked={generateApplePass}
-                onCheckedChange={(e) =>
-                  e === "indeterminate"
-                    ? setGenerateApplePass(false)
-                    : setGenerateApplePass(e)
-                }
-                disabled={!correctNetwork}
-              />
+          <SelectBoxContainer>
+            <Label label={"Generate Mobile Wallet Pass"}>
+              <RadioGroup defaultValue={""} onValueChange={(val) => setWalletPassPlatform(val)}>
+                <Radio id="radio1" inputLabel="None" value={""} />
+                <Radio id="radio2" inputLabel="Apple Wallet" value="apple" />
+                <Radio id="radio3" inputLabel="Google Pay" value="google" />
+              </RadioGroup>
             </Label>
-          </CheckBoxContainer>
+          </SelectBoxContainer>
           <div>
             <canvas ref={qrCanvasRef} />
           </div>
