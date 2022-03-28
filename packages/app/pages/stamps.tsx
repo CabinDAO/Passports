@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Contract, ContractSendMethod } from "web3-eth-contract";
+import { ContractSendMethod } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import {
   Modal,
@@ -166,7 +166,7 @@ const EditableStampCardRow = ({
   field,
   stamp,
   setStamp,
-  decorator = ''
+  decorator = "",
 }: {
   field: keyof IStampProps;
   stamp: IStampProps;
@@ -181,7 +181,8 @@ const EditableStampCardRow = ({
     <StampCardRow>
       <StampCardKey>{field}</StampCardKey>
       <StampCardValue>
-        {stamp[field]}{decorator}
+        {stamp[field]}
+        {decorator}
         <Button onClick={() => setIsOpen(true)} type={"icon"}>
           <Pencil1Icon color={theme.colors.wheat} width={10} height={10} />
         </Button>
@@ -226,7 +227,7 @@ const EditableStampCardRow = ({
   );
 };
 
-const StampCard = ({customization, ...props}: IStampCardProps) => {
+const StampCard = ({ customization, ...props }: IStampCardProps) => {
   const [stamp, setStamp] = useState(props);
   const web3 = useWeb3();
   const address = useAddress();
@@ -580,9 +581,23 @@ const StampCard = ({customization, ...props}: IStampCardProps) => {
           </Button>
         </StampCardValue>
       </StampCardRow>
-      <EditableStampCardRow field={"supply"} stamp={stamp} setStamp={setStamp} />
-      <EditableStampCardRow field={"price"} stamp={stamp} setStamp={setStamp} decorator={" ETH"} />
-      <EditableStampCardRow field={"royalty"} stamp={stamp} setStamp={setStamp} decorator={"%"} />
+      <EditableStampCardRow
+        field={"supply"}
+        stamp={stamp}
+        setStamp={setStamp}
+      />
+      <EditableStampCardRow
+        field={"price"}
+        stamp={stamp}
+        setStamp={setStamp}
+        decorator={" ETH"}
+      />
+      <EditableStampCardRow
+        field={"royalty"}
+        stamp={stamp}
+        setStamp={setStamp}
+        decorator={"%"}
+      />
       <Toast
         isOpen={!!toastMessage}
         onClose={() => setToastMessage("")}
@@ -738,6 +753,23 @@ const CreateStampModal = ({
   const [additionalFields, setAdditionalFields] = useState<
     { key: string; value: string }[]
   >([]);
+  const onClose = useCallback(() => {
+    setName("");
+    setSymbol("");
+    setQuantity("0");
+    setPrice("0");
+    setIsPrivate(false);
+    setStage(0);
+    setCid("");
+  }, [
+    setName,
+    setCid,
+    setIsPrivate,
+    setSymbol,
+    setStage,
+    setQuantity,
+    setPrice,
+  ]);
   const onFinalConfirm = useCallback(() => {
     return ipfsAdd(
       JSON.stringify({
@@ -747,7 +779,7 @@ const CreateStampModal = ({
         ...(cid ? { thumbnail: cid } : {}),
       })
     ).then((metadataHash) => {
-      const weiPrice = web3.utils.toWei(price, "ether");
+      const weiPrice = web3.utils.toWei(price || "0", "ether");
       const royalty = (Number(royaltyPcnt) * 100) | 0;
       return axios.get(`/api/abi?contract=stamp`).then((r) => {
         const passportJson = r.data;
@@ -776,7 +808,7 @@ const CreateStampModal = ({
                 chain: chainId,
                 version: passportJson.version,
               })
-              .then(() =>
+              .then(() => {
                 onSuccess({
                   address: contractAddress,
                   symbol,
@@ -787,8 +819,9 @@ const CreateStampModal = ({
                   royalty: royalty / 100,
                   isPrivate,
                   version: passportJson.version as string,
-                })
-              );
+                });
+                onClose();
+              });
           });
       });
     });
@@ -805,6 +838,7 @@ const CreateStampModal = ({
     cid,
     isPrivate,
     chainId,
+    onClose,
   ]);
   const stageConfirms = [
     () => {
@@ -828,6 +862,7 @@ const CreateStampModal = ({
         title={stageTitles[stage]}
         onConfirm={stageConfirms[stage]}
         confirmText={stage === stageConfirms.length - 1 ? "Create" : "Next"}
+        onCancel={onClose}
       >
         <ModalContent>
           {stage === 0 && (
