@@ -65,9 +65,11 @@ describe("Stamp", function () {
       const contractToClaim = contract.connect(dao1);
       const claimTx = await contractToClaim.claimEth({
         from: await dao1.getAddress(),
-      })
+      });
       const claimReceipt = await claimTx.wait();
-      const gasFee = claimReceipt.effectiveGasPrice.mul(claimReceipt.cumulativeGasUsed);
+      const gasFee = claimReceipt.effectiveGasPrice.mul(
+        claimReceipt.cumulativeGasUsed
+      );
 
       expect((await dao1.getBalance()).sub(ownerBalance).add(gasFee)).to.equal(
         utils.parseEther("39.0")
@@ -78,9 +80,29 @@ describe("Stamp", function () {
       expect(await waffle.provider.getBalance(contract.address)).to.equal(
         utils.parseEther("0.0")
       );
-      expect(await contract.ownerOf(1)).to.equal(
-        await member1.getAddress()
-      )
+      expect(await contract.ownerOf(1)).to.equal(await member1.getAddress());
+    });
+
+    it("Should be able to airdrop multiple stamps to the owner address", async function () {
+      if (!dao1) fail("Failed to setup dao1");
+      const factoryContract = await ethers.getContractFactory("Stamp", dao1);
+      const contract = await factoryContract.deploy(
+        "Creator Cabins",
+        "CC",
+        10000,
+        utils.parseEther("1.0"),
+        "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        0,
+        false,
+        1
+      );
+      await contract.deployed();
+      const address = await dao1.getAddress();
+
+      const airDropTx = await contract.airdrop(Array(500).fill(address));
+      const airDropReceipt = await airDropTx.wait();
+      expect((await contract.mintIndex()).toNumber()).to.equal(500);
+      expect(airDropReceipt.cumulativeGasUsed.toNumber()).to.be.lessThanOrEqual(12979319);
     });
   });
 });
