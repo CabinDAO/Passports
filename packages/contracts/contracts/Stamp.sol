@@ -275,4 +275,27 @@ contract Stamp is ERC721, AccessControlEnumerable, Pausable {
         );
         _setupRole(DEFAULT_ADMIN_ROLE, account);
     }
+
+    function pause() public {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to pause stamp"
+        );
+        _pause();
+    }
+
+    /**
+     * @dev Returns to normal state.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    function unpause() public {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Must be admin role to unpause stamp"
+        );
+        _unpause();
+    }
 }
