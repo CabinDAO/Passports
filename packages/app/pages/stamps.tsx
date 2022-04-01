@@ -61,7 +61,7 @@ const ViewStampFooter = styled("div", {
 const StampCardContainer = styled("div", {
   background: "$forest",
   color: "$sand",
-  width: 272,
+  width: 300,
   padding: "18px 24px 24px",
   display: "inline-block",
   marginRight: "8px",
@@ -568,8 +568,8 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
           </Modal>
           <Modal
             hideCloseIcon
-            isOpen={shareIsOpen}
-            setIsOpen={setShareIsOpen}
+            isOpen={pauseIsOpen}
+            setIsOpen={setPauseIsOpen}
             title={stamp.paused ? "Unpause Stamp" : "Pause Stamp"}
             onConfirm={async () => {
               return getStampContract({
@@ -588,7 +588,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                           "This stamp is on an older version that does not support pausing/unpausing"
                         );
                       } else {
-                        sendMethod
+                        return sendMethod
                           .send({ from: address })
                           .on("receipt", () => {
                             const newPauseValue = !stamp.paused;
@@ -613,7 +613,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
             <p>
               {stamp.paused
                 ? "Are you sure you want to unpause the Stamp? Doing so would allow anyone to buy one"
-                : "Are you sure you want to pause the Stamp? Doing so would prevent from buying one."}
+                : "Are you sure you want to pause the Stamp? Doing so would prevent anyone from buying one."}
             </p>
           </Modal>
         </div>
