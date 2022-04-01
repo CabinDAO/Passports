@@ -24,6 +24,8 @@ import { getAbiFromJson, networkNameById } from "../components/constants";
 import ClipSVG from "../components/icons/Clip.svg";
 import {
   Link1Icon,
+  PauseIcon,
+  PlayIcon,
   Pencil1Icon,
   Pencil2Icon,
   Share1Icon,
@@ -156,6 +158,7 @@ interface IStampProps {
   royalty: number;
   isPrivate: boolean;
   version: string;
+  paused: boolean;
 }
 
 interface IStampCardProps extends IStampProps {
@@ -237,6 +240,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
   const [newSupply, setNewSupply] = useState(stamp.supply);
   const [isOpen, setIsOpen] = useState(false);
   const [airDropIsOpen, setAirDropIsOpen] = useState(false);
+  const [pauseIsOpen, setPauseIsOpen] = useState(false);
   const [airdropAddrList, setAirdropAddrList] = useState<string[]>([]);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [url, setUrl] = useState(customization.redirect_url);
@@ -270,6 +274,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
             royalty: p[6] / 100,
             version: stamp.version,
             isPrivate: p[7],
+            paused: p[9] || false,
           });
           setNewSupply(supply);
         });
@@ -341,6 +346,20 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
           <Tooltip content={"Airdrop stamps"}>
             <Button onClick={() => setAirDropIsOpen(true)} type="icon">
               <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={stamp.paused ? "Unpause" : "Pause"}>
+            <Button
+              onClick={() => {
+                setPauseIsOpen(true);
+              }}
+              type={"icon"}
+            >
+              {stamp.paused ? (
+                <PlayIcon width={20} height={20} color={theme.colors.wheat} />
+              ) : (
+                <PauseIcon width={20} height={20} color={theme.colors.wheat} />
+              )}
             </Button>
           </Tooltip>
           <Modal
@@ -546,6 +565,56 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
             {airdropAddrList.length > 0 ? (
               <div>{airdropAddrList.length} Addresses</div>
             ) : null}
+          </Modal>
+          <Modal
+            hideCloseIcon
+            isOpen={shareIsOpen}
+            setIsOpen={setShareIsOpen}
+            title={stamp.paused ? "Unpause Stamp" : "Pause Stamp"}
+            onConfirm={async () => {
+              return getStampContract({
+                web3,
+                address: stamp.address,
+                version: stamp.version,
+              })
+                .then(
+                  (contract) =>
+                    new Promise<void>((resolve, reject) => {
+                      const sendMethod = stamp.paused
+                        ? contract.methods.unpause?.()
+                        : contract.methods.pause?.();
+                      if (!sendMethod) {
+                        throw new Error(
+                          "This stamp is on an older version that does not support pausing/unpausing"
+                        );
+                      } else {
+                        sendMethod
+                          .send({ from: address })
+                          .on("receipt", () => {
+                            const newPauseValue = !stamp.paused;
+                            setToastMessage(
+                              `Successfully ${
+                                newPauseValue ? "paused" : "unpaused"
+                              } the stamp.`
+                            );
+                            setStamp({
+                              ...stamp,
+                              paused: newPauseValue,
+                            });
+                            resolve();
+                          })
+                          .on("error", reject);
+                      }
+                    })
+                )
+                .catch((e) => setToastMessage(`ERROR: ${e.message}`));
+            }}
+          >
+            <p>
+              {stamp.paused
+                ? "Are you sure you want to unpause the Stamp? Doing so would allow anyone to buy one"
+                : "Are you sure you want to pause the Stamp? Doing so would prevent from buying one."}
+            </p>
           </Modal>
         </div>
       </StampHeader>
@@ -819,6 +888,7 @@ const CreateStampModal = ({
                   royalty: royalty / 100,
                   isPrivate,
                   version: passportJson.version as string,
+                  paused: false,
                 });
                 onClose();
               });
@@ -1073,6 +1143,7 @@ const StampTabContent = () => {
               royalty: 0,
               isPrivate: false,
               version,
+              paused: false,
             }))
           );
         })

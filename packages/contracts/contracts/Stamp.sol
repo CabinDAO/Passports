@@ -3,11 +3,12 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
  * The Stamp contract is an ERC721 that represents member access for DAOs.
  */
-contract Stamp is ERC721, AccessControlEnumerable {
+contract Stamp is ERC721, AccessControlEnumerable, Pausable {
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -119,11 +120,11 @@ contract Stamp is ERC721, AccessControlEnumerable {
         price = value;
     }
 
-    function buy() external payable {
+    function buy() external payable whenNotPaused {
         require(maxSupply > mintIndex, "Error, no more supply of this stamp");
         require(
-            maxOwned > balanceOf(msg.sender),
-            "Error, User already owns the maximum number of this stamp"
+            maxOwned > balanceOf(msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Error, non-admin User already owns the maximum number of this stamp"
         );
         require(msg.value == price, "Error, Token costs more");
         require(
@@ -150,7 +151,8 @@ contract Stamp is ERC721, AccessControlEnumerable {
             bytes32,
             uint256,
             bool,
-            uint256
+            uint256,
+            bool
         )
     {
         return (
@@ -162,7 +164,8 @@ contract Stamp is ERC721, AccessControlEnumerable {
             metadataHash,
             royaltyPercent,
             isPrivate,
-            maxOwned
+            maxOwned,
+            paused()
         );
     }
 
