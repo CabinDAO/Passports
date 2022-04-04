@@ -830,6 +830,8 @@ const CreateStampModal = ({
     setIsPrivate(false);
     setStage(0);
     setCid("");
+    setAdditionalFields([]);
+    setFileName("");
   }, [
     setName,
     setCid,
@@ -838,6 +840,8 @@ const CreateStampModal = ({
     setStage,
     setQuantity,
     setPrice,
+    setAdditionalFields,
+    setFileName,
   ]);
   const onFinalConfirm = useCallback(() => {
     return ipfsAdd(
@@ -892,7 +896,7 @@ const CreateStampModal = ({
                 });
                 onClose();
               });
-          });
+          })
       });
     });
   }, [

@@ -8,7 +8,7 @@ on:
       - ".github/workflows/contracts.yaml"
 
 env:
-  ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+  INFURA_ID: ${{ secrets.INFURA_ID }}
   PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
   FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}

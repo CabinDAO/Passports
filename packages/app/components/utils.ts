@@ -54,7 +54,7 @@ export const getWeb3 = (networkName: string) =>
   new Web3(
     networkName === "localhost"
       ? "http://localhost:8545"
-      : `https://eth-${networkName}.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
+      : `https://${networkName}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
   );
 
 export const getAllManagedStamps = ({

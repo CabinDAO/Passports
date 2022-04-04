@@ -164,7 +164,7 @@ const HomeContent: React.FC = ({ children }) => {
             {chainId && (
               <NetworkIndicator>
                 <span />
-                {networkNameById[chainId]}
+                {(networkNameById[chainId] || "").replace("-", " ")}
               </NetworkIndicator>
             )}
             <AddressLabel>

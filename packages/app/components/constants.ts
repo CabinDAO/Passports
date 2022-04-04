@@ -15,6 +15,12 @@ const KOVAN_NETWORK_ID = 0x2a;
 const ROPSTEN_NETWORK_ID = 0x3;
 const RINKEBY_NETWORK_ID = 0x4;
 const GOERLI_NETWORK_ID = 0x5;
+const OPTIMISM_NETWORK_ID = 10;
+const OPTIMISM_KOVAN_NETWORK_ID = 69;
+const ARBITRUM_TEST_NETWORK_ID = 421611;
+const ARBITRUM_NETWORK_ID = 42161;
+const POLYGON_MAIN_NETWORK_ID = 137;
+const POLYGON_TEST_NETWORK_ID = 80001;
 const LOCALHOST_NETWORK_ID = 0x7a69;
 
 export const networkNameById: {
@@ -25,7 +31,13 @@ export const networkNameById: {
   [ROPSTEN_NETWORK_ID]: "ropsten",
   [MAINNET_NETWORK_ID]: "ethereum",
   [RINKEBY_NETWORK_ID]: "rinkeby",
+  [OPTIMISM_NETWORK_ID]: "optimism-mainnet",
+  [OPTIMISM_KOVAN_NETWORK_ID]: "optimism-kovan",
+  [POLYGON_MAIN_NETWORK_ID]: "polygon-mainnet",
+  [POLYGON_TEST_NETWORK_ID]: "polygon-mumbai",
   [GOERLI_NETWORK_ID]: "goerly",
+  [ARBITRUM_TEST_NETWORK_ID]: 'arbitrum-rinkeby',
+  [ARBITRUM_NETWORK_ID]: 'arbitrum-mainnet',
 };
 
 export const networkIdByName = Object.fromEntries(

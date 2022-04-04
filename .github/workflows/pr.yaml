@@ -2,7 +2,6 @@ name: Set of checks to run on PRs
 on: pull_request
 
 env:
-  ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
   PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
 jobs:
