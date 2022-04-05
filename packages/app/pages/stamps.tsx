@@ -792,12 +792,14 @@ const CardImageContainer = styled("div", {
 });
 
 const StampImageContainer = styled("div", {
-  "> span": {
-    border: "1px solid $forest !important",
-    width: "100% !important",
-    height: "176px !important",
-    borderRadius: "20px",
-  },
+  height: "176px",
+  width: "100%",
+  border: "1px solid $forest !important",
+  borderRadius: "20px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: '32px'
 });
 
 const CreateStampModal = ({
@@ -832,6 +834,7 @@ const CreateStampModal = ({
     setCid("");
     setAdditionalFields([]);
     setFileName("");
+    setRoyaltyPcnt("");
   }, [
     setName,
     setCid,
@@ -842,6 +845,7 @@ const CreateStampModal = ({
     setPrice,
     setAdditionalFields,
     setFileName,
+    setRoyaltyPcnt,
   ]);
   const onFinalConfirm = useCallback(() => {
     return ipfsAdd(
@@ -896,7 +900,7 @@ const CreateStampModal = ({
                 });
                 onClose();
               });
-          })
+          });
       });
     });
   }, [
@@ -1079,9 +1083,9 @@ const CreateStampModal = ({
               </SummaryRow>
               {cid && (
                 <>
-                  <Label>Stamp Image</Label>
+                  <Label label={"Stamp Image"} />
                   <StampImageContainer>
-                    <IpfsImage cid={cid} height={"100%"} width={"100%"} />
+                    <IpfsImage cid={cid} height={"100%"} width={"100%"} id={'new-stamp-image'} />
                   </StampImageContainer>
                 </>
               )}

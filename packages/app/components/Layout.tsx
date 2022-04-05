@@ -13,6 +13,7 @@ import {
   Web3Provider,
 } from "./Web3Context";
 import { networkNameById } from "./constants";
+import NetworkIndicator from "./NetworkIndicator";
 
 const DRAWER_WIDTH = 200;
 const HEADER_HEIGHT = 64;
@@ -113,28 +114,6 @@ const PageMain = styled("main", {
   width: `calc(100% - 255px)`,
 });
 
-const NetworkIndicator = styled("span", {
-  height: "27px",
-  borderRadius: "13.5px",
-  background: "$green200",
-  padding: "8px",
-  marginRight: "16px",
-  textTransform: "capitalize",
-  fontWeight: 700,
-  color: "$forest",
-  fontFamily: "$sans",
-  display: "inline-flex",
-  alignItems: "center",
-  span: {
-    background: "$forest",
-    height: "8px",
-    width: "8px",
-    borderRadius: "4px",
-    marginRight: "5px",
-    display: "inline-block",
-  },
-});
-
 const AddressLabel = styled("span", {
   fontFamily: "$sans",
   color: "$forest",
@@ -161,12 +140,7 @@ const HomeContent: React.FC = ({ children }) => {
         <PageHeaderH1>{tab}</PageHeaderH1>
         {address ? (
           <span>
-            {chainId && (
-              <NetworkIndicator>
-                <span />
-                {(networkNameById[chainId] || "").replace("-", " ")}
-              </NetworkIndicator>
-            )}
+            <NetworkIndicator chainId={chainId} />
             <AddressLabel>
               {displayAddress.endsWith(".eth")
                 ? displayAddress

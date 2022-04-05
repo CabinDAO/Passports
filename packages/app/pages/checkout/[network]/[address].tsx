@@ -5,10 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import IpfsImage from "../../../components/IpfsImage";
 import {
+  Button,
   Label,
   Radio,
   RadioGroup,
   styled,
+  Toast,
 } from "@cabindao/topo";
 import {
   bytes32ToIpfsHash,
@@ -23,118 +25,140 @@ import {
 } from "../../../components/Web3Context";
 import QRCode from "qrcode";
 import { getAbi, getVersionByAddress } from "../../../components/firebase";
+import NetworkIndicator from "../../../components/NetworkIndicator";
 
 type QueryParams = {
   network: string;
   address: string;
 };
 
-const Button = styled("button", {
-  display: "inline-flex",
-  flexGrow: 0,
-  justifyContent: "center",
-  alignItems: "center",
-  fontFamily: "$sans",
-  fontWeight: 600,
-  fontSize: "$sm",
-  transition: "all 0.2s ease-in-out",
-  textDecoration: "none",
-  boxSizing: "border-box",
-  cursor: "pointer",
-  border: "none",
-  height: "$10",
-  py: 0,
-  px: "$4",
-});
-
-const AppContainer = styled("div", {
-  display: "flex",
-  flexWrap: "nowrap",
-  justifyContent: "center",
-  "&::before": {
-    height: "100%",
-    width: "50%",
-    background: "#fff",
-    position: "fixed",
-    content: " ",
-    top: 0,
-    right: 0,
-    animationFillMode: "both",
-    transformOrigin: "right",
-  },
-});
-
-const AppBackground = styled("div", {
-  position: "fixed",
-  top: 0,
-  bottom: 0,
-  right: 0,
-  left: 0,
-  zIndex: -1,
-  background: "$sand",
-});
-
 const App = styled("div", {
-  alignItems: "flex-start",
-  transform: "translateY(max(48px,calc(50vh - 55%)))",
+  alignItems: "center",
   width: "100%",
   display: "flex",
   position: "relative",
   flexDirection: "row",
-  justifyContent: "space-between",
-  maxWidth: 920,
+  justifyContent: "center",
+  height: "100vh",
 });
 
 const AppOverview = styled("div", {
-  width: "380px",
-  maxWidth: "380px",
+  width: "50%",
+  padding: "120px",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "flex-start",
+  flexDirection: "column",
+  height: "100%",
+  color: "white",
 });
 
 const AppHeader = styled("header", {
+  color: "white",
+  paddingBottom: "64px",
+  height: "50%",
   display: "flex",
-  alignItems: "center",
-});
-
-const AppNetworkContainer = styled("div", {
-  margin: "0 8px",
-  background: "$wheat",
-  borderRadius: "4px",
-  padding: "2px 4px",
-  display: "flex",
+  flexDirection: "column",
+  justifyContent: "end",
+  alignItems: "start",
 });
 
 const AppSummaryContainer = styled("div", {
-  marginTop: "24px",
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",
   textAlign: "left",
+  height: "50%",
+  width: "100%",
 });
 
 const ProductSummaryName = styled("span", {
-  color: "#00000090",
   fontSize: 16,
-  fontWeight: 500,
+  fontWeight: 600,
+  color: "$sand",
+  fontFamily: "$mono",
+  lineHeight: "21px",
+  textTransform: "uppercase",
+  display: "block",
 });
 
-const ProductSummaryAmount = styled("span", {
-  color: "#000000",
-  fontSize: 36,
+const LineItemAmount = styled("span", {
+  fontSize: 16,
   fontWeight: 600,
-  margin: "2px 0 3px",
+  color: "$sand",
+  fontFamily: "$mono",
+  lineHeight: "21px",
+  textTransform: "uppercase",
+});
+
+const ProductSummaryQuantity = styled("span", {
+  fontSize: 16,
+  fontWeight: 600,
+  color: "#8B9389",
+  fontFamily: "$mono",
+  lineHeight: "21px",
+  textTransform: "uppercase",
+});
+
+const LineItem = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "6px 0 6px 16px",
+  alignItems: "start",
+  flexGrow: 1,
+});
+
+const LineItemSummary = styled("div", {
+  display: "flex",
+  width: "100%",
+  alignItems: "start",
+  justifyContent: "start",
+});
+
+const LineItemThumbnail = styled("div", {
+  width: "80px",
+  height: "56px",
+  background: "white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: "10px",
+});
+
+const ProductSummaryTotal = styled("h2", {
+  fontSize: 32,
+  fontWeight: 600,
+  fontFamily: "$mono",
+  lineHeight: "42px",
+  marginBottom: 0,
+  marginTop: "16px",
+});
+
+const ProductSummaryAmount = styled("h1", {
+  fontSize: 48,
+  fontWeight: 700,
+  fontFamily: "$mono",
+  lineHeight: "62px",
+  marginTop: 0,
+  marginBottom: "64px",
 });
 
 const AppPayment = styled("div", {
-  width: "380px",
-  maxWidth: "380px",
+  width: "50%",
   height: "100%",
-  marginBottom: "24px",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  flexDirection: "column",
 });
 
 const PaymentRequestHeader = styled("div", {
-  fontSize: 20,
-  fontWeight: 500,
+  fontSize: 32,
+  fontWeight: 600,
   marginBottom: "24px",
+  textTransform: "uppercase",
+  color: "white",
+  fontFamil: "$mono",
 });
 
 const BottomText = styled("p", {
@@ -144,7 +168,8 @@ const BottomText = styled("p", {
 });
 
 const SelectBoxContainer = styled("div", {
-  margin: "32px 0",
+  marginTop: "64px",
+  color: "white",
 });
 
 type PageProps = {
@@ -156,6 +181,12 @@ type PageProps = {
   metadataHash: string;
   network: string;
   version: string;
+};
+
+const walletLabels: Record<string, string> = {
+  "": "None",
+  apple: "Apple Wallet",
+  google: "Google Pay",
 };
 
 const CheckoutPageContent = ({
@@ -171,7 +202,6 @@ const CheckoutPageContent = ({
   const web3 = useWeb3();
   const account = useAddress();
   const chainId = useChainId();
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [supply, setSupply] = useState(initialSupply);
   const correctNetwork = useMemo(
@@ -182,9 +212,7 @@ const CheckoutPageContent = ({
     {}
   );
   const [metadata, setMetadata] = useState<Record<string, string>>({});
-  const [walletPassPlatform, setWalletPassPlatform] = useState<string | null>(
-    null
-  );
+  const [walletPassPlatform, setWalletPassPlatform] = useState<string>("");
 
   const [qrFile, setQrfile] = useState("");
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -206,14 +234,14 @@ const CheckoutPageContent = ({
       });
     }
   }, [metadata, metadataHash]);
+  const [toastMessage, setToastMessage] = useState("");
   useEffect(() => {
     if (qrFile)
       QRCode.toCanvas(qrCanvasRef.current, qrFile).catch((e) =>
-        setError(e.message)
+        setToastMessage(`ERROR: ${e.message}`)
       );
   }, [qrFile, qrCanvasRef]);
   const onBuy = useCallback(() => {
-    setError("");
     setLoading(true);
     return getStampContract({
       web3,
@@ -249,6 +277,7 @@ const CheckoutPageContent = ({
           )
       )
       .then((tokenId) => {
+        setToastMessage(`Stamp purchased!`);
         if (walletPassPlatform && tokenId) {
           const signatureMessage = `Give Passports permission to generate an Apple Wallet Pass for token ${tokenId}`;
           return web3.eth.personal
@@ -275,7 +304,7 @@ const CheckoutPageContent = ({
         }
       })
       .catch((e) => {
-        setError(e.message);
+        setToastMessage(`ERROR: ${e.message}`);
       })
       .finally(() => setLoading(false));
   }, [
@@ -292,70 +321,100 @@ const CheckoutPageContent = ({
     walletPassPlatform,
   ]);
   return (
-    <AppContainer>
-      <AppBackground
+    <App>
+      <AppOverview
         style={{
-          background: customization.brand_color || "#FDF3E7",
+          background: customization.brand_color || "#1D2B2A",
         }}
-      />
-      <App>
-        <AppOverview>
-          <AppHeader>
-            {customization.logo_cid ? (
-              <IpfsImage cid={customization.logo_cid} height={50} width={50} />
-            ) : null}
-            <AppNetworkContainer>{network}</AppNetworkContainer>
-            {!correctNetwork && (
-              <div>
-                You are connected to the wrong network to buy this NFT. Please
-                switch to {network}
-              </div>
-            )}
-          </AppHeader>
-          <AppSummaryContainer>
-            <ProductSummaryName>
-              {name} ({symbol})
-            </ProductSummaryName>
-            <ProductSummaryAmount>Ξ{price}</ProductSummaryAmount>
+      >
+        <NetworkIndicator chainId={chainId} />
+        {!correctNetwork && (
+          <div>
+            You are connected to the wrong network to buy this NFT. Please
+            switch to {network}
+          </div>
+        )}
+        <ProductSummaryTotal>Total</ProductSummaryTotal>
+        <ProductSummaryAmount>{price} ETH</ProductSummaryAmount>
+        <LineItemSummary>
+          <LineItemThumbnail>
             {metadata && metadata.thumbnail ? (
-              <IpfsImage cid={metadata.thumbnail} />
+              <IpfsImage
+                cid={metadata.thumbnail}
+                height={"100%"}
+                width={"100%"}
+              />
             ) : null}
-          </AppSummaryContainer>
-        </AppOverview>
-        <AppPayment>
-          <PaymentRequestHeader>Pay With Wallet</PaymentRequestHeader>
+          </LineItemThumbnail>
+          <LineItem>
+            <span>
+              <ProductSummaryName>
+                {name} ({symbol})
+              </ProductSummaryName>
+              <ProductSummaryQuantity>Quantity 1</ProductSummaryQuantity>
+            </span>
+            <LineItemAmount>{price} ETH</LineItemAmount>
+          </LineItem>
+        </LineItemSummary>
+        <SelectBoxContainer>
+          <Label label={"Generate Mobile Wallet Pass"}>
+            <RadioGroup
+              defaultValue={""}
+              onValueChange={(val) => setWalletPassPlatform(val)}
+            >
+              {Object.keys(walletLabels)
+                .sort()
+                .map((k) => (
+                  <Radio
+                    id={`radio-${k}`}
+                    inputLabel={walletLabels[k]}
+                    value={k}
+                    key={k}
+                  />
+                ))}
+            </RadioGroup>
+          </Label>
+        </SelectBoxContainer>
+      </AppOverview>
+      <AppPayment style={{ backgroundColor: "#324841" }}>
+        <PaymentRequestHeader>
+          {qrFile
+            ? `Download ${walletLabels[walletPassPlatform]}`
+            : "Pay With Wallet"}
+        </PaymentRequestHeader>
+        {!qrFile && (
           <div>
             <Button
               onClick={onBuy}
               disabled={!correctNetwork || loading}
-              style={{
-                backgroundColor: customization.accent_color || "#324841",
-                color: "#FDF3E7",
-              }}
+              type="primary"
+              tone={"wheat"}
             >
               {customization.button_txt?.replace?.(
                 /{supply}/g,
                 supply.toString()
-              ) || `Buy (${supply} left)`}
+              ) || `Buy Stamp`}
             </Button>
           </div>
-          <SelectBoxContainer>
-            <Label label={"Generate Mobile Wallet Pass"}>
-              <RadioGroup defaultValue={""} onValueChange={(val) => setWalletPassPlatform(val)}>
-                <Radio id="radio1" inputLabel="None" value={""} />
-                <Radio id="radio2" inputLabel="Apple Wallet" value="apple" />
-                <Radio id="radio3" inputLabel="Google Pay" value="google" />
-              </RadioGroup>
-            </Label>
-          </SelectBoxContainer>
-          <div>
-            <canvas ref={qrCanvasRef} />
-          </div>
-          <p style={{ color: "darkred" }}>{error}</p>
-        </AppPayment>
-      </App>
-      <BottomText>Powered by CabinDAO</BottomText>
-    </AppContainer>
+        )}
+        <div>
+          <canvas ref={qrCanvasRef} />
+        </div>
+      </AppPayment>
+      <BottomText>
+        {customization.logo_cid ? (
+          <IpfsImage cid={customization.logo_cid} height={56} width={80} />
+        ) : (
+          "Powered By CabinDAO"
+        )}
+      </BottomText>
+      <Toast
+        isOpen={!!toastMessage}
+        onClose={() => setToastMessage("")}
+        message={toastMessage}
+        intent={toastMessage.startsWith("ERROR") ? "error" : "success"}
+      />
+    </App>
   );
 };
 

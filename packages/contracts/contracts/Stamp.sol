@@ -123,7 +123,7 @@ contract Stamp is ERC721, AccessControlEnumerable, Pausable {
     function buy() external payable whenNotPaused {
         require(maxSupply > mintIndex, "Error, no more supply of this stamp");
         require(
-            maxOwned > balanceOf(msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            maxOwned > balanceOf(msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Error, non-admin User already owns the maximum number of this stamp"
         );
         require(msg.value == price, "Error, Token costs more");
