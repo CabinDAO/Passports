@@ -12,6 +12,7 @@
     "@cabindao/nft-passport-contracts": "^0.12.0",
     "@cabindao/topo": "^0.6.4",
     "@cabindao/topo-theme": "^0.1.0",
+    "@clerk/nextjs": "^3.3.1",
     "@ensdomains/ens": "^0.6.2",
     "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@walletconnect/web3-provider": "^1.7.1",

@@ -12,8 +12,14 @@ import {
   useDisplayAddress,
   Web3Provider,
 } from "./Web3Context";
-import { networkNameById } from "./constants";
 import NetworkIndicator from "./NetworkIndicator";
+import {
+  SignedIn,
+  SignedOut,
+  SignInWithMetamaskButton,
+  useClerk,
+  useUser,
+} from "@clerk/nextjs";
 
 const DRAWER_WIDTH = 200;
 const HEADER_HEIGHT = 64;
@@ -44,20 +50,19 @@ const TabContainer = styled("div", {
   },
 });
 
-const Tab: React.FC<{ to: string; disabled: boolean }> = ({
-  children,
-  to,
-  disabled,
-}) => {
+const useTab = () => {
   const router = useRouter();
-  const tab = useMemo(() => router.asPath.replace(/^\/#?/, ""), [router]);
-  const onClick = useCallback(
-    () => !disabled && router.push(`/${to}`),
-    [router, to, disabled]
+  return useMemo(
+    () => router.asPath.replace(/^\/#?/, "").replace(/(#.*)$/, ""),
+    [router]
   );
+};
+
+const Tab: React.FC<{ to: string; disabled: boolean }> = ({ to, disabled }) => {
+  const tab = useTab();
   return (
-    <TabContainer active={tab === to} onClick={onClick} disabled={disabled}>
-      {to}
+    <TabContainer active={tab === to} disabled={disabled}>
+      <Link href={`/${to}`}>{to}</Link>
     </TabContainer>
   );
 };
@@ -134,14 +139,28 @@ const AddressLabel = styled("span", {
   fontWeight: 600,
 });
 
-const HomeContent: React.FC = ({ children }) => {
-  const router = useRouter();
-  const tab = useMemo(() => router.asPath.replace(/^\/#?/, ""), [router]);
-  const address = useAddress();
+const SignedInIndicator = () => {
+  const clerk = useClerk();
   const displayAddress = useDisplayAddress();
   const chainId = useChainId();
-  const connectWallet = useConnect();
-  const disconnectWallet = useDisconnect();
+  return (
+    <span>
+      <NetworkIndicator chainId={chainId} />
+      <AddressLabel>
+        {displayAddress.endsWith(".eth")
+          ? displayAddress
+          : `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`}
+      </AddressLabel>
+      <Button onClick={() => clerk.signOut()} tone="forest">
+        Disconnect wallet
+      </Button>
+    </span>
+  );
+};
+
+const HomeContent: React.FC = ({ children }) => {
+  const tab = useTab();
+  const address = useAddress();
   return (
     <PageContent>
       <Head>
@@ -151,23 +170,38 @@ const HomeContent: React.FC = ({ children }) => {
       </Head>
       <PageHeader>
         <PageHeaderH1>{tab}</PageHeaderH1>
-        {address ? (
-          <span>
-            <NetworkIndicator chainId={chainId} />
-            <AddressLabel>
-              {displayAddress.endsWith(".eth")
-                ? displayAddress
-                : `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`}
-            </AddressLabel>
-            <Button onClick={disconnectWallet} tone="forest">
-              Disconnect wallet
-            </Button>
-          </span>
+        {/*address ? (
+          <SignedIn>
+            <span>
+              <NetworkIndicator chainId={chainId} />
+              <AddressLabel>
+                {displayAddress.endsWith(".eth")
+                  ? displayAddress
+                  : `${displayAddress.slice(0, 6)}...${displayAddress.slice(
+                      -4
+                    )}`}
+              </AddressLabel>
+              <Button onClick={disconnectWallet} tone="forest">
+                Disconnect wallet
+              </Button>
+            </span>
+          </SignedIn>
         ) : (
-          <Button onClick={connectWallet} tone={"wheat"}>
-            Connect wallet
-          </Button>
-        )}
+          <SignedOut>
+            <Button onClick={connectWallet} tone={"wheat"}>
+              Connect wallet
+            </Button>
+            <SignInWithMetamaskButton />
+          </SignedOut>
+        ) */}
+        <SignedIn>
+          <SignedInIndicator />
+        </SignedIn>
+        <SignedOut>
+          <SignInWithMetamaskButton>
+            <Button tone={"wheat"}>Connect wallet</Button>
+          </SignInWithMetamaskButton>
+        </SignedOut>
       </PageHeader>
       <DashboardSidebar>
         <LinkContainer>
@@ -184,6 +218,9 @@ const HomeContent: React.FC = ({ children }) => {
           </Tab>
           <Tab to={"manage"} disabled={!address}>
             Manage
+          </Tab>
+          <Tab to={"profile"} disabled={!address}>
+            Profile
           </Tab>
           {/*<Tab to={"settings"}>Settings</Tab>*/}
         </LinkContainer>
