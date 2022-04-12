@@ -3,7 +3,7 @@ import { getAbiFromJson, networkIdByName } from "../../../components/constants";
 import type { ContractSendMethod } from "web3-eth-contract";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import IpfsImage from "../../../components/IpfsImage";
+import IpfsAsset from "../../../components/IpfsAsset";
 import {
   Button,
   Label,
@@ -170,6 +170,11 @@ const BottomText = styled("p", {
 const SelectBoxContainer = styled("div", {
   marginTop: "64px",
   color: "white",
+});
+
+const LogoContainer = styled("div", {
+  width: "56px",
+  height: "56px",
 });
 
 type PageProps = {
@@ -339,7 +344,7 @@ const CheckoutPageContent = ({
         <LineItemSummary>
           <LineItemThumbnail>
             {metadata && metadata.thumbnail ? (
-              <IpfsImage
+              <IpfsAsset
                 cid={metadata.thumbnail}
                 height={"100%"}
                 width={"100%"}
@@ -403,7 +408,13 @@ const CheckoutPageContent = ({
       </AppPayment>
       <BottomText>
         {customization.logo_cid ? (
-          <IpfsImage cid={customization.logo_cid} height={56} width={80} />
+          <LogoContainer>
+            <IpfsAsset
+              cid={customization.logo_cid}
+              height={"100%"}
+              width={"100%"}
+            />
+          </LogoContainer>
         ) : (
           "Powered By CabinDAO"
         )}

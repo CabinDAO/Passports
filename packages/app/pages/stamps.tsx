@@ -43,7 +43,7 @@ import {
   ipfsHashToBytes32,
   resolveAddress,
 } from "../components/utils";
-import IpfsImage from "../components/IpfsImage";
+import IpfsAsset from "../components/IpfsAsset";
 import Papa from "papaparse";
 import Layout from "../components/Layout";
 
@@ -306,7 +306,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
       <StampHeader>
         <CardImageContainer>
           {thumbnail ? (
-            <IpfsImage cid={thumbnail} height={"100%"} width={"100%"} />
+            <IpfsAsset cid={thumbnail} height={"100%"} width={"100%"} />
           ) : (
             <Image
               src={"/vercel.svg"}
@@ -380,7 +380,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                 .post("/api/updateCustomization", {
                   data: upsertData,
                 })
-                .then(() => setToastMessage("Successfully updated stamp data!"))
+                .then(() => setToastMessage("Successfully updated stamp's customized checkout experience!"))
                 .catch((e) =>
                   setToastMessage(`ERROR: ${e.response?.data || e.message}`)
                 );
@@ -424,6 +424,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                 <Label label={logoCid ? "Change Logo" : "Upload Logo"}>
                   <input
                     type={"file"}
+                    accept="video/*,image/*"
                     onChange={async (e) => {
                       if (e.target.files) {
                         setFileLoading(true);
@@ -783,10 +784,13 @@ const FileInput = styled("div", {
 });
 
 const CardImageContainer = styled("div", {
+  width: "80px",
+  height: "56px",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
   "> span": {
     border: "1px solid $forest !important",
-    width: "80px !important",
-    height: "56px !important",
     borderRadius: "20px",
   },
 });
@@ -799,7 +803,7 @@ const StampImageContainer = styled("div", {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  marginBottom: '32px'
+  marginBottom: "32px",
 });
 
 const CreateStampModal = ({
@@ -1045,6 +1049,7 @@ const CreateStampModal = ({
                 <input
                   ref={fileRef}
                   type={"file"}
+                  accept="video/*,image/*"
                   onChange={async (e) => {
                     if (e.target.files) {
                       setFileLoading(true);
@@ -1085,7 +1090,12 @@ const CreateStampModal = ({
                 <>
                   <Label label={"Stamp Image"} />
                   <StampImageContainer>
-                    <IpfsImage cid={cid} height={"100%"} width={"100%"} id={'new-stamp-image'} />
+                    <IpfsAsset
+                      cid={cid}
+                      height={"100%"}
+                      width={"100%"}
+                      id={"new-stamp-image"}
+                    />
                   </StampImageContainer>
                 </>
               )}

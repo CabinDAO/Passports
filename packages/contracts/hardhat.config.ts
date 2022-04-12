@@ -7,6 +7,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import { bytes32ToIpfsHash } from "../app/components/utils";
 
 dotenv.config();
 dotenv.config({ path: "../app/.env" });
@@ -48,6 +49,19 @@ task("faucet", "Seed an account with the test token")
       .finally(() => console.log("done!"));
   });
 
+task("scan", "Edit this command to quickly query things on testnets").setAction(
+  async (_, hre) => {
+    console.log("ok");
+    const stamp = await hre.ethers.getContractAt(
+      "Stamp",
+      "0xb9f7c8b8554c6e1b5271b4fee8504266e6c5e316"
+    );
+    console.log("stamp");
+    const hash = await stamp.metadataHash();
+    console.log("metadata", bytes32ToIpfsHash(hash));
+  }
+);
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -86,7 +100,7 @@ const config: HardhatUserConfig = {
     localhost: {
       url: "http://localhost:8545",
       accounts: getAccountsFromEnv("PRIVATE_KEY"),
-    }
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
