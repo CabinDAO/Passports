@@ -246,6 +246,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
   const [url, setUrl] = useState(customization.redirect_url);
   const [brandColor, setBrandColor] = useState(customization.brand_color);
   const [accColor, setAccColor] = useState(customization.accent_color);
+  const [textColor, setTextColor] = useState(customization.text_color);
   const [buttonTxt, setButtonTxt] = useState(customization.button_txt);
   const [logoCid, setLogoCid] = useState(customization.logo_cid);
   const [fileLoading, setFileLoading] = useState(false);
@@ -373,6 +374,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                 contractAddr: stamp.address,
                 brand_color: brandColor,
                 accent_color: accColor,
+                text_color: textColor,
                 button_txt: buttonTxt,
                 logo_cid: logoCid,
               };
@@ -413,6 +415,18 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                   name="acolor"
                   value={accColor || "#324841"}
                   onChange={(e) => setAccColor(e.target.value)}
+                ></input>
+              </ModalInputBox>
+              <ModalInputBox>
+                <ModalInputLabel htmlFor="acolor">
+                  Text color:
+                </ModalInputLabel>
+                <input
+                  type="color"
+                  id="textColor"
+                  name="textColor"
+                  value={textColor || "#ffffff"}
+                  onChange={(e) => setTextColor(e.target.value)}
                 ></input>
               </ModalInputBox>
               <ModalInput

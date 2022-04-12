@@ -26,6 +26,7 @@ import {
 import QRCode from "qrcode";
 import { getAbi, getVersionByAddress } from "../../../components/firebase";
 import NetworkIndicator from "../../../components/NetworkIndicator";
+import { getCustomization } from "../../api/customization";
 
 type QueryParams = {
   network: string;
@@ -50,62 +51,6 @@ const AppOverview = styled("div", {
   alignItems: "flex-start",
   flexDirection: "column",
   height: "100%",
-  color: "white",
-});
-
-const AppHeader = styled("header", {
-  color: "white",
-  paddingBottom: "64px",
-  height: "50%",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "end",
-  alignItems: "start",
-});
-
-const AppSummaryContainer = styled("div", {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  textAlign: "left",
-  height: "50%",
-  width: "100%",
-});
-
-const ProductSummaryName = styled("span", {
-  fontSize: 16,
-  fontWeight: 600,
-  color: "$sand",
-  fontFamily: "$mono",
-  lineHeight: "21px",
-  textTransform: "uppercase",
-  display: "block",
-});
-
-const LineItemAmount = styled("span", {
-  fontSize: 16,
-  fontWeight: 600,
-  color: "$sand",
-  fontFamily: "$mono",
-  lineHeight: "21px",
-  textTransform: "uppercase",
-});
-
-const ProductSummaryQuantity = styled("span", {
-  fontSize: 16,
-  fontWeight: 600,
-  color: "#8B9389",
-  fontFamily: "$mono",
-  lineHeight: "21px",
-  textTransform: "uppercase",
-});
-
-const LineItem = styled("div", {
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "6px 0 6px 16px",
-  alignItems: "start",
-  flexGrow: 1,
 });
 
 const LineItemSummary = styled("div", {
@@ -116,13 +61,14 @@ const LineItemSummary = styled("div", {
 });
 
 const LineItemThumbnail = styled("div", {
-  width: "80px",
-  height: "56px",
-  background: "white",
+  width: "240px",
+  height: "168px",
+  background: "transparent",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   borderRadius: "10px",
+  marginBottom: "16px",
 });
 
 const ProductSummaryTotal = styled("h2", {
@@ -157,19 +103,25 @@ const PaymentRequestHeader = styled("div", {
   fontWeight: 600,
   marginBottom: "24px",
   textTransform: "uppercase",
-  color: "white",
   fontFamil: "$mono",
 });
 
-const BottomText = styled("p", {
+const BottomLeftText = styled("p", {
   position: "fixed",
-  bottom: 0,
-  right: 10,
+  bottom: 8,
+  left: 8,
+  margin: 0,
+});
+
+const BottomText = styled("div", {
+  position: "fixed",
+  bottom: 8,
+  right: 8,
+  margin: 0,
 });
 
 const SelectBoxContainer = styled("div", {
   marginTop: "64px",
-  color: "white",
 });
 
 const LogoContainer = styled("div", {
@@ -186,6 +138,8 @@ type PageProps = {
   metadataHash: string;
   network: string;
   version: string;
+  limit: number;
+  customization: Record<string, string>;
 };
 
 const walletLabels: Record<string, string> = {
@@ -203,18 +157,18 @@ const CheckoutPageContent = ({
   metadataHash,
   network,
   version,
+  limit,
+  customization,
 }: PageProps) => {
   const web3 = useWeb3();
   const account = useAddress();
   const chainId = useChainId();
   const [loading, setLoading] = useState(false);
   const [supply, setSupply] = useState(initialSupply);
+  const [owned, setOwned] = useState(0);
   const correctNetwork = useMemo(
     () => Number(chainId) === Number(networkIdByName[network]),
     [network, chainId]
-  );
-  const [customization, setCustomization] = useState<Record<string, string>>(
-    {}
   );
   const [metadata, setMetadata] = useState<Record<string, string>>({});
   const [walletPassPlatform, setWalletPassPlatform] = useState<string>("");
@@ -222,16 +176,20 @@ const CheckoutPageContent = ({
   const [qrFile, setQrfile] = useState("");
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    // Fetch redirect url from DB on page load.
-    axios
-      .post("/api/customization", {
-        address: address,
+    if (account)
+      getStampContract({
+        web3,
+        address,
+        version,
       })
-      .then((result: { data: Record<string, string> }) => {
-        setCustomization(result.data);
-      })
-      .catch(console.error);
-  }, [address, setCustomization]);
+        .then((contract) =>
+          (contract.methods.balanceOf(account) as ContractSendMethod).call()
+        )
+        .then((a) => {
+          console.log(a);
+          setOwned(a);
+        });
+  }, [address, web3, version, account]);
   useEffect(() => {
     if (!Object.entries(metadata).length && metadataHash) {
       axios.get(`https://ipfs.io/ipfs/${metadataHash}`).then((r) => {
@@ -326,7 +284,7 @@ const CheckoutPageContent = ({
     walletPassPlatform,
   ]);
   return (
-    <App>
+    <App style={{ color: customization.text_color || "white" }}>
       <AppOverview
         style={{
           background: customization.brand_color || "#1D2B2A",
@@ -339,29 +297,25 @@ const CheckoutPageContent = ({
             switch to {network}
           </div>
         )}
-        <ProductSummaryTotal>Total</ProductSummaryTotal>
+        <ProductSummaryTotal>Your Total</ProductSummaryTotal>
         <ProductSummaryAmount>{price} ETH</ProductSummaryAmount>
+        <LineItemThumbnail>
+          {metadata && metadata.thumbnail ? (
+            <IpfsAsset
+              cid={metadata.thumbnail}
+              height={"100%"}
+              width={"100%"}
+            />
+          ) : null}
+        </LineItemThumbnail>
         <LineItemSummary>
-          <LineItemThumbnail>
-            {metadata && metadata.thumbnail ? (
-              <IpfsAsset
-                cid={metadata.thumbnail}
-                height={"100%"}
-                width={"100%"}
-              />
-            ) : null}
-          </LineItemThumbnail>
-          <LineItem>
-            <span>
-              <ProductSummaryName>
-                {name} ({symbol})
-              </ProductSummaryName>
-              <ProductSummaryQuantity>Quantity 1</ProductSummaryQuantity>
-            </span>
-            <LineItemAmount>{price} ETH</LineItemAmount>
-          </LineItem>
+          {name} ({symbol})
         </LineItemSummary>
-        <SelectBoxContainer>
+        <SelectBoxContainer
+          css={{
+            "& button": { borderColor: customization.accent_color || "$wheat" },
+          }}
+        >
           <Label label={"Generate Mobile Wallet Pass"}>
             <RadioGroup
               defaultValue={""}
@@ -381,12 +335,20 @@ const CheckoutPageContent = ({
           </Label>
         </SelectBoxContainer>
       </AppOverview>
-      <AppPayment style={{ backgroundColor: "#324841" }}>
+      <AppPayment
+        style={{ backgroundColor: customization.accent_color || "#324841" }}
+      >
         <PaymentRequestHeader>
           {qrFile
             ? `Download ${walletLabels[walletPassPlatform]}`
             : "Pay With Wallet"}
         </PaymentRequestHeader>
+        {limit <= owned && (
+          <PaymentRequestHeader>
+            WARNING: Already own the max amount of this Stamp ({limit}). Buying
+            will fail
+          </PaymentRequestHeader>
+        )}
         {!qrFile && (
           <div>
             <Button
@@ -406,6 +368,7 @@ const CheckoutPageContent = ({
           <canvas ref={qrCanvasRef} />
         </div>
       </AppPayment>
+      <BottomLeftText>Version {version}</BottomLeftText>
       <BottomText>
         {customization.logo_cid ? (
           <LogoContainer>
@@ -444,25 +407,29 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
   const web3 = getWeb3(network);
   return getVersionByAddress(address, networkIdByName[network])
     .then((version) =>
-      getAbi("stamp", version)
-        .then((stampJson) => {
-          return new web3.eth.Contract(getAbiFromJson(stampJson), address);
-        })
-        .then((contract) =>
-          (contract.methods.get() as ContractSendMethod).call()
-        )
-        .then((p) => ({
-          props: {
-            address,
-            name: p[0],
-            symbol: p[1],
-            supply: p[2] - p[3],
-            price: web3.utils.fromWei(p[4], "ether"),
-            metadataHash: bytes32ToIpfsHash(p[5]),
-            network,
-            version,
-          },
-        }))
+      Promise.all([
+        getAbi("stamp", version)
+          .then((stampJson) => {
+            return new web3.eth.Contract(getAbiFromJson(stampJson), address);
+          })
+          .then((contract) =>
+            (contract.methods.get() as ContractSendMethod).call()
+          ),
+        getCustomization(address),
+      ]).then(([p, customization]) => ({
+        props: {
+          address,
+          name: p[0],
+          symbol: p[1],
+          supply: p[2] - p[3],
+          price: web3.utils.fromWei(p[4], "ether"),
+          metadataHash: bytes32ToIpfsHash(p[5]),
+          network,
+          version,
+          limit: Number(p[8]),
+          customization,
+        },
+      }))
     )
     .catch((e) => {
       console.error(e);
@@ -476,6 +443,8 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
           supply: 0,
           metadataHash: "",
           version: "0.0.0",
+          limit: 1,
+          customization: {},
         },
       };
     });
