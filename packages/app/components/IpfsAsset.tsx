@@ -32,7 +32,7 @@ const IpfsAsset = ({
         const assetSrc = URL.createObjectURL(r.data);
         if (contentType.startsWith("image")) {
           const parent = (document.getElementById(id) as HTMLDivElement)
-            .parentElement;
+            ?.parentElement;
           if (
             imageState.height === "100%" &&
             imageState.width === "100%" &&

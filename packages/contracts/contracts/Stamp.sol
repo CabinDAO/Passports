@@ -265,7 +265,7 @@ contract Stamp is ERC721, AccessControlEnumerable, Pausable {
             _mint(accounts[i], ++mintIndex);
         }
 
-        emit Airdrop(msg.sender, accounts.length);
+        emit Airdrop(msg.sender, mintIndex);
     }
 
     function grantAdmin(address account) public {

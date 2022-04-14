@@ -152,6 +152,7 @@ interface IStampProps {
   address: string;
   name: string;
   symbol: string;
+  mintIndex: number;
   supply: number;
   price: string;
   metadataHash: string;
@@ -186,9 +187,11 @@ const EditableStampCardRow = ({
       <StampCardValue>
         {stamp[field]}
         {decorator}
-        <Button onClick={() => setIsOpen(true)} type={"icon"}>
-          <Pencil1Icon color={theme.colors.wheat} width={10} height={10} />
-        </Button>
+        <Tooltip content={"Edit"}>
+          <Button onClick={() => setIsOpen(true)} type={"icon"}>
+            <Pencil1Icon color={theme.colors.wheat} width={12} height={12} />
+          </Button>
+        </Tooltip>
         <Modal
           hideCloseIcon
           isOpen={isOpen}
@@ -237,7 +240,6 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
   const networkId = useChainId();
   const [shareIsOpen, setShareIsOpen] = useState(false);
   const [userAddress, setUserAddress] = useState("");
-  const [newSupply, setNewSupply] = useState(stamp.supply);
   const [isOpen, setIsOpen] = useState(false);
   const [airDropIsOpen, setAirDropIsOpen] = useState(false);
   const [pauseIsOpen, setPauseIsOpen] = useState(false);
@@ -264,12 +266,12 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
           (contract.methods.get() as ContractSendMethod).call()
         )
         .then((p) => {
-          const supply = Number(p[2]) - Number(p[3]);
           setStamp({
             address: stamp.address,
             name: p[0],
             symbol: p[1],
-            supply,
+            supply: Number(p[2]),
+            mintIndex: Number(p[3]),
             price: web3.utils.fromWei(p[4], "ether"),
             metadataHash: bytes32ToIpfsHash(p[5]),
             royalty: p[6] / 100,
@@ -277,10 +279,9 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
             isPrivate: p[7],
             paused: p[9] || false,
           });
-          setNewSupply(supply);
         });
     }
-  }, [setStamp, stamp, web3, setNewSupply]);
+  }, [setStamp, stamp, web3]);
   useEffect(() => {
     setUrl(customization.redirect_url);
     setBrandColor(customization.brand_color);
@@ -318,22 +319,6 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
           )}
         </CardImageContainer>
         <div>
-          <Tooltip content={"Copy checkout link"}>
-            <Button
-              onClick={(e) => {
-                window.navigator.clipboard.writeText(
-                  `${window.location.origin}/checkout/${
-                    networkNameById[Number(networkId)]
-                  }/${stamp.address}`
-                );
-                setToastMessage("Copied checkout link!");
-                e.stopPropagation();
-              }}
-              type="icon"
-            >
-              <Link1Icon width={20} height={20} color={theme.colors.wheat} />
-            </Button>
-          </Tooltip>
           <Tooltip content={"Share Stamp Ownership"}>
             <Button onClick={() => setShareIsOpen(true)} type="icon">
               <Share1Icon width={20} height={20} color={theme.colors.wheat} />
@@ -382,7 +367,11 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                 .post("/api/updateCustomization", {
                   data: upsertData,
                 })
-                .then(() => setToastMessage("Successfully updated stamp's customized checkout experience!"))
+                .then(() =>
+                  setToastMessage(
+                    "Successfully updated stamp's customized checkout experience!"
+                  )
+                )
                 .catch((e) =>
                   setToastMessage(`ERROR: ${e.response?.data || e.message}`)
                 );
@@ -418,9 +407,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                 ></input>
               </ModalInputBox>
               <ModalInputBox>
-                <ModalInputLabel htmlFor="acolor">
-                  Text color:
-                </ModalInputLabel>
+                <ModalInputLabel htmlFor="acolor">Text color:</ModalInputLabel>
                 <input
                   type="color"
                   id="textColor"
@@ -527,13 +514,32 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                             from: address,
                           })
                           .on("receipt", (receipt: TransactionReceipt) => {
-                            setToastMessage("Airdrop Successful!");
-                            setStamp({
-                              ...stamp,
-                              supply: stamp.supply - addrList.length,
-                            });
-                            setAirDropIsOpen(false);
-                            resolve();
+                            const transferEvents = receipt.events?.["Transfer"];
+                            const transfers = Array.isArray(transferEvents)
+                              ? transferEvents
+                              : [transferEvents];
+                            const tokens = transfers.map((t) => ({
+                              tokenId: t?.returnValues?.tokenId as string,
+                              address: t?.returnValues?.to as string,
+                            }));
+                            const mintIndex =
+                              (receipt.events?.["Airdrop"]
+                                ?.returnValues?.[1] as number) || 0;
+                            axios
+                              .post("/api/stamps", {
+                                chain: chainId,
+                                tokens,
+                                contract: stamp.address,
+                              })
+                              .then((r) => {
+                                setToastMessage("Airdrop Successful!");
+                                setStamp({
+                                  ...stamp,
+                                  mintIndex,
+                                });
+                                setAirDropIsOpen(false);
+                                resolve();
+                              });
                           })
                           .on("error", (e: Error) => {
                             setToastMessage(`ERROR: ${e.message}`);
@@ -547,7 +553,7 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
           >
             <div>
               {" "}
-              {`All the addresses should be under column named "address". All other columns will be ignored.`}{" "}
+              {`All the addresses should be under column named "address". An optional "quantity" column could be added for airdropping multiple stamps per address."`}{" "}
             </div>
             <ModalInputBox>
               <Label label={"Upload CSV"}>
@@ -560,11 +566,16 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                       Papa.parse<Record<string, string>, File>(f, {
                         header: true,
                         complete: function (results) {
-                          const addrsInCsv = results.data.map(
-                            (result) => result["address"]
-                          );
-                          const relevantAddr = addrsInCsv.filter(
-                            (addr) => addr
+                          const addrsInCsv = results.data.map((result) => ({
+                            address: result["address"],
+                            quantity: result["quantity"],
+                          }));
+                          const relevantAddr = addrsInCsv.flatMap((a) =>
+                            !a.address
+                              ? ([] as string[])
+                              : Array(Number(a.quantity) || 1)
+                                  .fill(null)
+                                  .map(() => a.address)
                           );
                           setAirdropAddrList(relevantAddr);
                         },
@@ -642,27 +653,51 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
         <span>BALANCE</span>
         <StampCardValue>
           {((Number(balance) * 39) / 40).toFixed(2)} ETH
-          <Button
-            type={"icon"}
-            disabled={balance === "0"}
-            onClick={(e) => {
-              getStampContract({
-                web3,
-                address: stamp.address,
-                version: stamp.version,
-              }).then((contract) =>
-                (contract.methods.claimEth() as ContractSendMethod)
-                  .send({ from: address })
-                  .on("receipt", () => {
-                    setToastMessage(`Successfully Claimed ${balance} ETH!`);
-                    setBalance("0");
-                  })
-              );
-              e.stopPropagation();
-            }}
-          >
-            <ExitIcon color={theme.colors.wheat} />
-          </Button>
+          <Tooltip content={"Withdraw"}>
+            <Button
+              type={"icon"}
+              disabled={balance === "0"}
+              onClick={(e) => {
+                getStampContract({
+                  web3,
+                  address: stamp.address,
+                  version: stamp.version,
+                }).then((contract) =>
+                  (contract.methods.claimEth() as ContractSendMethod)
+                    .send({ from: address })
+                    .on("receipt", () => {
+                      setToastMessage(`Successfully Claimed ${balance} ETH!`);
+                      setBalance("0");
+                    })
+                );
+                e.stopPropagation();
+              }}
+            >
+              <ExitIcon color={theme.colors.wheat} width={12} height={12} />
+            </Button>
+          </Tooltip>
+        </StampCardValue>
+      </StampCardRow>
+      <StampCardRow>
+        <span>MINTED</span>
+        <StampCardValue>
+          {stamp.mintIndex}
+          <Tooltip content={"Copy checkout link"}>
+            <Button
+              onClick={(e) => {
+                window.navigator.clipboard.writeText(
+                  `${window.location.origin}/checkout/${
+                    networkNameById[Number(networkId)]
+                  }/${stamp.address}`
+                );
+                setToastMessage("Copied checkout link!");
+                e.stopPropagation();
+              }}
+              type="icon"
+            >
+              <Link1Icon width={12} height={12} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
         </StampCardValue>
       </StampCardRow>
       <EditableStampCardRow
@@ -909,6 +944,7 @@ const CreateStampModal = ({
                   symbol,
                   name,
                   supply: Number(quantity),
+                  mintIndex: 0,
                   price,
                   metadataHash,
                   royalty: royalty / 100,
@@ -1170,6 +1206,7 @@ const StampTabContent = () => {
               name: "",
               symbol: "",
               supply: 0,
+              mintIndex: 0,
               price: "0",
               metadataHash: "",
               royalty: 0,
