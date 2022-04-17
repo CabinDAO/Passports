@@ -97,11 +97,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           )
           .then((args) => {
             if (!args) return;
-            if (args.some((s) => !s.success))
+            const failures = args.filter((s) => !s.success);
+            if (failures.length)
               return res
                 .status(500)
                 .end(
-                  `Querying Contract failed. Errors:\n${args
+                  `Querying Contract failed. Errors:\n${failures
                     .map((s) => ` - ${s.value}`)
                     .join("\n")}`
                 );
@@ -113,7 +114,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                   description: `${args[0].value} (${args[1].value})`,
                   external_url: `https://passports.creatorcabins.com/checkout/${networkName}/${contractAddress}`,
                   image: `https://ipfs.io/ipfs/${thumbnail}`,
-                  name: args[0],
+                  name: args[0].value,
                   attributes: Object.entries(fields).map(
                     ([trait_type, value]) => ({ trait_type, value })
                   ),
@@ -123,7 +124,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               .catch((e) =>
                 res
                   .status(500)
-                  .end(`Failed to get metadata ${args?.[2]?.value}: ${e.message}`)
+                  .end(
+                    `Failed to get metadata ${args?.[2]?.value}: ${e.message}`
+                  )
               );
           })
           .catch((e) =>
