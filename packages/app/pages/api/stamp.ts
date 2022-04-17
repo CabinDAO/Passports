@@ -65,7 +65,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                   getAbiFromJson(stampJson),
                   contractAddress
                 );
-                return (contract.methods.get() as ContractSendMethod).call();
+                return Promise.all([
+                  (contract.methods.name() as ContractSendMethod).call(),
+                  (contract.methods.symbol() as ContractSendMethod).call(),
+                  (contract.methods.metadataHash() as ContractSendMethod).call(),
+                ])
+                .catch((e) =>
+                  res
+                    .status(500)
+                    .end(
+                      `Failed to get contract data from get method ${version}: ${e.message}`
+                    )
+                );
               })
               .catch((e) =>
                 res
@@ -76,7 +87,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           .then((args) => {
             if (!args) return;
             return axios
-              .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[5])}`)
+              .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[2])}`)
               .then((r) => {
                 const { thumbnail, ...fields } = r.data;
                 const nftStandard = {
@@ -93,7 +104,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               .catch((e) =>
                 res
                   .status(500)
-                  .end(`Failed to get metadata ${args?.[5]}: ${e.message}`)
+                  .end(`Failed to get metadata ${args?.[2]}: ${e.message}`)
               );
           })
           .catch((e) =>
