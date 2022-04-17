@@ -66,17 +66,28 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                   contractAddress
                 );
                 return Promise.all([
-                  (contract.methods.name() as ContractSendMethod).call(),
-                  (contract.methods.symbol() as ContractSendMethod).call(),
-                  (contract.methods.metadataHash() as ContractSendMethod).call(),
-                ])
-                .catch((e) =>
-                  res
-                    .status(500)
-                    .end(
-                      `Failed to get contract data from get method ${version}: ${e.message}`
-                    )
-                );
+                  (contract.methods.name() as ContractSendMethod)
+                    .call()
+                    .then((s) => ({ success: true, value: s as string }))
+                    .catch((e) => ({
+                      success: false,
+                      value: `Failed to get name: ${e.message}`,
+                    })),
+                  (contract.methods.symbol() as ContractSendMethod)
+                    .call()
+                    .then((s) => ({ success: true, value: s as string }))
+                    .catch((e) => ({
+                      success: false,
+                      value: `Failed to get symbol: ${e.message}`,
+                    })),
+                  (contract.methods.metadataHash() as ContractSendMethod)
+                    .call()
+                    .then((s) => ({ success: true, value: s as string }))
+                    .catch((e) => ({
+                      success: false,
+                      value: `Failed to get metadata hash: ${e.message}`,
+                    })),
+                ]);
               })
               .catch((e) =>
                 res
@@ -86,6 +97,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           )
           .then((args) => {
             if (!args) return;
+            if (args.some((s) => !s.success))
+              return res
+                .status(500)
+                .end(
+                  `Querying Contract failed. Errors:\n${args
+                    .map((s) => ` - ${s.value}`)
+                    .join("\n")}`
+                );
             return axios
               .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[2])}`)
               .then((r) => {
