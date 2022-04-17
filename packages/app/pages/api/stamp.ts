@@ -48,6 +48,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return getDocs(
         query(adminCol, where("contract", "==", contractAddress.toLowerCase()))
       ).then((data) => {
+        if (!data.docs.length) {
+          return res
+            .status(409)
+            .end(`Contract ${contractAddress} Missing From Firebase`);
+        }
         const doc = data.docs[0].data();
         const networkId = doc["chain"];
         const networkName = networkNameById[networkId];
