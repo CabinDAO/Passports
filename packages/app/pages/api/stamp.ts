@@ -106,11 +106,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                     .join("\n")}`
                 );
             return axios
-              .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[2])}`)
+              .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[2].value)}`)
               .then((r) => {
                 const { thumbnail, ...fields } = r.data;
                 const nftStandard = {
-                  description: `${args[0]} (${args[1]})`,
+                  description: `${args[0].value} (${args[1].value})`,
                   external_url: `https://passports.creatorcabins.com/checkout/${networkName}/${contractAddress}`,
                   image: `https://ipfs.io/ipfs/${thumbnail}`,
                   name: args[0],
@@ -123,7 +123,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               .catch((e) =>
                 res
                   .status(500)
-                  .end(`Failed to get metadata ${args?.[2]}: ${e.message}`)
+                  .end(`Failed to get metadata ${args?.[2]?.value}: ${e.message}`)
               );
           })
           .catch((e) =>
