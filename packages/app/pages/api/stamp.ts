@@ -58,14 +58,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         const networkName = networkNameById[networkId];
         return getVersionByAddress(contractAddress, networkId)
           .then((version) =>
-            getAbi("stamp", version).then((stampJson) => {
-              const web3 = getWeb3(networkName);
-              const contract = new web3.eth.Contract(
-                getAbiFromJson(stampJson),
-                contractAddress
-              );
-              return (contract.methods.get() as ContractSendMethod).call();
-            })
+            getAbi("stamp", version)
+              .then((stampJson) => {
+                const web3 = getWeb3(networkName);
+                const contract = new web3.eth.Contract(
+                  getAbiFromJson(stampJson),
+                  contractAddress
+                );
+                return (contract.methods.get() as ContractSendMethod).call();
+              })
+              .catch((e) =>
+                res
+                  .status(500)
+                  .end(`Failed to get abi for version ${version}: ${e.message}`)
+              )
           )
           .then((args) => {
             return axios
@@ -82,8 +88,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                   ),
                 };
                 res.status(200).send(nftStandard);
-              });
-          });
+              })
+              .catch((e) =>
+                res
+                  .status(500)
+                  .end(`Failed to get metadata ${args?.[5]}: ${e.message}`)
+              );
+          })
+          .catch((e) =>
+            res
+              .status(500)
+              .end(
+                `Failed to get versions for stamp ${contractAddress} in network ${networkName}: ${e.message}`
+              )
+          );
       });
 
     default:
