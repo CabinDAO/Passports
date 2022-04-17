@@ -102,7 +102,34 @@ describe("Stamp", function () {
       const airDropTx = await contract.airdrop(Array(500).fill(address));
       const airDropReceipt = await airDropTx.wait();
       expect((await contract.mintIndex()).toNumber()).to.equal(500);
-      expect(airDropReceipt.cumulativeGasUsed.toNumber()).to.be.lessThanOrEqual(12979319);
+      expect(airDropReceipt.cumulativeGasUsed.toNumber()).to.be.lessThanOrEqual(
+        12979425
+      );
     });
+  });
+
+  it("Should be able to query tokenuri", async function () {
+    if (!dao1) fail("Failed to setup dao1");
+    const factoryContract = await ethers.getContractFactory("Stamp", dao1);
+    const price = utils.parseEther("1.0");
+    const contract = await factoryContract.deploy(
+      "Creator Cabins",
+      "CC",
+      10000,
+      price,
+      "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+      0,
+      false,
+      1
+    );
+    await contract.deployed();
+    const buyTx = await contract.buy({
+      from: await dao1.getAddress(),
+      value: price,
+    });
+    await buyTx.wait();
+    expect(await contract.tokenURI(1)).to.equal(
+      `https://passports.creatorcabins.com/api/stamp?address=${contract.address.toLowerCase()}&token=1`
+    );
   });
 });

@@ -87,6 +87,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                       success: false,
                       value: `Failed to get metadata hash: ${e.message}`,
                     })),
+                  (contract.methods.tokenURI(1) as ContractSendMethod)
+                    .call()
+                    .then((s) => ({ success: true, value: s as string }))
+                    .catch((e) => ({
+                      success: false,
+                      value: `Failed to get tokenUri: ${e.message}`,
+                    })),
                 ]);
               })
               .catch((e) =>
@@ -97,6 +104,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           )
           .then((args) => {
             if (!args) return;
+            console.log(args[3].value);
             const failures = args.filter((s) => !s.success);
             if (failures.length)
               return res
