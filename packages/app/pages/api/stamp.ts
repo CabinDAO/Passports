@@ -74,6 +74,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               )
           )
           .then((args) => {
+            if (!args) return;
             return axios
               .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[5])}`)
               .then((r) => {
