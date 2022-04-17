@@ -20,9 +20,9 @@ export const getVersionByAddress = (address: string, chain: number) => {
       where("address", "==", address.toLowerCase()),
       where("chain", "==", chain)
     )
-  ).then((d) =>
-    d.docs.length ? (d.docs[0].data()["version"] as string) : "0.0.0"
-  );
+  ).then((d) => {
+    return d.docs.length ? (d.docs[0].data()["version"] as string) : "0.0.0";
+  });
 };
 
 export const getAbi = (contract: string, version: string) => {
