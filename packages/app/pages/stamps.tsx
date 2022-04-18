@@ -1150,7 +1150,7 @@ const CreateStampModal = ({
                 </>
               )}
               <Label
-                label="Private Passport"
+                label="Private Stamp"
                 description="If checked, only an authorized lst of addresses can mint the passort. This list can be managed from the Manage Tab"
               >
                 <Checkbox
