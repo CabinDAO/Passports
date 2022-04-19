@@ -35,15 +35,28 @@ const TabContainer = styled("div", {
         color: "$sand",
       },
     },
+    disabled: {
+      true: {
+        cursor: "not-allowed",
+        opacity: 0.5,
+      },
+    },
   },
 });
 
-const Tab: React.FC<{ to: string }> = ({ children, to }) => {
+const Tab: React.FC<{ to: string; disabled: boolean }> = ({
+  children,
+  to,
+  disabled,
+}) => {
   const router = useRouter();
   const tab = useMemo(() => router.asPath.replace(/^\/#?/, ""), [router]);
-  const onClick = useCallback(() => router.push(`/${to}`), [router, to]);
+  const onClick = useCallback(
+    () => !disabled && router.push(`/${to}`),
+    [router, to, disabled]
+  );
   return (
-    <TabContainer active={tab === to} onClick={onClick}>
+    <TabContainer active={tab === to} onClick={onClick} disabled={disabled}>
       {to}
     </TabContainer>
   );
@@ -132,8 +145,8 @@ const HomeContent: React.FC = ({ children }) => {
   return (
     <PageContent>
       <Head>
-        <title>NFT Passports</title>
-        <meta name="description" content="App | NFT Passports" />
+        <title>Passports</title>
+        <meta name="description" content="App | Passports" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <PageHeader>
@@ -160,12 +173,18 @@ const HomeContent: React.FC = ({ children }) => {
         <LinkContainer>
           <CabinLink>
             <Link href="/">
-              <a>Cabin</a>
+              <a>Passports</a>
             </Link>
           </CabinLink>
-          <Tab to={"stamps"}>Stamps</Tab>
-          <Tab to={"users"}>Users</Tab>
-          <Tab to={"manage"}>Manage</Tab>
+          <Tab to={"stamps"} disabled={!address}>
+            Stamps
+          </Tab>
+          <Tab to={"users"} disabled={!address}>
+            Users
+          </Tab>
+          <Tab to={"manage"} disabled={!address}>
+            Manage
+          </Tab>
           {/*<Tab to={"settings"}>Settings</Tab>*/}
         </LinkContainer>
       </DashboardSidebar>
