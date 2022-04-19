@@ -2,12 +2,11 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import React, { useCallback, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Button, styled } from "@cabindao/topo";
 import {
   useAddress,
   useChainId,
-  useConnect,
   useDisconnect,
   useDisplayAddress,
   Web3Provider,
@@ -18,7 +17,6 @@ import {
   SignedOut,
   SignInWithMetamaskButton,
   useClerk,
-  useUser,
 } from "@clerk/nextjs";
 
 const DRAWER_WIDTH = 200;
@@ -140,9 +138,9 @@ const AddressLabel = styled("span", {
 });
 
 const SignedInIndicator = () => {
-  const clerk = useClerk();
   const displayAddress = useDisplayAddress();
   const chainId = useChainId();
+  const disconnectWallet = useDisconnect();
   return (
     <span>
       <NetworkIndicator chainId={chainId} />
@@ -151,7 +149,7 @@ const SignedInIndicator = () => {
           ? displayAddress
           : `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`}
       </AddressLabel>
-      <Button onClick={() => clerk.signOut()} tone="forest">
+      <Button onClick={disconnectWallet} tone="forest">
         Disconnect wallet
       </Button>
     </span>
@@ -170,30 +168,6 @@ const HomeContent: React.FC = ({ children }) => {
       </Head>
       <PageHeader>
         <PageHeaderH1>{tab}</PageHeaderH1>
-        {/*address ? (
-          <SignedIn>
-            <span>
-              <NetworkIndicator chainId={chainId} />
-              <AddressLabel>
-                {displayAddress.endsWith(".eth")
-                  ? displayAddress
-                  : `${displayAddress.slice(0, 6)}...${displayAddress.slice(
-                      -4
-                    )}`}
-              </AddressLabel>
-              <Button onClick={disconnectWallet} tone="forest">
-                Disconnect wallet
-              </Button>
-            </span>
-          </SignedIn>
-        ) : (
-          <SignedOut>
-            <Button onClick={connectWallet} tone={"wheat"}>
-              Connect wallet
-            </Button>
-            <SignInWithMetamaskButton />
-          </SignedOut>
-        ) */}
         <SignedIn>
           <SignedInIndicator />
         </SignedIn>
