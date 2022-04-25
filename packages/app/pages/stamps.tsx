@@ -465,11 +465,10 @@ const StampCard = ({ customization, ...props }: IStampCardProps) => {
                           .send({ from: address })
                           .on("receipt", () => {
                             axios
-                              .post("/api/admin/stamp", {
+                              .put("/api/admin/stamp", {
                                 address: ethAddress,
                                 contract: stamp.address,
                                 chain: chainId,
-                                version: stamp.version,
                               })
                               .then(() => {
                                 setUserAddress("");
@@ -937,6 +936,7 @@ const CreateStampModal = ({
                 contract: contractAddress,
                 chain: chainId,
                 version: passportJson.version,
+                files: [cid, metadataHash],
               })
               .then(() => {
                 onSuccess({
