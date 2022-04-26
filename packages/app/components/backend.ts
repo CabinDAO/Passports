@@ -15,7 +15,11 @@ export const addPins = (files: string[]) => {
     },
   });
   const addPin = (hash: string) => {
-    return client.pin.add(hash);
+    return client.pin.add(hash).catch((e) => {
+      console.error(`Failed to pin hash ${hash}:`);
+      console.error(e);
+      return "";
+    });
   };
   return Promise.all(files.map(addPin));
 };
