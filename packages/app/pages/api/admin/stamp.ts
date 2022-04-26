@@ -1,12 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { collection, doc, getFirestore, setDoc } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { addPins } from "../../../components/backend";
 import { firebaseConfig } from "../../../components/constants";
-import { create } from "ipfs-http-client";
-import AbortController from "abort-controller";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  global.AbortController = AbortController;
   switch (req.method) {
     case "POST": {
       const {
@@ -35,22 +33,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           chain,
         }),
       ])
-        .then(() => {
-          const client = create({
-            host: "ipfs.infura.io",
-            port: 5001,
-            protocol: "https",
-            headers: {
-              authorization: `Basic ${Buffer.from(
-                `${process.env.IPFS_INFURA_ID}:${process.env.IPFS_INFURA_SECRET}`
-              ).toString("base64")}`,
-            },
-          });
-          const addPin = (hash: string) => {
-            return client.pin.add(hash);
-          };
-          return Promise.all(files.map(addPin));
-        })
+        .then(() => addPins(files))
         .then(() => {
           res.status(200).json({ success: true });
         })

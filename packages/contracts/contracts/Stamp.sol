@@ -123,7 +123,8 @@ contract Stamp is ERC721, AccessControlEnumerable, Pausable {
     function buy() external payable whenNotPaused {
         require(maxSupply > mintIndex, "Error, no more supply of this stamp");
         require(
-            maxOwned > balanceOf(msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            maxOwned > balanceOf(msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Error, non-admin User already owns the maximum number of this stamp"
         );
         require(msg.value == price, "Error, Token costs more");
@@ -142,14 +143,23 @@ contract Stamp is ERC721, AccessControlEnumerable, Pausable {
 
     function _baseURI() internal view override returns (string memory) {
         bytes memory s = new bytes(40);
-        for (uint i = 0; i < 20; i++) {
-            bytes1 b = bytes1(uint8(uint(uint160(address(this))) / (2**(8*(19 - i)))));
+        for (uint256 i = 0; i < 20; i++) {
+            bytes1 b = bytes1(
+                uint8(uint256(uint160(address(this))) / (2**(8 * (19 - i))))
+            );
             bytes1 hi = bytes1(uint8(b) / 16);
             bytes1 lo = bytes1(uint8(b) - 16 * uint8(hi));
-            s[2*i] = char(hi);
-            s[2*i+1] = char(lo);            
+            s[2 * i] = char(hi);
+            s[2 * i + 1] = char(lo);
         }
-        return string(abi.encodePacked("https://passports.creatorcabins.com/api/stamp?address=0x", string(s),"&token="));
+        return
+            string(
+                abi.encodePacked(
+                    "https://passports.creatorcabins.com/api/stamp?address=0x",
+                    string(s),
+                    "&token="
+                )
+            );
     }
 
     function get()
