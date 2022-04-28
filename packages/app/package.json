@@ -12,6 +12,7 @@
     "@cabindao/nft-passport-contracts": "^0.12.0",
     "@cabindao/topo": "^0.6.4",
     "@cabindao/topo-theme": "^0.1.0",
+    "@clerk/nextjs": "^3.3.1",
     "@ensdomains/ens": "^0.6.2",
     "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@walletconnect/web3-provider": "^1.7.1",
@@ -25,8 +26,7 @@
     "qrcode": "^1.5.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "web3": "^1.6.1",
-    "web3modal": "^1.9.5"
+    "web3": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "16.11.10",

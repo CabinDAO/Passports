@@ -1,4 +1,5 @@
 import { globalCss } from "@cabindao/topo";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { AppProps } from "next/app";
 
 const globalStyles = globalCss({
@@ -21,7 +22,11 @@ const globalStyles = globalCss({
 
 function MyApp({ Component, pageProps }: AppProps) {
   globalStyles();
-  return <Component {...pageProps} />;
+  return (
+    <ClerkProvider>
+      <Component {...pageProps} />
+    </ClerkProvider>
+  );
 }
 
 export default MyApp;
