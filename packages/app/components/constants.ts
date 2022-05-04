@@ -35,7 +35,7 @@ export const networkNameById: {
   [OPTIMISM_KOVAN_NETWORK_ID]: "optimism-kovan",
   [POLYGON_MAIN_NETWORK_ID]: "polygon-mainnet",
   [POLYGON_TEST_NETWORK_ID]: "polygon-mumbai",
-  [GOERLI_NETWORK_ID]: "goerly",
+  [GOERLI_NETWORK_ID]: "goerli",
   [ARBITRUM_TEST_NETWORK_ID]: 'arbitrum-rinkeby',
   [ARBITRUM_NETWORK_ID]: 'arbitrum-mainnet',
 };

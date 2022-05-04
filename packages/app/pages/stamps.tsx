@@ -23,6 +23,8 @@ import Image from "next/image";
 import { getAbiFromJson, networkNameById } from "../components/constants";
 import ClipSVG from "../components/icons/Clip.svg";
 import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
   Link1Icon,
   PauseIcon,
   PlayIcon,
@@ -46,6 +48,8 @@ import {
 import IpfsAsset from "../components/IpfsAsset";
 import Papa from "papaparse";
 import Layout from "../components/Layout";
+import Loading from "../components/Loading";
+import { useRouter } from "next/router";
 
 const ViewStampContainer = styled("div", {
   display: "flex",
@@ -123,7 +127,6 @@ const StampCardValue = styled("span", {
 
 const ModalInput = styled(Input, {
   paddingLeft: 8,
-  marginBottom: "24px",
   border: "1px solid $forest",
   borderRadius: 5,
   fontWeight: 600,
@@ -854,11 +857,38 @@ const StampImageContainer = styled("div", {
   marginBottom: "32px",
 });
 
-const CreateStampModal = ({
-  onSuccess,
-}: {
-  onSuccess: (m: IStampProps) => void;
-}) => {
+const LoadingContainer = styled("div", {
+  display: "flex",
+  alignItems: "center",
+  margin: "64px 0",
+  justifyContent: "center",
+});
+
+const EtherscanContainer = styled("a", {
+  display: "flex",
+  alignItems: "center",
+  fontFamily: "$mono",
+  fontSize: "16px",
+  margin: "16px 0",
+  textTransform: "uppercase",
+  color: "$forest",
+  gap: "16px",
+  cursor: "pointer",
+  textDecoration: "none",
+  justifyContent: "center",
+  span: {
+    textDecoration: "underline",
+  },
+});
+
+const InitialStampScreen = styled('div', {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: "24px",
+})
+
+const CreateStampModal = () => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [name, setName] = useState("");
@@ -867,6 +897,7 @@ const CreateStampModal = ({
   const [price, setPrice] = useState("");
   const [royaltyPcnt, setRoyaltyPcnt] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
@@ -876,6 +907,7 @@ const CreateStampModal = ({
   const [additionalFields, setAdditionalFields] = useState<
     { key: string; value: string }[]
   >([]);
+  const [txHash, setTxHash] = useState("");
   const onClose = useCallback(() => {
     setName("");
     setSymbol("");
@@ -909,7 +941,7 @@ const CreateStampModal = ({
       })
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price || "0", "ether");
-      const royalty = (Number(royaltyPcnt) * 100) | 0;
+      const royalty = Number(royaltyPcnt || "0") * 100;
       return axios.get(`/api/abi?contract=stamp`).then((r) => {
         const passportJson = r.data;
         const contract = new web3.eth.Contract(getAbiFromJson(passportJson));
@@ -919,7 +951,7 @@ const CreateStampModal = ({
             arguments: [
               name,
               symbol,
-              quantity,
+              quantity || "0",
               weiPrice,
               ipfsHashToBytes32(metadataHash),
               royalty,
@@ -928,6 +960,10 @@ const CreateStampModal = ({
             ],
           })
           .send({ from: address })
+          .on("transactionHash", (transactionHash) => {
+            setTxHash(transactionHash);
+            setStage(2);
+          })
           .then((c) => {
             const contractAddress = c.options.address;
             return axios
@@ -939,19 +975,7 @@ const CreateStampModal = ({
                 files: [cid, metadataHash],
               })
               .then(() => {
-                onSuccess({
-                  address: contractAddress,
-                  symbol,
-                  name,
-                  supply: Number(quantity),
-                  mintIndex: 0,
-                  price,
-                  metadataHash,
-                  royalty: royalty / 100,
-                  isPrivate,
-                  version: passportJson.version as string,
-                  paused: false,
-                });
+                router.push(`/stamps/${contractAddress}`);
                 onClose();
               });
           });
@@ -965,12 +989,12 @@ const CreateStampModal = ({
     royaltyPcnt,
     web3,
     address,
-    onSuccess,
     additionalFields,
     cid,
     isPrivate,
     chainId,
     onClose,
+    router,
   ]);
   const stageConfirms = [
     () => {
@@ -979,7 +1003,22 @@ const CreateStampModal = ({
     },
     onFinalConfirm,
   ];
-  const stageTitles = ["New Stamp Type", "Review"];
+  const stageTitles = [
+    "Enter Stamp Details",
+    <>
+      <Button
+        onClick={() => {
+          setStage(0);
+        }}
+        type={"icon"}
+      >
+        <ArrowLeftIcon width={20} height={20} color={theme.colors.wheat} />
+      </Button>
+      <span style={{ marginRight: 16, display: "inline-block" }} />
+      Review Stamp Details
+    </>,
+    "Deploying Stamp Contract",
+  ];
   const [fileLoading, setFileLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   return (
@@ -993,25 +1032,32 @@ const CreateStampModal = ({
         setIsOpen={setIsOpen}
         title={stageTitles[stage]}
         onConfirm={stageConfirms[stage]}
-        confirmText={stage === stageConfirms.length - 1 ? "Create" : "Next"}
+        confirmText={stage === 1 ? "Create" : "Next"}
         onCancel={onClose}
+        disabled={!isReady && stage === 1}
+        hideFooter={stage === 2}
       >
         <ModalContent>
           {stage === 0 && (
-            <>
+            <InitialStampScreen>
               <ModalInput
                 label={"Name"}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setSymbol(e.target.value.slice(0, 3).toUpperCase());
+                }}
                 placeholder="Enter stamp name"
+                helpText="This is a unique human-readable name to identify the Stamp."
               />
               <ModalInput
                 label={"Symbol"}
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="Enter stamp symbol"
+                helpText="This is a unique capitalized abbreviation to represent the Stamp."
               />
-              <ShortInputContainer>
+              {/*<ShortInputContainer>
                 <ModalInput
                   label={"Quantity"}
                   value={quantity}
@@ -1033,7 +1079,7 @@ const CreateStampModal = ({
                   type={"number"}
                   placeholder={"Ex. 2%"}
                 />
-              </ShortInputContainer>
+              </ShortInputContainer>}
               {!!additionalFields.length && (
                 <>
                   <hr style={{ marginBottom: 24 }} />
@@ -1081,7 +1127,7 @@ const CreateStampModal = ({
                     </AdditionalFieldRow>
                   ))}
                 </>
-              )}
+                      )
               <div>
                 <UnderlinedLabel
                   onClick={() =>
@@ -1093,37 +1139,39 @@ const CreateStampModal = ({
                 >
                   Add extra fields
                 </UnderlinedLabel>
-              </div>
-              <StampImageLabel>Stamp Image</StampImageLabel>
-              <FileInput onClick={() => fileRef.current?.click()}>
-                <input
-                  ref={fileRef}
-                  type={"file"}
-                  accept="video/*,image/*"
-                  onChange={async (e) => {
-                    if (e.target.files) {
-                      setFileLoading(true);
-                      const file = e.target.files[0];
-                      if (file) {
-                        return ipfsAdd(file)
-                          .then(setCid)
-                          .then(() => setFileName(file.name))
-                          .finally(() => setFileLoading(false));
+              </div>*/}
+              <div>
+                <StampImageLabel>Stamp Image</StampImageLabel>
+                <FileInput onClick={() => fileRef.current?.click()}>
+                  <input
+                    ref={fileRef}
+                    type={"file"}
+                    accept="video/*,image/*"
+                    onChange={async (e) => {
+                      if (e.target.files) {
+                        setFileLoading(true);
+                        const file = e.target.files[0];
+                        if (file) {
+                          return ipfsAdd(file)
+                            .then(setCid)
+                            .then(() => setFileName(file.name))
+                            .finally(() => setFileLoading(false));
+                        }
                       }
-                    }
-                  }}
-                  style={{ display: "none" }}
-                />
-                <Image {...ClipSVG} alt={"file"} />
-                {fileLoading ? (
-                  <SummaryCellValue>Loading...</SummaryCellValue>
-                ) : fileName ? (
-                  <SummaryCellValue>{fileName}</SummaryCellValue>
-                ) : (
-                  <UnderlinedLabel>Upload an image</UnderlinedLabel>
-                )}
-              </FileInput>
-            </>
+                    }}
+                    style={{ display: "none" }}
+                  />
+                  <Image {...ClipSVG} alt={"file"} />
+                  {fileLoading ? (
+                    <SummaryCellValue>Loading...</SummaryCellValue>
+                  ) : fileName ? (
+                    <SummaryCellValue>{fileName}</SummaryCellValue>
+                  ) : (
+                    <UnderlinedLabel>Upload an image</UnderlinedLabel>
+                  )}
+                </FileInput>
+              </div>
+            </InitialStampScreen>
           )}
           {stage === 1 && (
             <>
@@ -1131,11 +1179,11 @@ const CreateStampModal = ({
                 <SummaryCell field="Name" value={name} grow={2} />
                 <SummaryCell field="Symbol" value={symbol} />
               </SummaryRow>
-              <SummaryRow>
+              {/* <SummaryRow>
                 <SummaryCell field="Quantity" value={quantity} />
                 <SummaryCell field="Price" value={`${price} ETH`} />
                 <SummaryCell field="Royalty" value={`${royaltyPcnt}%`} />
-              </SummaryRow>
+              </SummaryRow> */}
               {cid && (
                 <>
                   <Label label={"Stamp Image"} />
@@ -1149,7 +1197,7 @@ const CreateStampModal = ({
                   </StampImageContainer>
                 </>
               )}
-              <Label
+              {/* <Label
                 label="Private Stamp"
                 description="If checked, only an authorized lst of addresses can mint the passort. This list can be managed from the Manage Tab"
               >
@@ -1161,7 +1209,46 @@ const CreateStampModal = ({
                       : setIsPrivate(b)
                   }
                 />
+              </Label> */}
+              <Label
+                label="Confirmation"
+                description="After this contract is deployed some inputs are unable to be changed. Are you sure you want to continue?"
+              >
+                <Checkbox
+                  checked={isReady}
+                  onCheckedChange={(b) =>
+                    b === "indeterminate" ? setIsReady(false) : setIsReady(b)
+                  }
+                />
               </Label>
+            </>
+          )}
+          {stage === 2 && (
+            <>
+              <Label label={`${name} (${symbol})`} />
+              <StampImageContainer>
+                <IpfsAsset
+                  cid={cid}
+                  height={"100%"}
+                  width={"100%"}
+                  id={"new-stamp-image"}
+                />
+              </StampImageContainer>
+              <LoadingContainer>
+                <Loading />
+              </LoadingContainer>
+              <EtherscanContainer
+                href={`https://${
+                  networkNameById[chainId] === "ethereum"
+                    ? ""
+                    : `${networkNameById[chainId]}.`
+                }etherscan.io/tx/${txHash}`}
+                target={"_blank"}
+                rel={"noreferrer"}
+              >
+                <span>View on etherscan</span>
+                <ArrowRightIcon />
+              </EtherscanContainer>
             </>
           )}
         </ModalContent>
@@ -1233,13 +1320,13 @@ const StampTabContent = () => {
             ))}
           </StampContainer>
           <ViewStampFooter>
-            <CreateStampModal onSuccess={(m) => setStamps([...stamps, m])} />
+            <CreateStampModal />
           </ViewStampFooter>
         </ViewStampContainer>
       ) : (
         <CreateStampContainer>
           <CreateStampHeader>Get started using stamps</CreateStampHeader>
-          <CreateStampModal onSuccess={(m) => setStamps([...stamps, m])} />
+          <CreateStampModal />
         </CreateStampContainer>
       )}
     </>

@@ -43,6 +43,10 @@ const TabContainer = styled("div", {
       true: {
         cursor: "not-allowed",
         opacity: 0.5,
+
+        a: {
+          cursor: "not-allowed",
+        },
       },
     },
   },
@@ -60,7 +64,9 @@ const Tab: React.FC<{ to: string; disabled: boolean }> = ({ to, disabled }) => {
   const tab = useTab();
   return (
     <TabContainer active={tab === to} disabled={disabled}>
-      <Link href={`/${to}`}>{to}</Link>
+      <Link href={`/${to}`} passHref>
+        <span onClick={(e) => disabled && e.preventDefault()}>{to}</span>
+      </Link>
     </TabContainer>
   );
 };
@@ -156,7 +162,10 @@ const SignedInIndicator = () => {
   );
 };
 
-const HomeContent: React.FC = ({ children }) => {
+const HomeContent: React.FC<{ title?: React.ReactNode }> = ({
+  children,
+  title,
+}) => {
   const tab = useTab();
   const address = useAddress();
   return (
@@ -167,7 +176,7 @@ const HomeContent: React.FC = ({ children }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <PageHeader>
-        <PageHeaderH1>{tab}</PageHeaderH1>
+        {title || <PageHeaderH1>{tab}</PageHeaderH1>}
         <SignedIn>
           <SignedInIndicator />
         </SignedIn>
@@ -204,12 +213,12 @@ const HomeContent: React.FC = ({ children }) => {
   );
 };
 
-const Home: NextPage = ({ children }) => {
+const Layout: NextPage<{ title?: React.ReactNode }> = ({ children, title }) => {
   return (
     <Web3Provider>
-      <HomeContent>{children}</HomeContent>
+      <HomeContent title={title}>{children}</HomeContent>
     </Web3Provider>
   );
 };
 
-export default Home;
+export default Layout;
