@@ -54,8 +54,10 @@ export const Web3Provider: React.FC = ({ children }) => {
   );
   const switchAddress = useCallback(
     (accounts: string[]) => {
-      setAddress(accounts[0]);
-      return lookupAddress(accounts[0], web3.current).then((d) =>
+      const [addr] = accounts;
+      setAddress(addr);
+      if (!addr) return Promise.resolve();
+      return lookupAddress(addr, web3.current).then((d) =>
         setDisplayAddress(d)
       );
     },

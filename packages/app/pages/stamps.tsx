@@ -137,6 +137,7 @@ const ModalContent = styled("div", {
   color: "$forest",
   marginTop: "-8px",
   width: "400px",
+  minHeight: "440px",
 });
 
 const ModalLabel = styled(`h2`, { marginBottom: 32 });
@@ -881,11 +882,27 @@ const EtherscanContainer = styled("a", {
   },
 });
 
-const InitialStampScreen = styled('div', {
-  display: 'flex',
-  flexDirection: 'column',
+const StampScreen = styled("div", {
+  display: "flex",
+  flexDirection: "column",
   gap: "24px",
-})
+});
+
+const ScreenTitle = styled("h1", {
+  fontSize: "18px",
+  fontWeight: "600",
+  fontFamily: "$mono",
+  textTransform: "uppercase",
+  color: "#000000",
+  margin: 0,
+});
+
+const ScreenDescription = styled("p", {
+  fontSize: "18px",
+  fontWeight: "400",
+  fontFamily: "$mono",
+  margin: 0,
+});
 
 const CreateStampModal = () => {
   const router = useRouter();
@@ -1001,22 +1018,44 @@ const CreateStampModal = () => {
       setStage(1);
       return true;
     },
+    () => {
+      setStage(2);
+      return true;
+    },
+    () => {
+      setStage(3);
+      return true;
+    },
     onFinalConfirm,
   ];
+  const BackButton = useCallback(
+    ({ index, children }: { index: number; children: React.ReactNode }) => (
+      <>
+        <Button
+          onClick={() => {
+            setStage(index - 1);
+          }}
+          type={"icon"}
+        >
+          <ArrowLeftIcon width={20} height={20} color={theme.colors.wheat} />
+        </Button>
+        <span style={{ marginRight: 16, display: "inline-block" }} />
+        {children}
+      </>
+    ),
+    [setStage]
+  );
   const stageTitles = [
     "Enter Stamp Details",
-    <>
-      <Button
-        onClick={() => {
-          setStage(0);
-        }}
-        type={"icon"}
-      >
-        <ArrowLeftIcon width={20} height={20} color={theme.colors.wheat} />
-      </Button>
-      <span style={{ marginRight: 16, display: "inline-block" }} />
+    <BackButton index={1} key={1}>
+      Enter Stamp Details
+    </BackButton>,
+    <BackButton index={2} key={2}>
+      Enter Stamp Details
+    </BackButton>,
+    <BackButton index={3} key={3}>
       Review Stamp Details
-    </>,
+    </BackButton>,
     "Deploying Stamp Contract",
   ];
   const [fileLoading, setFileLoading] = useState(false);
@@ -1032,14 +1071,18 @@ const CreateStampModal = () => {
         setIsOpen={setIsOpen}
         title={stageTitles[stage]}
         onConfirm={stageConfirms[stage]}
-        confirmText={stage === 1 ? "Create" : "Next"}
+        confirmText={stage === 3 ? "Create" : "Next"}
         onCancel={onClose}
-        disabled={!isReady && stage === 1}
-        hideFooter={stage === 2}
+        disabled={!isReady && stage === 3}
+        hideFooter={stage === 4}
       >
         <ModalContent>
           {stage === 0 && (
-            <InitialStampScreen>
+            <StampScreen>
+              <ScreenTitle>1. Stamp Metadata</ScreenTitle>
+              <ScreenDescription>
+                Stamps need a name and symbol, both of which should be unique.
+              </ScreenDescription>
               <ModalInput
                 label={"Name"}
                 value={name}
@@ -1048,98 +1091,41 @@ const CreateStampModal = () => {
                   setSymbol(e.target.value.slice(0, 3).toUpperCase());
                 }}
                 placeholder="Enter stamp name"
-                helpText="This is a unique human-readable name to identify the Stamp."
+                helpText="The title of your stamp contract. This is how others will identify this stamp."
               />
               <ModalInput
                 label={"Symbol"}
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="Enter stamp symbol"
-                helpText="This is a unique capitalized abbreviation to represent the Stamp."
+                helpText="A unique way of identifying your stamp. Accronyms work well here."
               />
-              {/*<ShortInputContainer>
-                <ModalInput
-                  label={"Quantity"}
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  type={"number"}
-                  placeholder="Ex. 100"
-                />
-                <ModalInput
-                  label={"Price"}
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  type={"number"}
-                  placeholder="Ex. 2 ETH"
-                />
-                <ModalInput
-                  label={"Royalty %"}
-                  value={royaltyPcnt}
-                  onChange={(e) => setRoyaltyPcnt(e.target.value)}
-                  type={"number"}
-                  placeholder={"Ex. 2%"}
-                />
-              </ShortInputContainer>}
-              {!!additionalFields.length && (
-                <>
-                  <hr style={{ marginBottom: 24 }} />
-                  {additionalFields.map((a, i) => (
-                    <AdditionalFieldRow key={i}>
-                      <ModalInput
-                        label={"New Field"}
-                        placeholder={"Metadata"}
-                        value={a.key}
-                        onChange={(e) =>
-                          setAdditionalFields(
-                            additionalFields.map((field, j) =>
-                              j === i
-                                ? { value: field.value, key: e.target.value }
-                                : field
-                            )
-                          )
-                        }
-                      />
-                      <ModalInput
-                        label={"Field Value"}
-                        value={a.value}
-                        placeholder={"Value"}
-                        onChange={(e) =>
-                          setAdditionalFields(
-                            additionalFields.map((field, j) =>
-                              j === i
-                                ? { value: e.target.value, key: field.key }
-                                : field
-                            )
-                          )
-                        }
-                      />
-                      <Button
-                        type={"link"}
-                        tone={"wheat"}
-                        onClick={() =>
-                          setAdditionalFields(
-                            additionalFields.filter((field, j) => j !== i)
-                          )
-                        }
-                      >
-                        <TrashIcon />
-                      </Button>
-                    </AdditionalFieldRow>
-                  ))}
-                </>
-                      )
-              <div>
-                <UnderlinedLabel
-                  onClick={() =>
-                    setAdditionalFields([
-                      ...additionalFields,
-                      { key: "", value: "" },
-                    ])
-                  }
-                >
-                  Add extra fields
-                </UnderlinedLabel>
-              </div>*/}
+            </StampScreen>
+          )}
+          {stage === 1 && (
+            <StampScreen>
+              <ScreenTitle>2. Supply</ScreenTitle>
+              <ScreenDescription>
+                How many of this stamp would you like to issue?
+              </ScreenDescription>
+              <ModalInput
+                label={"Supply"}
+                value={quantity}
+                onChange={(e) => {
+                  setQuantity(e.target.value);
+                }}
+                placeholder="10"
+                helpText="This field is optional. If you’re not sure, you can increase the supply later."
+              />
+            </StampScreen>
+          )}
+          {stage === 2 && (
+            <StampScreen>
+              <ScreenTitle>3. Image</ScreenTitle>
+              <ScreenDescription>
+                The image is what people will associate with this stamp. It is
+                also what will show up in people’s wallets.
+              </ScreenDescription>
               <div>
                 <StampImageLabel>Stamp Image</StampImageLabel>
                 <FileInput onClick={() => fileRef.current?.click()}>
@@ -1171,19 +1157,15 @@ const CreateStampModal = () => {
                   )}
                 </FileInput>
               </div>
-            </InitialStampScreen>
+            </StampScreen>
           )}
-          {stage === 1 && (
-            <>
+          {stage === 3 && (
+            <StampScreen>
               <SummaryRow>
                 <SummaryCell field="Name" value={name} grow={2} />
                 <SummaryCell field="Symbol" value={symbol} />
+                <SummaryCell field="Supply" value={quantity} />
               </SummaryRow>
-              {/* <SummaryRow>
-                <SummaryCell field="Quantity" value={quantity} />
-                <SummaryCell field="Price" value={`${price} ETH`} />
-                <SummaryCell field="Royalty" value={`${royaltyPcnt}%`} />
-              </SummaryRow> */}
               {cid && (
                 <>
                   <Label label={"Stamp Image"} />
@@ -1197,19 +1179,6 @@ const CreateStampModal = () => {
                   </StampImageContainer>
                 </>
               )}
-              {/* <Label
-                label="Private Stamp"
-                description="If checked, only an authorized lst of addresses can mint the passort. This list can be managed from the Manage Tab"
-              >
-                <Checkbox
-                  checked={isPrivate}
-                  onCheckedChange={(b) =>
-                    b === "indeterminate"
-                      ? setIsPrivate(false)
-                      : setIsPrivate(b)
-                  }
-                />
-              </Label> */}
               <Label
                 label="Confirmation"
                 description="After this contract is deployed some inputs are unable to be changed. Are you sure you want to continue?"
@@ -1221,9 +1190,9 @@ const CreateStampModal = () => {
                   }
                 />
               </Label>
-            </>
+            </StampScreen>
           )}
-          {stage === 2 && (
+          {stage === 4 && (
             <>
               <Label label={`${name} (${symbol})`} />
               <StampImageContainer>
