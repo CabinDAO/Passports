@@ -50,6 +50,8 @@ import Papa from "papaparse";
 import Layout from "../components/Layout";
 import Loading from "../components/Loading";
 import { useRouter } from "next/router";
+import type { GetServerSideProps } from "next/types";
+import { withServerSideAuth } from "@clerk/nextjs/ssr";
 
 const ViewStampContainer = styled("div", {
   display: "flex",
@@ -949,6 +951,7 @@ const CreateStampModal = () => {
     setRoyaltyPcnt,
   ]);
   const onFinalConfirm = useCallback(() => {
+    setStage(4);
     return ipfsAdd(
       JSON.stringify({
         ...Object.fromEntries(
@@ -979,7 +982,6 @@ const CreateStampModal = () => {
           .send({ from: address })
           .on("transactionHash", (transactionHash) => {
             setTxHash(transactionHash);
-            setStage(2);
           })
           .then((c) => {
             const contractAddress = c.options.address;
@@ -1012,6 +1014,7 @@ const CreateStampModal = () => {
     chainId,
     onClose,
     router,
+    setStage,
   ]);
   const stageConfirms = [
     () => {
@@ -1206,18 +1209,20 @@ const CreateStampModal = () => {
               <LoadingContainer>
                 <Loading />
               </LoadingContainer>
-              <EtherscanContainer
-                href={`https://${
-                  networkNameById[chainId] === "ethereum"
-                    ? ""
-                    : `${networkNameById[chainId]}.`
-                }etherscan.io/tx/${txHash}`}
-                target={"_blank"}
-                rel={"noreferrer"}
-              >
-                <span>View on etherscan</span>
-                <ArrowRightIcon />
-              </EtherscanContainer>
+              {txHash && (
+                <EtherscanContainer
+                  href={`https://${
+                    networkNameById[chainId] === "ethereum"
+                      ? ""
+                      : `${networkNameById[chainId]}.`
+                  }etherscan.io/tx/${txHash}`}
+                  target={"_blank"}
+                  rel={"noreferrer"}
+                >
+                  <span>View on etherscan</span>
+                  <ArrowRightIcon />
+                </EtherscanContainer>
+              )}
             </>
           )}
         </ModalContent>
@@ -1226,8 +1231,12 @@ const CreateStampModal = () => {
   );
 };
 
-const StampTabContent = () => {
-  const [stamps, setStamps] = useState<IStampProps[]>([]);
+const StampTabContent = ({
+  serverSideStamps,
+}: {
+  serverSideStamps: IStampProps[];
+}) => {
+  const [stamps, setStamps] = useState<IStampProps[]>(serverSideStamps);
   const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
@@ -1302,12 +1311,21 @@ const StampTabContent = () => {
   );
 };
 
-const StampsPage = () => {
+const StampsPage = ({ stamps }: { stamps: IStampProps[] }) => {
   return (
     <Layout>
-      <StampTabContent />
+      <StampTabContent serverSideStamps={stamps} />
     </Layout>
   );
 };
+
+export const getServerSideProps: GetServerSideProps<{}, {}> =
+  withServerSideAuth((context) => {
+    return {
+      props: {
+        stamps: [],
+      },
+    };
+  });
 
 export default StampsPage;
