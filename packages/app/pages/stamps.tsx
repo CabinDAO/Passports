@@ -52,6 +52,8 @@ import Loading from "../components/Loading";
 import { useRouter } from "next/router";
 import type { GetServerSideProps } from "next/types";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
+import { users } from "@clerk/clerk-sdk-node";
+import { getAdminStamps } from "../components/firebase";
 
 const ViewStampContainer = styled("div", {
   display: "flex",
@@ -1321,11 +1323,38 @@ const StampsPage = ({ stamps }: { stamps: IStampProps[] }) => {
 
 export const getServerSideProps: GetServerSideProps<{}, {}> =
   withServerSideAuth((context) => {
-    return {
-      props: {
-        stamps: [],
-      },
-    };
+    const { userId } = context.req.auth;
+    if (!userId) {
+      // Do we do this in an edge function?
+      console.warn("Should redirect to home.");
+      return {
+        props: {
+          stamps: [],
+        },
+      };
+    }
+    return users
+      .getUser(userId)
+      .then((user) =>
+        Promise.all(
+          user.web3Wallets
+            .map((wal) => wal.web3Wallet as string)
+            .filter((addr) => !!addr)
+            .map((address) =>
+              getAdminStamps({
+                address,
+                chainId: 4, // Hard coded for now to rinkeby, investigate storing chainId on in user metadata
+              })
+            )
+        )
+      )
+      .then((data) => {
+        return {
+          props: {
+            stamps: data.flatMap((d) => d.contracts),
+          },
+        };
+      });
   });
 
 export default StampsPage;

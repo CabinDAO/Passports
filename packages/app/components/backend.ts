@@ -1,7 +1,17 @@
 import { create } from "ipfs-http-client";
 import AbortController from "abort-controller";
+import Web3 from "web3";
+import { getAbiFromJson, networkIdByName } from "./constants";
+import { getAbi, getVersionByAddress } from "./firebase";
 
 global.AbortController = AbortController;
+
+export const getWeb3 = (networkName: string) =>
+  new Web3(
+    networkName === "localhost"
+      ? "http://localhost:8545"
+      : `https://${networkName}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
+  );
 
 export const addPins = (files: string[]) => {
   const client = create({
@@ -22,4 +32,23 @@ export const addPins = (files: string[]) => {
     });
   };
   return Promise.all(files.map(addPin));
+};
+
+export const getStampContract = ({
+  network,
+  address,
+  web3 = getWeb3(network),
+}: {
+  network: string;
+  address: string;
+  web3?: Web3;
+}) => {
+  return getVersionByAddress(address, networkIdByName[network]).then(
+    (version) =>
+      getAbi("stamp", version)
+        .then((stampJson) => {
+          return new web3.eth.Contract(getAbiFromJson(stampJson), address);
+        })
+        .then((contract) => ({ contract, version }))
+  );
 };

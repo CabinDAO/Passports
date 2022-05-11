@@ -50,13 +50,6 @@ export const lookupAddress = async (
     .catch(() => addr);
 };
 
-export const getWeb3 = (networkName: string) =>
-  new Web3(
-    networkName === "localhost"
-      ? "http://localhost:8545"
-      : `https://${networkName}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
-  );
-
 export const getAllManagedStamps = ({
   web3, // web3 is unused for now - but we might need it when we migrate from firebase to the graph or some other blockchain indexer
   chainId,

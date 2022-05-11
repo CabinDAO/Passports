@@ -55,3 +55,48 @@ export const getAbi = (contract: string, version: string) => {
     )
   );
 };
+
+export const getAdminStamps = ({
+  address,
+  chainId,
+}: {
+  address: string;
+  chainId: number;
+}) => {
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const adminStampsCol = collection(db, "admin_stamps");
+  const versionsCol = collection(db, "versions");
+  return Promise.all([
+    getDocs(
+      query(
+        adminStampsCol,
+        where("address", "==", address.toLowerCase()),
+        where("chain", "==", chainId)
+      )
+    ),
+    getDocs(
+      query(
+        versionsCol,
+        where("contract", "==", "stamp"),
+        where("chain", "==", chainId)
+      )
+    ),
+  ]).then(([memberships, versions]) => {
+    const versionByContract = Object.fromEntries(
+      versions.docs
+        .map((d) => d.data())
+        .map((data) => [data["address"], data["version"]])
+    );
+    return {
+      contracts: memberships.docs.map((doc) => {
+        const docData = doc.data();
+        const address = docData["contract"] as string;
+        return {
+          address,
+          version: versionByContract[address],
+        };
+      }),
+    };
+  });
+};

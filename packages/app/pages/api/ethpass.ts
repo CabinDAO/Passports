@@ -1,25 +1,23 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
-import { getWeb3 } from "../../components/utils";
-import { getAbiFromJson, networkIdByName } from "../../components/constants";
-import { getAbi, getVersionByAddress } from "../../components/firebase";
+import { networkIdByName } from "../../components/constants";
+import { getStampContract } from "../../components/backend";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
     case "POST":
-      const { address, network, tokenId, signature, signatureMessage, platform } =
-        typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-      const web3 = getWeb3(network);
-      return getVersionByAddress(address, networkIdByName[network])
-        .then((version) =>
-          getAbi("stamp", version).then((stampJson) => {
-            const contract = new web3.eth.Contract(
-              getAbiFromJson(stampJson),
-              address
-            );
-            return (contract.methods.symbol() as ContractSendMethod).call();
-          })
+      const {
+        address,
+        network,
+        tokenId,
+        signature,
+        signatureMessage,
+        platform,
+      } = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      return getStampContract({ address, network })
+        .then(({ contract }) =>
+          (contract.methods.symbol() as ContractSendMethod).call()
         )
         .then((description) => {
           const body = {
@@ -30,16 +28,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             signatureMessage,
             platform,
             templateId: process.env.ETHPASS_TEMPLATE_ID,
-            barcode: { message: "Thanks for participating at Cabin’s first inaugural GUILD GAMES!"},
-            pass: {   
-              description,
-              headerFields: [{
-                key: "header1",
-                value: "DEMO PASS",
-                textAlignment: "PKTextAlignmentNatural"
-              }],
+            barcode: {
+              message:
+                "Thanks for participating at Cabin’s first inaugural GUILD GAMES!",
             },
-
+            pass: {
+              description,
+              headerFields: [
+                {
+                  key: "header1",
+                  value: "DEMO PASS",
+                  textAlignment: "PKTextAlignmentNatural",
+                },
+              ],
+            },
           };
           return axios.post("https://api.ethpass.xyz/api/v0/passes", body, {
             headers: {

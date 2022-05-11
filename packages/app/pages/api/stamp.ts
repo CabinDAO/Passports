@@ -11,13 +11,12 @@ import {
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   firebaseConfig,
-  getAbiFromJson,
   networkNameById,
 } from "../../components/constants";
-import { getAbi, getVersionByAddress } from "../../components/firebase";
-import { bytes32ToIpfsHash, getWeb3 } from "../../components/utils";
+import { bytes32ToIpfsHash } from "../../components/utils";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
+import { getStampContract } from "../../components/backend";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const app = initializeApp(firebaseConfig);
@@ -56,55 +55,44 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         const doc = data.docs[0].data();
         const networkId = doc["chain"];
         const networkName = networkNameById[networkId];
-        return getVersionByAddress(contractAddress, networkId)
-          .then((version) =>
-            getAbi("stamp", version)
-              .then((stampJson) => {
-                const web3 = getWeb3(networkName);
-                const contract = new web3.eth.Contract(
-                  getAbiFromJson(stampJson),
-                  contractAddress
-                );
-                return Promise.all([
-                  (contract.methods.name() as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get name: ${e.message}`,
-                    })),
-                  (contract.methods.symbol() as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get symbol: ${e.message}`,
-                    })),
-                  (contract.methods.metadataHash() as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get metadata hash: ${e.message}`,
-                    })),
-                  (contract.methods.tokenURI(1) as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get tokenUri: ${e.message}`,
-                    })),
-                ]);
-              })
-              .catch((e) =>
-                res
-                  .status(500)
-                  .end(`Failed to get abi for version ${version}: ${e.message}`)
-              )
-          )
+        return getStampContract({
+          network: networkName,
+          address: contractAddress,
+        })
+          .then(({contract, version}) => {
+            return Promise.all([
+              (contract.methods.name() as ContractSendMethod)
+                .call()
+                .then((s) => ({ success: true, value: s as string }))
+                .catch((e) => ({
+                  success: false,
+                  value: `Failed to get name: ${e.message}`,
+                })),
+              (contract.methods.symbol() as ContractSendMethod)
+                .call()
+                .then((s) => ({ success: true, value: s as string }))
+                .catch((e) => ({
+                  success: false,
+                  value: `Failed to get symbol: ${e.message}`,
+                })),
+              (contract.methods.metadataHash() as ContractSendMethod)
+                .call()
+                .then((s) => ({ success: true, value: s as string }))
+                .catch((e) => ({
+                  success: false,
+                  value: `Failed to get metadata hash: ${e.message}`,
+                })),
+              (contract.methods.tokenURI(1) as ContractSendMethod)
+                .call()
+                .then((s) => ({ success: true, value: s as string }))
+                .catch((e) => ({
+                  success: false,
+                  value: `Failed to get tokenUri: ${e.message}`,
+                })),
+            ]);
+          })
           .then((args) => {
             if (!args) return;
-            console.log(args[3].value);
             const failures = args.filter((s) => !s.success);
             if (failures.length)
               return res

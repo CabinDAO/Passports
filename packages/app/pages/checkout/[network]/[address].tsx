@@ -12,11 +12,11 @@ import {
   styled,
   Toast,
 } from "@cabindao/topo";
+import { bytes32ToIpfsHash, getStampContract } from "../../../components/utils";
 import {
-  bytes32ToIpfsHash,
-  getStampContract,
+  getStampContract as backendGetStampContract,
   getWeb3,
-} from "../../../components/utils";
+} from "../../../components/backend";
 import {
   useAddress,
   useChainId,
@@ -405,32 +405,29 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
 ) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
-  return getVersionByAddress(address, networkIdByName[network])
-    .then((version) =>
-      Promise.all([
-        getAbi("stamp", version)
-          .then((stampJson) => {
-            return new web3.eth.Contract(getAbiFromJson(stampJson), address);
-          })
-          .then((contract) =>
-            (contract.methods.get() as ContractSendMethod).call()
-          ),
-        getCustomization(address),
-      ]).then(([p, customization]) => ({
-        props: {
-          address,
-          name: p[0],
-          symbol: p[1],
-          supply: p[2] - p[3],
-          price: web3.utils.fromWei(p[4], "ether"),
-          metadataHash: bytes32ToIpfsHash(p[5]),
-          network,
-          version,
-          limit: Number(p[8]),
-          customization,
-        },
-      }))
-    )
+  return Promise.all([
+    backendGetStampContract({ network, address, web3 }).then(
+      ({ contract, version }) =>
+        (contract.methods.get() as ContractSendMethod)
+          .call()
+          .then((data) => ({ data, version }))
+    ),
+    getCustomization(address),
+  ])
+    .then(([{ data, version }, customization]) => ({
+      props: {
+        address,
+        name: data[0],
+        symbol: data[1],
+        supply: data[2] - data[3],
+        price: web3.utils.fromWei(data[4], "ether"),
+        metadataHash: bytes32ToIpfsHash(data[5]),
+        network,
+        version,
+        limit: Number(data[8]),
+        customization,
+      },
+    }))
     .catch((e) => {
       console.error(e);
       return {
