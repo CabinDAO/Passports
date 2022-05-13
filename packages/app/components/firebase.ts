@@ -94,7 +94,7 @@ export const getAdminStamps = ({
         const address = docData["contract"] as string;
         return {
           address,
-          version: versionByContract[address],
+          version: versionByContract[address] as string,
         };
       }),
     };
