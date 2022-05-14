@@ -1,33 +1,16 @@
 import { NextPage } from "next";
-import { Web3Provider } from "../components/Web3Context";
-import { UserProfile } from "@clerk/nextjs";
-import Layout from "../components/Layout";
+import CommunityLayout from "../components/CommunityLayout";
 import { styled } from "@cabindao/topo";
 
-const UserProfileContainer = styled("div", {
-  "& .cl-component.cl-user-profile": {
-    background: "transparent",
-  },
-  "& .cl-powered-by-clerk-container.cl-powered-by-clerk": {
-    display: "none",
-  },
-});
-
 const ProfileContent = () => {
-  return (
-    <Layout>
-      <UserProfileContainer>
-        <UserProfile />
-      </UserProfileContainer>
-    </Layout>
-  );
+  return <h1>Community Profile coming soon!</h1>;
 };
 
 const Profile: NextPage = () => {
   return (
-    <Web3Provider>
+    <CommunityLayout>
       <ProfileContent />
-    </Web3Provider>
+    </CommunityLayout>
   );
 };
 

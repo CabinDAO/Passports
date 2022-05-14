@@ -19,7 +19,7 @@ import {
   resolveAddress,
   getStampContract,
 } from "../components/utils";
-import Layout from "../components/Layout";
+import Layout from "../components/CommunityLayout";
 
 const SmallBox = styled(Box, {
   width: "25%",

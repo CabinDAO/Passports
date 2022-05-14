@@ -1,5 +1,5 @@
 import type { NextPage } from "next/types";
-import Layout from "../components/Layout";
+import Layout from "../components/CommunityLayout";
 import { Button, styled, Wrapper } from "@cabindao/topo";
 
 const Row = styled("div", {
@@ -156,21 +156,19 @@ const Content = styled("div", {
 const Home: NextPage = () => {
   return (
     <Layout>
-      <Container>
-        <Wrapper>
-          <HeroContainer>
-            <HeroPattern width={17} height={6} />
-            <ProductHeading>
-              <Title>PASSPORTS</Title>
-              <HeaderBackground>
-                <Header>
-                  Create and mint Stamp NFTs representing membership
-                </Header>
-              </HeaderBackground>
-            </ProductHeading>
-          </HeroContainer>
-        </Wrapper>
-      </Container>
+      <Wrapper>
+        <HeroContainer>
+          <HeroPattern width={17} height={6} />
+          <ProductHeading>
+            <Title>PASSPORTS</Title>
+            <HeaderBackground>
+              <Header>
+                Create and mint Stamp NFTs representing membership
+              </Header>
+            </HeaderBackground>
+          </ProductHeading>
+        </HeroContainer>
+      </Wrapper>
       <Container id="about">
         <Wrapper>
           <Content>
@@ -182,10 +180,10 @@ const Home: NextPage = () => {
                 tracking. And while you may be web3 tech savvy, your growing
                 community may not. You need a simple and effective way to grant
                 access that reduces friction and seamlessly onboards new
-                members. With NFT Passports, we{"'"}re changing what{"'"}s possible for
-                on-chain membership, giving you one place to easily create,
-                mint, and manage your membership NFTs. Connect your wallet on
-                the top right to get started!
+                members. With NFT Passports, we{"'"}re changing what{"'"}s
+                possible for on-chain membership, giving you one place to easily
+                create, mint, and manage your membership NFTs. Connect your
+                wallet on the top right to get started!
               </p>
             </div>
           </Content>

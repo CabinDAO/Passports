@@ -1,10 +1,9 @@
 import { Box, Label, Select } from "@cabindao/topo";
 import { useEffect, useMemo, useState } from "react";
 import type { ContractSendMethod } from "web3-eth-contract";
-import { getAbiFromJson } from "../components/constants";
 import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import { styled } from "@cabindao/topo";
-import Layout from "../components/Layout";
+import Layout from "../components/CommunityLayout";
 import {
   getAllManagedStamps,
   getStampContract,

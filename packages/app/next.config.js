@@ -6,7 +6,7 @@ module.exports = (phase) => {
   const baseConfig = {
     reactStrictMode: true,
     images: {
-      domains: ['ipfs.io'],
+      domains: ['ipfs.io', 'www.gravatar.com'],
     },
   };
 

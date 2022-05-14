@@ -23,7 +23,7 @@ import {
   ipfsHashToBytes32,
 } from "../components/utils";
 import IpfsAsset from "../components/IpfsAsset";
-import Layout from "../components/Layout";
+import Layout from "../components/CommunityLayout";
 import Loading from "../components/Loading";
 import { useRouter } from "next/router";
 import type { GetServerSideProps } from "next/types";

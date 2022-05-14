@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { getStampContract } from "../../components/utils";
 import { networkNameById } from "../../components/constants";
 import IpfsAsset from "../../components/IpfsAsset";
-import Layout from "../../components/Layout";
+import Layout from "../../components/CommunityLayout";
 import {
   bytes32ToIpfsHash,
   ipfsAdd,
@@ -37,6 +37,7 @@ import {
 } from "@radix-ui/react-icons";
 import { GetServerSideProps } from "next/types";
 import Loading from "../../components/Loading";
+import PageTitle from "../../components/PageTitle";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -65,13 +66,6 @@ const StampCardDivider = styled("hr", {
   margin: "16px 0",
   height: "1px",
   border: 0,
-});
-
-const Title = styled("h1", {
-  textTransform: "uppercase",
-  color: "#8B9389",
-  fontSize: "14px",
-  fontFamily: "$mono",
 });
 
 const StampHeader = styled("div", {
@@ -790,7 +784,7 @@ type PageProps = {
 
 const StampAddressPage = ({ address }: PageProps) => {
   return (
-    <Layout title={<Title>Stamps / Coming Soon</Title>}>
+    <Layout title={<PageTitle>Stamps / Coming Soon</PageTitle>}>
       <p style={{marginBottom: 64}}>Coming soon! Old Stamp Card available below:</p>
       <StampCard
         address={address}
