@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from "@cabindao/topo";
 import React, { useCallback, useEffect, useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/router";
 import {
   bytes32ToIpfsHash,
@@ -21,7 +22,6 @@ import { useAddress, useChainId, useWeb3 } from "../../components/Web3Context";
 import Layout from "../../components/Layout";
 import StampHeader from "../../components/StampHeader";
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from "../../components/tabs";
-import axios from "axios";
 import { GetServerSideProps } from "next";
 import Papa from "papaparse";
 import { networkNameById } from "../../components/constants";
@@ -40,6 +40,7 @@ import {
 } from "@radix-ui/react-icons";
 import type { ContractSendMethod } from "web3-eth-contract";
 import type { TransactionReceipt } from "web3-core";
+import { lookupAddress } from "../../components/utils";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -767,8 +768,26 @@ const StampDetailPage = () => {
   const router = useRouter();
   const { address } = router.query;
   const [stamp, setStamp] = useState({});
+  const chainId = useChainId();
   const web3 = useWeb3();
-  //const address = useAddress();
+
+  console.log(address, chainId);
+
+  useEffect(() => {
+    //setShowLoading(true)
+    axios
+      .get(`/api/stamps?contract=${address}&chain=${chainId}`)
+      .then((r) =>
+        Promise.all(
+          Object.entries(r.data.users).map(([addr, ids]) =>
+            lookupAddress(addr, web3).then((addr) => [addr, ids]),
+          ),
+        ),
+      )
+      .then(console.log);
+    //.then((entries) => setUsers(Object.fromEntries(entries)));
+    //.finally(() => setShowLoading(false));
+  });
 
   return (
     <Layout title={<PageTitle>Stamps / Stamp Name</PageTitle>}>
