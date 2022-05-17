@@ -3,22 +3,40 @@ import Image from "next/image";
 import Layout from "../components/Layout";
 import { Button, styled } from "@cabindao/topo";
 import PageTitle from "../components/PageTitle";
-import { useUser } from "@clerk/nextjs";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
+import { useRouter } from "next/router";
 
-const UserProfileContainer = styled("div", {});
+const UserProfileContainer = styled("div", {
+  display: "flex",
+  flexDirection: "column",
+  maxHeight: "100%",
+});
 
 const UserProfileHero = styled("div", {
   padding: "24px 32px",
   background: "$forest",
   minHeight: "232px",
+  display: "flex",
+  alignItems: "center",
+  marginBottom: "24px",
+  flexShrink: 0,
 });
 
-const UserInfo = styled("div", {});
+const UserInfo = styled("div", {
+  flexGrow: 1,
+});
 
-const UserPersonalInfo = styled("div", {});
+const UserPersonalInfo = styled("div", {
+  width: "min-content",
+  marginBottom: "40px",
+});
 
-const UserName = styled("h1", {});
+const UserName = styled("h1", {
+  fontSize: "32px",
+  fontFamily: "$mono",
+  fontWeight: 600,
+  color: "$sand",
+});
 
 const UserDivider = styled("hr", {
   background: "$sprout",
@@ -27,75 +45,193 @@ const UserDivider = styled("hr", {
   border: 0,
 });
 
-const PassportNumber = styled("h2", {});
+const PassportNumber = styled("h2", {
+  textTransform: "uppercase",
+  fontSize: "18px",
+  fontFamily: "$mono",
+  fontWeight: 600,
+  color: "$sand",
+  whiteSpace: "nowrap",
+});
 
-const UserTabs = styled("div", {});
+const UserTabs = styled("div", {
+  display: "flex",
+  gap: "16px",
+});
 
-const UserContent = styled("div", {});
+const UserContent = styled("div", {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: "16px",
+  padding: "0 8px 24px",
+  flexGrow: 1,
+  overflowY: "auto",
+  "&::-webkit-scrollbar": {
+    width: 0,
+  },
+});
 
-export const ProfileLayout: React.FC<{ tab: "communities" | "stamps" }> = ({
-  children,
-  tab,
-}) => {
-  const user = useUser();
+const AvatarContainer = styled("div", {
+  "> span": {
+    borderRadius: "50%",
+  },
+});
+
+export const ProfileLayout: React.FC<{
+  tab: "communities" | "stamps";
+  name: string;
+  passportNumber: string;
+  avatar: string;
+}> = ({ children, tab, name, passportNumber, avatar }) => {
+  const router = useRouter();
   return (
     <UserProfileContainer>
-      <h1>Page Under Construction. Check back later!</h1>
       <UserProfileHero>
         <UserInfo>
           <UserPersonalInfo>
-            <UserName>{user.user?.username}</UserName>
+            <UserName>{name}</UserName>
             <UserDivider />
-            <PassportNumber>Passport NO: {user.user?.id}</PassportNumber>
+            <PassportNumber>Passport NO: {passportNumber}</PassportNumber>
           </UserPersonalInfo>
           <UserTabs>
             <Button
               tone="wheat"
               type={tab === "communities" ? "primary" : "secondary"}
+              // @ts-ignore TODO update TOPO Button
+              css={{
+                minWidth: "144px",
+              }}
+              onClick={() => router.push('/passport')}
             >
               Communities
             </Button>
             <Button
               tone="wheat"
               type={tab === "stamps" ? "primary" : "secondary"}
+              // @ts-ignore TODO update TOPO Button
+              css={{
+                minWidth: "144px",
+              }}
+              onClick={() => router.push('/passport/stamps')}
             >
               Stamps
             </Button>
           </UserTabs>
         </UserInfo>
-        <Image
-          src={user.user?.profileImageUrl || ""}
-          width={120}
-          height={120}
-          alt={"Profile Image"}
-        />
+        <AvatarContainer>
+          <Image src={avatar} width={120} height={120} alt={"Profile Image"} />
+        </AvatarContainer>
       </UserProfileHero>
       <UserContent>{children}</UserContent>
     </UserProfileContainer>
   );
 };
 
-const CommunityContainer = styled("div", {});
+const CommunityContainer = styled("div", {
+  display: "flex",
+  flexDirection: "column",
+  boxShadow: "0 4px 15px rgb(0 0 0 / 0.25)",
+});
 
-const CommunityHeader = styled("div", {});
+const CommunityContent = styled("div", {
+  display: "flex",
+  flexDirection: "column",
+  flexGrow: 1,
+  padding: "20px",
+});
 
-const CommunityThumbnail = styled("div", {});
+const CommunityHeader = styled("div", {
+  background: "$forest",
+  color: "$sand",
+  textTransform: "capitalize",
+  padding: "10px 20px",
+  fontFamily: "$mono",
+  fontSize: "16px",
+});
 
-const CommunityDescription = styled("div", {});
+const CommunityThumbnail = styled("div", {
+  width: "160px",
+  height: "120px",
+  "> span": {
+    borderRadius: "20px",
+  },
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  margin: "0 auto",
+});
 
-const CommunityFields = styled("div", {});
+const CommunityDescription = styled("div", {
+  margin: "20px 0px",
+  fontFamily: "$mono",
+  fontSize: "14px",
+  fontWeight: 400,
+  flexGrow: 1,
+});
 
-const ProfileContent = (props: PageProps) => {
+const CommunityFields = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+});
+
+const MembershipStamp = styled("div", {
+  alignItems: "start",
+  display: "flex",
+  flexDirection: "column",
+});
+
+const MembershipQuantity = styled("div", {
+  alignItems: "end",
+  display: "flex",
+  flexDirection: "column",
+});
+
+const MembershipField = styled("span", {
+  color: "$forest",
+  fontFamily: "$mono",
+  fontSize: 14,
+  fontWeight: 600,
+  marginBottom: "8px",
+});
+
+const MembershipValue = styled("span", {
+  color: "#8B9389",
+  fontFamily: "$sans",
+  fontSize: 12,
+  fontWeight: 500,
+});
+
+const ProfileContent = ({ communities, ...rest }: PageProps) => {
   return (
-    <ProfileLayout tab="communities">
-      {props.communities.map((c) => (
+    <ProfileLayout tab="communities" {...rest}>
+      {communities.map((c) => (
         <CommunityContainer key={c.symbol}>
           <CommunityHeader>
             {c.name} ({c.symbol})
           </CommunityHeader>
-          <CommunityThumbnail></CommunityThumbnail>
-          <CommunityDescription></CommunityDescription>
-          <CommunityFields></CommunityFields>
+          <CommunityContent>
+            <CommunityThumbnail>
+              <Image
+                src={c.thumbnail}
+                alt={"Thumbnail"}
+                height={"100%"}
+                width={"100%"}
+              />
+            </CommunityThumbnail>
+            <CommunityDescription>{c.description}</CommunityDescription>
+            <CommunityFields>
+              <MembershipStamp>
+                <MembershipField>Membership Stamp</MembershipField>
+                <MembershipValue>
+                  {c.name} ({c.symbol})
+                </MembershipValue>
+              </MembershipStamp>
+              <MembershipQuantity>
+                <MembershipField>Quantity</MembershipField>
+                <MembershipValue>{c.quantity}</MembershipValue>
+              </MembershipQuantity>
+            </CommunityFields>
+          </CommunityContent>
         </CommunityContainer>
       ))}
     </ProfileLayout>
@@ -104,6 +240,9 @@ const ProfileContent = (props: PageProps) => {
 
 type PageProps = {
   communities: Awaited<ReturnType<typeof getCommunitiesByUser>>;
+  name: string;
+  passportNumber: string;
+  avatar: string;
 };
 
 const Profile = (props: PageProps) => {
@@ -115,42 +254,64 @@ const Profile = (props: PageProps) => {
 };
 
 // fetch user data
-const getCommunitiesByUser = async (userId: string) => [
-  {
-    name: "ACME Corporation",
-    symbol: "AC",
-    description:
-      "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
-    quantity: 3000,
-  },
-  {
-    name: "House DAO",
-    symbol: "HDAO",
-    description:
-      "House DAO is a member-owned global network of independent, innovative hubs powered by web3.",
-    quantity: 230,
-  },
-  {
-    name: "Rocket Science",
-    symbol: "RS",
-    description:
-      "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
-    quantity: 7100403,
-  },
-];
+const getCommunitiesByUser = async (userId: string) => {
+  const dummy = [
+    {
+      name: "ACME Corporation",
+      symbol: "AC",
+      description:
+        "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
+      quantity: 3000,
+      thumbnail: "/logo.png",
+    },
+    {
+      name: "House DAO",
+      symbol: "HDAO",
+      description:
+        "House DAO is a member-owned global network of independent, innovative hubs powered by web3.",
+      quantity: 230,
+      thumbnail: "/logo.png",
+    },
+    {
+      name: "Rocket Science",
+      symbol: "RS",
+      description:
+        "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
+      quantity: 7100403,
+      thumbnail: "/logo.png",
+    },
+  ];
+  return [dummy, dummy].flat();
+};
 
 export const getServerSideProps: GetServerSideProps<PageProps, {}> =
-  withServerSideAuth((context) => {
-    const { userId } = context.req.auth;
-    if (!userId)
-      return {
-        props: { communities: [] },
-      };
-    return getCommunitiesByUser(userId).then((communities) => ({
-      props: {
-        communities,
-      },
-    }));
-  });
+  withServerSideAuth(
+    async (context) => {
+      const { user } = context.req;
+      const userId = user?.id;
+      if (!user || !userId)
+        return {
+          redirect: {
+            statusCode: 302,
+            destination: "/",
+          },
+        };
+      return getCommunitiesByUser(userId).then((communities) => ({
+        props: {
+          communities,
+          name:
+            user.username ||
+            `${user.firstName} ${user.lastName}`.trim() ||
+            user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
+              ?.emailAddress ||
+            user.web3Wallets[0].web3Wallet ||
+            userId,
+          passportNumber: userId,
+          avatar: user.profileImageUrl || "/logo.png",
+        },
+      }));
+    },
+    { loadUser: true }
+  );
 
 export default Profile;

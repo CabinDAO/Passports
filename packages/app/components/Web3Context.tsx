@@ -101,6 +101,10 @@ export const Web3Provider: React.FC = ({ children }) => {
       }
     });
   }, [setup, clerk]);
+  useEffect(() => {
+    if (user.isSignedIn)
+      switchAddress(user.user.web3Wallets.map((a) => a.web3Wallet));
+  }, [user, switchAddress]);
   return (
     <Web3Context.Provider
       value={{

@@ -697,11 +697,10 @@ export const getServerSideProps: GetServerSideProps<
 > = withServerSideAuth((context) => {
   const { userId } = context.req.auth;
   if (!userId) {
-    // Do we do this in an edge function?
-    console.warn("Should redirect to home.");
     return {
-      props: {
-        stamps: [],
+      redirect: {
+        statusCode: 302,
+        destination: "/",
       },
     };
   }

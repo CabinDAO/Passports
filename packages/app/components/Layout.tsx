@@ -2,6 +2,7 @@ import { Button, styled } from "@cabindao/topo";
 import Head from "next/head";
 import { NextPage } from "next/types";
 import {
+  useAddress,
   useChainId,
   useDisconnect,
   useDisplayAddress,
@@ -94,7 +95,9 @@ const SignedInIndicator = () => {
       <AddressLabel>
         {displayAddress.endsWith(".eth")
           ? displayAddress
-          : `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`}
+          : displayAddress
+          ? `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`
+          : ""}
       </AddressLabel>
       <Button onClick={disconnectWallet} tone="forest">
         Disconnect wallet
