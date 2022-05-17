@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ContractSendMethod } from "web3-eth-contract";
+import type { ContractSendMethod } from "web3-eth-contract";
 import {
   Modal,
   Input,
