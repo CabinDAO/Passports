@@ -100,6 +100,7 @@ interface IStampProps {
   version: string;
 }
 
+<<<<<<< HEAD
 const StampCard = (stamp: IStampProps) => {
   return (
     <StampCardContainer>
@@ -116,12 +117,575 @@ const StampCard = (stamp: IStampProps) => {
         )}
       </CardImageContainer>
       <StampCardDivider />
+=======
+interface IStampCardProps extends IStampProps {
+  customization: Record<string, string>;
+}
+
+const EditableStampCardRow = ({
+  field,
+  stamp,
+  setStamp,
+  decorator = "",
+}: {
+  field: keyof IStampProps;
+  stamp: IStampProps;
+  setStamp: (s: IStampProps) => void;
+  decorator?: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const web3 = useWeb3();
+  const address = useAddress();
+  const [value, setValue] = useState(stamp[field] || 0);
+  return (
+    <StampCardRow>
+      <StampCardKey>{field}</StampCardKey>
+      <StampCardValue>
+        {stamp[field]}
+        {decorator}
+        <Tooltip content={"Edit"}>
+          <Button onClick={() => setIsOpen(true)} type={"icon"}>
+            <Pencil1Icon color={theme.colors.wheat} width={12} height={12} />
+          </Button>
+        </Tooltip>
+        <Modal
+          hideCloseIcon
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          title={`Change ${field}`}
+          onConfirm={() => {
+            getStampContract({
+              web3,
+              address: stamp.address,
+              version: stamp.version,
+            }).then(
+              (contract) =>
+                new Promise<void>((resolve, reject) =>
+                  contract.methods[
+                    `set${field.slice(0, 1).toUpperCase()}${field.slice(1)}`
+                  ](value)
+                    .send({ from: address })
+                    .on("receipt", () => {
+                      setStamp({
+                        ...stamp,
+                        [field]: value,
+                      });
+                      resolve();
+                    })
+                    .on("error", reject),
+                ),
+            );
+          }}
+        >
+          <ModalInput
+            label={`New ${field}`}
+            value={value.toString()}
+            onChange={(e) => setValue(Number(e.target.value))}
+            type={"number"}
+          />
+        </Modal>
+      </StampCardValue>
+    </StampCardRow>
+  );
+};
+
+const StampCard = ({ customization, ...props }: IStampCardProps) => {
+  const [stamp, setStamp] = useState(props);
+  const web3 = useWeb3();
+  const address = useAddress();
+  const networkId = useChainId();
+  const [shareIsOpen, setShareIsOpen] = useState(false);
+  const [userAddress, setUserAddress] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [airDropIsOpen, setAirDropIsOpen] = useState(false);
+  const [pauseIsOpen, setPauseIsOpen] = useState(false);
+  const [airdropAddrList, setAirdropAddrList] = useState<string[]>([]);
+  const open = useCallback(() => setIsOpen(true), [setIsOpen]);
+  const [url, setUrl] = useState(customization.redirect_url);
+  const [brandColor, setBrandColor] = useState(customization.brand_color);
+  const [accColor, setAccColor] = useState(customization.accent_color);
+  const [textColor, setTextColor] = useState(customization.text_color);
+  const [buttonTxt, setButtonTxt] = useState(customization.button_txt);
+  const [logoCid, setLogoCid] = useState(customization.logo_cid);
+  const [fileLoading, setFileLoading] = useState(false);
+  const [metadata, setMetadata] = useState<Record<string, string>>({});
+  const [balance, setBalance] = useState("0");
+  const chainId = useChainId();
+
+  useEffect(() => {
+    if (!stamp.name) {
+      getStampContract({
+        web3,
+        address: stamp.address,
+        version: stamp.version,
+      })
+        .then((contract) =>
+          (contract.methods.get() as ContractSendMethod).call(),
+        )
+        .then((p) => {
+          setStamp({
+            address: stamp.address,
+            name: p[0],
+            symbol: p[1],
+            supply: Number(p[2]),
+            mintIndex: Number(p[3]),
+            price: web3.utils.fromWei(p[4], "ether"),
+            metadataHash: bytes32ToIpfsHash(p[5]),
+            royalty: p[6] / 100,
+            version: stamp.version,
+            isPrivate: p[7],
+            paused: p[9] || false,
+          });
+        });
+    }
+  }, [setStamp, stamp, web3]);
+
+  useEffect(() => {
+    setUrl(customization.redirect_url);
+    setBrandColor(customization.brand_color);
+    setAccColor(customization.accent_color);
+    setButtonTxt(customization.button_txt);
+    setLogoCid(customization.logo_cid);
+  }, [customization]);
+  useEffect(() => {
+    if (!Object.keys(metadata).length && stamp.metadataHash) {
+      axios.get(`https://ipfs.io/ipfs/${stamp.metadataHash}`).then((r) => {
+        if (Object.keys(r.data).length) {
+          setMetadata(r.data);
+        }
+      });
+    }
+    web3.eth
+      .getBalance(stamp.address)
+      .then((v) => setBalance(web3.utils.fromWei(v, "ether")));
+  }, [metadata, stamp.metadataHash, web3, stamp.address, setBalance]);
+  const { thumbnail, ...fields } = metadata;
+  const [toastMessage, setToastMessage] = useState("");
+  return (
+    <StampCardContainer>
+      <StampHeader>
+        <CardImageContainer>
+          {thumbnail ? (
+            <IpfsAsset cid={thumbnail} height={"100%"} width={"100%"} />
+          ) : (
+            <Image
+              src={"/vercel.svg"}
+              alt={"stock photo"}
+              height={"100%"}
+              width={"100&"}
+            />
+          )}
+        </CardImageContainer>
+        <div>
+          <Tooltip content={"Share Stamp Ownership"}>
+            <Button onClick={() => setShareIsOpen(true)} type="icon">
+              <Share1Icon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={"Customize checkout"}>
+            <Button onClick={open} type="icon">
+              <Pencil2Icon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={"Airdrop stamps"}>
+            <Button onClick={() => setAirDropIsOpen(true)} type="icon">
+              <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={stamp.paused ? "Unpause" : "Pause"}>
+            <Button
+              onClick={() => {
+                setPauseIsOpen(true);
+              }}
+              type={"icon"}
+            >
+              {stamp.paused ? (
+                <PlayIcon width={20} height={20} color={theme.colors.wheat} />
+              ) : (
+                <PauseIcon width={20} height={20} color={theme.colors.wheat} />
+              )}
+            </Button>
+          </Tooltip>
+          <Modal
+            hideCloseIcon
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            title="Customize Checkout"
+            onConfirm={() => {
+              let upsertData: Record<string, string> = {
+                redirect_url: url,
+                contractAddr: stamp.address,
+                brand_color: brandColor,
+                accent_color: accColor,
+                text_color: textColor,
+                button_txt: buttonTxt,
+                logo_cid: logoCid,
+              };
+              return axios
+                .post("/api/updateCustomization", {
+                  data: upsertData,
+                })
+                .then(() =>
+                  setToastMessage(
+                    "Successfully updated stamp's customized checkout experience!",
+                  ),
+                )
+                .catch((e) =>
+                  setToastMessage(`ERROR: ${e.response?.data || e.message}`),
+                );
+            }}
+          >
+            <ModalContent>
+              <ModalLabel>{`${stamp.name} (${stamp.symbol})`}</ModalLabel>
+              <ModalInput
+                label={"Redirect URL"}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+              <ModalInputBox>
+                <ModalInputLabel htmlFor="bcolor">Brand color:</ModalInputLabel>
+                <input
+                  type="color"
+                  id="bcolor"
+                  name="bcolor"
+                  value={brandColor || "#fdf3e7"}
+                  onChange={(e) => setBrandColor(e.target.value)}
+                ></input>
+              </ModalInputBox>
+              <ModalInputBox>
+                <ModalInputLabel htmlFor="acolor">
+                  Accent color:
+                </ModalInputLabel>
+                <input
+                  type="color"
+                  id="acolor"
+                  name="acolor"
+                  value={accColor || "#324841"}
+                  onChange={(e) => setAccColor(e.target.value)}
+                ></input>
+              </ModalInputBox>
+              <ModalInputBox>
+                <ModalInputLabel htmlFor="acolor">Text color:</ModalInputLabel>
+                <input
+                  type="color"
+                  id="textColor"
+                  name="textColor"
+                  value={textColor || "#ffffff"}
+                  onChange={(e) => setTextColor(e.target.value)}
+                ></input>
+              </ModalInputBox>
+              <ModalInput
+                label={"Button Text"}
+                value={buttonTxt}
+                onChange={(e) => setButtonTxt(e.target.value)}
+              />
+              <ModalInputBox>
+                <Label label={logoCid ? "Change Logo" : "Upload Logo"}>
+                  <input
+                    type={"file"}
+                    accept="video/*,image/*"
+                    onChange={async (e) => {
+                      if (e.target.files) {
+                        setFileLoading(true);
+                        const file = e.target.files[0];
+                        if (file) {
+                          return ipfsAdd(file)
+                            .then(setLogoCid)
+                            .finally(() => setFileLoading(false));
+                        }
+                      }
+                    }}
+                  />
+                </Label>
+                {fileLoading && "Loading..."}
+              </ModalInputBox>
+            </ModalContent>
+          </Modal>
+          <Modal
+            hideCloseIcon
+            isOpen={shareIsOpen}
+            setIsOpen={setShareIsOpen}
+            title="Grant Access to Stamp"
+            onConfirm={async () => {
+              return Promise.all([
+                getStampContract({
+                  web3,
+                  address: stamp.address,
+                  version: stamp.version,
+                }),
+                resolveAddress(userAddress, web3),
+              ])
+                .then(([contract, ethAddress]) =>
+                  ethAddress
+                    ? new Promise<void>((resolve, reject) =>
+                        contract.methods
+                          .grantAdmin(ethAddress)
+                          .send({ from: address })
+                          .on("receipt", () => {
+                            axios
+                              .put("/api/admin/stamp", {
+                                address: ethAddress,
+                                contract: stamp.address,
+                                chain: chainId,
+                              })
+                              .then(() => {
+                                setUserAddress("");
+                                resolve();
+                              });
+                          })
+                          .on("error", reject),
+                      )
+                    : Promise.reject(
+                        new Error(`Invalid wallet address ${userAddress}`),
+                      ),
+                )
+                .catch((e) => setToastMessage(`ERROR: ${e.message}`));
+            }}
+          >
+            <ModalInput
+              label={"Address"}
+              value={userAddress}
+              onChange={(e) => setUserAddress(e.target.value)}
+            />
+          </Modal>
+          <Modal
+            hideCloseIcon
+            isOpen={airDropIsOpen}
+            setIsOpen={setAirDropIsOpen}
+            title="Airdrop Passports"
+            onConfirm={() => {
+              return getStampContract({
+                web3,
+                address: stamp.address,
+                version: stamp.version,
+              })
+                .then((contract) =>
+                  Promise.all(
+                    airdropAddrList.map((addr) => resolveAddress(addr, web3)),
+                  ).then(
+                    (addrList) =>
+                      new Promise<void>((resolve, reject) =>
+                        contract.methods
+                          .airdrop(addrList)
+                          .send({
+                            from: address,
+                          })
+                          .on("receipt", (receipt: TransactionReceipt) => {
+                            const transferEvents = receipt.events?.["Transfer"];
+                            const transfers = Array.isArray(transferEvents)
+                              ? transferEvents
+                              : [transferEvents];
+                            const tokens = transfers.map((t) => ({
+                              tokenId: t?.returnValues?.tokenId as string,
+                              address: t?.returnValues?.to as string,
+                            }));
+                            const mintIndex =
+                              (receipt.events?.["Airdrop"]
+                                ?.returnValues?.[1] as number) || 0;
+                            axios
+                              .post("/api/stamps", {
+                                chain: chainId,
+                                tokens,
+                                contract: stamp.address,
+                              })
+                              .then((r) => {
+                                setToastMessage("Airdrop Successful!");
+                                setStamp({
+                                  ...stamp,
+                                  mintIndex,
+                                });
+                                setAirDropIsOpen(false);
+                                resolve();
+                              });
+                          })
+                          .on("error", (e: Error) => {
+                            setToastMessage(`ERROR: ${e.message}`);
+                            reject(e);
+                          }),
+                      ),
+                  ),
+                )
+                .catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
+            }}
+          >
+            <div>
+              {" "}
+              {`All the addresses should be under column named "address". An optional "quantity" column could be added for airdropping multiple stamps per address."`}{" "}
+            </div>
+            <ModalInputBox>
+              <Label label={"Upload CSV"}>
+                <input
+                  type={"file"}
+                  accept={".csv"}
+                  onChange={async (e) => {
+                    if (e.target.files) {
+                      const f: File = e.target.files[0];
+                      Papa.parse<Record<string, string>, File>(f, {
+                        header: true,
+                        complete: function (results) {
+                          const addrsInCsv = results.data.map((result) => ({
+                            address: result["address"],
+                            quantity: result["quantity"],
+                          }));
+                          const relevantAddr = addrsInCsv.flatMap((a) =>
+                            !a.address
+                              ? ([] as string[])
+                              : Array(Number(a.quantity) || 1)
+                                  .fill(null)
+                                  .map(() => a.address),
+                          );
+                          setAirdropAddrList(relevantAddr);
+                        },
+                        error: function (e) {
+                          setToastMessage(`ERROR: ${e.message}`);
+                        },
+                      });
+                    }
+                  }}
+                />
+              </Label>
+            </ModalInputBox>
+            {airdropAddrList.length > 0 ? (
+              <div>{airdropAddrList.length} Addresses</div>
+            ) : null}
+          </Modal>
+          <Modal
+            hideCloseIcon
+            isOpen={pauseIsOpen}
+            setIsOpen={setPauseIsOpen}
+            title={stamp.paused ? "Unpause Stamp" : "Pause Stamp"}
+            onConfirm={async () => {
+              return getStampContract({
+                web3,
+                address: stamp.address,
+                version: stamp.version,
+              })
+                .then(
+                  (contract) =>
+                    new Promise<void>((resolve, reject) => {
+                      const sendMethod = stamp.paused
+                        ? contract.methods.unpause?.()
+                        : contract.methods.pause?.();
+                      if (!sendMethod) {
+                        throw new Error(
+                          "This stamp is on an older version that does not support pausing/unpausing",
+                        );
+                      } else {
+                        return sendMethod
+                          .send({ from: address })
+                          .on("receipt", () => {
+                            const newPauseValue = !stamp.paused;
+                            setToastMessage(
+                              `Successfully ${
+                                newPauseValue ? "paused" : "unpaused"
+                              } the stamp.`,
+                            );
+                            setStamp({
+                              ...stamp,
+                              paused: newPauseValue,
+                            });
+                            resolve();
+                          })
+                          .on("error", reject);
+                      }
+                    }),
+                )
+                .catch((e) => setToastMessage(`ERROR: ${e.message}`));
+            }}
+          >
+            <p>
+              {stamp.paused
+                ? "Are you sure you want to unpause the Stamp? Doing so would allow anyone to buy one"
+                : "Are you sure you want to pause the Stamp? Doing so would prevent anyone from buying one."}
+            </p>
+          </Modal>
+        </div>
+      </StampHeader>
+>>>>>>> 9f6d27e (finish static version of stamp detail page)
       <StampName>
         <Link href={`/stamps/${stamp.address}`}>
           {stamp.name}
         </Link>
         <br />({stamp.symbol})
       </StampName>
+<<<<<<< HEAD
+=======
+      <StampCardDivider />
+      <StampCardRow>
+        <span>BALANCE</span>
+        <StampCardValue>
+          {((Number(balance) * 39) / 40).toFixed(2)} ETH
+          <Tooltip content={"Withdraw"}>
+            <Button
+              type={"icon"}
+              disabled={balance === "0"}
+              onClick={(e) => {
+                getStampContract({
+                  web3,
+                  address: stamp.address,
+                  version: stamp.version,
+                }).then((contract) =>
+                  (contract.methods.claimEth() as ContractSendMethod)
+                    .send({ from: address })
+                    .on("receipt", () => {
+                      setToastMessage(`Successfully Claimed ${balance} ETH!`);
+                      setBalance("0");
+                    }),
+                );
+                e.stopPropagation();
+              }}
+            >
+              <ExitIcon color={theme.colors.wheat} width={12} height={12} />
+            </Button>
+          </Tooltip>
+        </StampCardValue>
+      </StampCardRow>
+      <StampCardRow>
+        <span>MINTED</span>
+        <StampCardValue>
+          {stamp.mintIndex}
+          <Tooltip content={"Copy checkout link"}>
+            <Button
+              onClick={(e) => {
+                window.navigator.clipboard.writeText(
+                  `${window.location.origin}/checkout/${
+                    networkNameById[Number(networkId)]
+                  }/${stamp.address}`,
+                );
+                setToastMessage("Copied checkout link!");
+                e.stopPropagation();
+              }}
+              type="icon"
+            >
+              <Link1Icon width={12} height={12} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+        </StampCardValue>
+      </StampCardRow>
+      <EditableStampCardRow
+        field={"supply"}
+        stamp={stamp}
+        setStamp={setStamp}
+      />
+      <EditableStampCardRow
+        field={"price"}
+        stamp={stamp}
+        setStamp={setStamp}
+        decorator={" ETH"}
+      />
+      <EditableStampCardRow
+        field={"royalty"}
+        stamp={stamp}
+        setStamp={setStamp}
+        decorator={"%"}
+      />
+      <Toast
+        isOpen={!!toastMessage}
+        onClose={() => setToastMessage("")}
+        message={toastMessage}
+        intent={toastMessage.startsWith("ERROR") ? "error" : "success"}
+      />
+>>>>>>> 9f6d27e (finish static version of stamp detail page)
     </StampCardContainer>
   );
 };
@@ -148,6 +712,7 @@ const ShortInputContainer = styled("div", {
   },
 });
 
+<<<<<<< HEAD
 >>>>>>> 9e20eb2 (finish static version of stamp detail page)
 const CreateStampContainer = styled("div", {
   borderRadius: "48px",
@@ -167,6 +732,8 @@ const CreateStampHeader = styled("h1", {
   fontFamily: "$mono",
 });
 
+=======
+>>>>>>> 9f6d27e (finish static version of stamp detail page)
 const SummaryRow = styled("div", {
   display: "flex",
   justifyContent: "space-between",
@@ -353,10 +920,10 @@ const CreateStampModal = () => {
     return ipfsAdd(
       JSON.stringify({
         ...Object.fromEntries(
-          additionalFields.map(({ key, value }) => [key, value])
+          additionalFields.map(({ key, value }) => [key, value]),
         ),
         ...(cid ? { thumbnail: cid } : {}),
-      })
+      }),
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price || "0", "ether");
       const royalty = Number(royaltyPcnt || "0") * 100;
@@ -444,7 +1011,7 @@ const CreateStampModal = () => {
         {children}
       </>
     ),
-    [setStage]
+    [setStage],
   );
   const stageTitles = [
     "Enter Stamp Details",
@@ -629,7 +1196,59 @@ const CreateStampModal = () => {
   );
 };
 
+<<<<<<< HEAD
 const StampTabContent = ({ stamps }: { stamps: IStampProps[] }) => {
+=======
+const StampTabContent = () => {
+  const [stamps, setStamps] = useState<IStampProps[]>([]);
+  const address = useAddress();
+  const web3 = useWeb3();
+  const chainId = useChainId();
+  const [customizations, setCustomizations] = useState<
+    Record<string, Record<string, string>>
+  >({});
+  useEffect(() => {
+    // Fetch the relevant redirection URLs on page load.
+    const stampAddrs = stamps.map((m) => m.address);
+    if (stamps.length > 0) {
+      axios
+        .post("/api/customizations", {
+          addresses: stampAddrs,
+        })
+        .then(
+          (result: {
+            data: { customizations: Record<string, Record<string, string>> };
+          }) => {
+            setCustomizations(result.data["customizations"]);
+          },
+        )
+        .catch(console.error);
+    }
+  }, [stamps, setCustomizations]);
+  useEffect(() => {
+    if (address && chainId) {
+      getAllManagedStamps({ web3, chainId, from: address })
+        .then((r) => {
+          setStamps(
+            r.map(({ address, version }) => ({
+              address,
+              name: "",
+              symbol: "",
+              supply: 0,
+              mintIndex: 0,
+              price: "0",
+              metadataHash: "",
+              royalty: 0,
+              isPrivate: false,
+              version,
+              paused: false,
+            })),
+          );
+        })
+        .catch(console.error);
+    }
+  }, [web3, chainId, address]);
+>>>>>>> 9f6d27e (finish static version of stamp detail page)
   return (
     <>
       {stamps.length ? (
