@@ -52,6 +52,9 @@ export const Web3Provider: React.FC = ({ children }) => {
   const web3 = useRef<Web3>(
     new Web3(Web3.givenProvider || "ws://localhost:8545")
   );
+  const loaded = useRef(false);
+  const clerk = useClerk();
+  const user = useUser();
   const switchAddress = useCallback(
     (accounts: string[]) => {
       const [addr] = accounts;
@@ -63,11 +66,29 @@ export const Web3Provider: React.FC = ({ children }) => {
     },
     [setAddress, setDisplayAddress]
   );
-  const loaded = useRef(false);
-  const clerk = useClerk();
-  const user = useUser();
+  const switchChain = useCallback(
+    (chainId: number) => {
+      if (user.user) {
+        const data = user.user.unsafeMetadata;
+        if (!data.chainId || data.chainId !== chainId) {
+          user.user
+            ?.update({
+              unsafeMetadata: {
+                ...data,
+                chainId,
+              },
+            })
+            .then(() => window.location.reload());
+        } else {
+          setChainId(Number(chainId));
+        }
+      }
+    },
+    [setChainId, user]
+  );
   const setup = useCallback(() => {
     if (!loaded.current && web3.current) {
+      loaded.current = true;
       web3.current.givenProvider.on("close", async () => {
         clerk.signOut();
       });
@@ -79,20 +100,17 @@ export const Web3Provider: React.FC = ({ children }) => {
             .then(() => clerk.authenticateWithMetamask());
         }
       });
-      web3.current.givenProvider.on("chainChanged", async (chainId: number) => {
-        setChainId(Number(chainId));
-      });
+      web3.current.givenProvider.on("chainChanged", switchChain);
 
       return Promise.all([
         web3.current.eth.getAccounts(),
         web3.current.eth.getChainId(),
       ]).then(([addresses, chain]) => {
-        setChainId(chain);
+        switchChain(chain);
         switchAddress(addresses);
-        loaded.current = true;
       });
     }
-  }, [loaded, setChainId, switchAddress, clerk, web3, user.isSignedIn]);
+  }, [loaded, switchAddress, clerk, web3, switchChain, user.isSignedIn]);
 
   useEffect(() => {
     clerk.addListener(({ session, user }) => {

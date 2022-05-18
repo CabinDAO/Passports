@@ -714,7 +714,7 @@ export const getServerSideProps: GetServerSideProps<
           .map((address) =>
             getAdminStamps({
               address,
-              chainId: 4, // Hard coded for now to rinkeby, investigate storing chainId on in user metadata
+              chainId: user.unsafeMetadata.chainId as number,
             })
           )
       )

@@ -6,90 +6,106 @@ import Layout from "../../components/Layout";
 import PageTitle from "../../components/PageTitle";
 import Image from "next/image";
 import { ProfileLayout } from "../passport";
+import { getStampsByUser } from "../../components/firebase";
+import { useRouter } from "next/router";
 
 const StampContainer = styled("div", {
   display: "flex",
   flexDirection: "column",
-  boxShadow: "0 4px 15px rgb(0 0 0 / 0.25)",
-});
-
-const StampContent = styled("div", {
-  display: "flex",
-  flexDirection: "column",
-  flexGrow: 1,
-  padding: "20px",
+  background: "$forest",
+  padding: "16px 24px 40px",
+  borderRadius: "20px",
 });
 
 const StampHeader = styled("div", {
-  background: "$forest",
   color: "$sand",
   textTransform: "capitalize",
-  padding: "10px 20px",
+  marginBottom: "8px",
   fontFamily: "$mono",
-  fontSize: "16px",
+  fontSize: "18px",
+  fontWeight: 600,
+});
+
+const StampDivider = styled("hr", {
+  background: "$sprout",
+  margin: "16px 0",
+  height: "1px",
+  border: 0,
 });
 
 const StampThumbnail = styled("div", {
-  width: "160px",
-  height: "120px",
+  width: "100%",
+  height: "128px",
   "> span": {
-    borderRadius: "20px",
+    borderRadius: "10px",
   },
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  margin: "0 auto",
 });
 
-const StampDescription = styled("div", {
-  margin: "20px 0px",
-  fontFamily: "$mono",
-  fontSize: "14px",
-  fontWeight: 400,
-  flexGrow: 1,
-});
-
-const StampFields = styled("div", {
+const TabContainer = styled("div", {
+  marginBottom: "24px",
   display: "flex",
-  justifyContent: "space-between",
 });
 
-const MembershipStamp = styled("div", {
-  alignItems: "start",
-  display: "flex",
-  flexDirection: "column",
-});
-
-const MembershipQuantity = styled("div", {
-  alignItems: "end",
-  display: "flex",
-  flexDirection: "column",
-});
-
-const MembershipField = styled("span", {
-  color: "$forest",
-  fontFamily: "$mono",
-  fontSize: 14,
-  fontWeight: 600,
-  marginBottom: "8px",
-});
-
-const MembershipValue = styled("span", {
-  color: "#8B9389",
+const Tab = styled("div", {
+  padding: "8px 16px",
+  cursor: "pointer",
   fontFamily: "$sans",
-  fontSize: 12,
-  fontWeight: 500,
+  fontWeight: 600,
+  boxSizing: "border-box",
+  border: "1px solid $forest",
+  variants: {
+    active: {
+      true: {
+        background: "$forest",
+        color: "$wheat",
+      },
+      false: {
+        color: "$forest",
+        textDecoration: "underline",
+      },
+    },
+  },
 });
 
-const ProfileContent = ({ stamps, ...rest }: PageProps) => {
+const UserContent = styled("div", {
+  display: "grid",
+  gap: "16px",
+  paddingBottom: "24px",
+  flexGrow: 1,
+  overflowY: "auto",
+  "&::-webkit-scrollbar": {
+    width: 0,
+  },
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+});
+
+const ProfileContent = ({ stamps, communities, ...rest }: PageProps) => {
+  const router = useRouter();
+  const activeTab = (router.query["community"] as string) || "";
   return (
-    <ProfileLayout tab="stamps" {...rest}>
-      {stamps.map((c) => (
-        <StampContainer key={c.symbol}>
-          <StampHeader>
-            {c.name} ({c.symbol})
-          </StampHeader>
-          <StampContent>
+    <ProfileLayout colSpan={4} tab="stamps" {...rest}>
+      <TabContainer>
+        {communities.map((c) => (
+          <Tab
+            key={c.id}
+            active={activeTab === c.id}
+            onClick={() => router.push(`/passport/stamps?community=${c.id}`)}
+          >
+            {c.name}
+          </Tab>
+        ))}
+      </TabContainer>
+      <UserContent>
+        {stamps.map((c) => (
+          <StampContainer key={c.symbol}>
+            <StampHeader>
+              {c.name} ({c.symbol})<br />
+              {c.token}
+            </StampHeader>
+            <StampDivider />
             <StampThumbnail>
               <Image
                 src={c.thumbnail}
@@ -98,22 +114,9 @@ const ProfileContent = ({ stamps, ...rest }: PageProps) => {
                 width={"100%"}
               />
             </StampThumbnail>
-            <StampDescription>{c.description}</StampDescription>
-            <StampFields>
-              <MembershipStamp>
-                <MembershipField>Membership Stamp</MembershipField>
-                <MembershipValue>
-                  {c.name} ({c.symbol})
-                </MembershipValue>
-              </MembershipStamp>
-              <MembershipQuantity>
-                <MembershipField>Quantity</MembershipField>
-                <MembershipValue>{c.quantity}</MembershipValue>
-              </MembershipQuantity>
-            </StampFields>
-          </StampContent>
-        </StampContainer>
-      ))}
+          </StampContainer>
+        ))}
+      </UserContent>
     </ProfileLayout>
   );
 };
@@ -126,14 +129,12 @@ const ProfileStamps = (props: PageProps) => {
   );
 };
 
-const getStampsByUser = async (userId: string) =>
-  [] as Record<string, string>[]; // TODO actually fetch stamps
-
 type PageProps = {
   stamps: Awaited<ReturnType<typeof getStampsByUser>>;
   name: string;
   passportNumber: string;
   avatar: string;
+  communities: { name: string; id: string }[];
 };
 
 export const getServerSideProps: GetServerSideProps<PageProps, {}> =
@@ -148,7 +149,17 @@ export const getServerSideProps: GetServerSideProps<PageProps, {}> =
             destination: "/",
           },
         };
-      return getStampsByUser(userId).then((stamps) => ({
+      const address = user.web3Wallets[0].web3Wallet;
+      const chainId = user.unsafeMetadata.chainId as number;
+      if (!address || !chainId) {
+        return {
+          redirect: {
+            statusCode: 302,
+            destination: "/",
+          },
+        };
+      }
+      return getStampsByUser({ address, chainId }).then((stamps) => ({
         props: {
           stamps,
           name:
@@ -160,6 +171,12 @@ export const getServerSideProps: GetServerSideProps<PageProps, {}> =
             userId,
           passportNumber: userId,
           avatar: user.profileImageUrl || "/logo.png",
+          communities: [
+            { id: "CBN", name: "Cabin" },
+            { id: "ACME", name: "Acme Corporation" },
+            { id: "haus", name: "House DAO" },
+            { id: "RS", name: "Rocket Science" },
+          ],
         },
       }));
     },

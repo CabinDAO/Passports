@@ -61,7 +61,6 @@ const UserTabs = styled("div", {
 
 const UserContent = styled("div", {
   display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: "16px",
   padding: "0 8px 24px",
   flexGrow: 1,
@@ -69,6 +68,7 @@ const UserContent = styled("div", {
   "&::-webkit-scrollbar": {
     width: 0,
   },
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
 });
 
 const AvatarContainer = styled("div", {
@@ -82,7 +82,8 @@ export const ProfileLayout: React.FC<{
   name: string;
   passportNumber: string;
   avatar: string;
-}> = ({ children, tab, name, passportNumber, avatar }) => {
+  colSpan: 3 | 4;
+}> = ({ children, tab, name, passportNumber, avatar, colSpan }) => {
   const router = useRouter();
   return (
     <UserProfileContainer>
@@ -122,7 +123,7 @@ export const ProfileLayout: React.FC<{
           <Image src={avatar} width={120} height={120} alt={"Profile Image"} />
         </AvatarContainer>
       </UserProfileHero>
-      <UserContent>{children}</UserContent>
+      {children}
     </UserProfileContainer>
   );
 };
@@ -203,7 +204,8 @@ const MembershipValue = styled("span", {
 
 const ProfileContent = ({ communities, ...rest }: PageProps) => {
   return (
-    <ProfileLayout tab="communities" {...rest}>
+    <ProfileLayout tab="communities" colSpan={3} {...rest}>
+      <UserContent>
       {communities.map((c) => (
         <CommunityContainer key={c.symbol}>
           <CommunityHeader>
@@ -233,7 +235,7 @@ const ProfileContent = ({ communities, ...rest }: PageProps) => {
             </CommunityFields>
           </CommunityContent>
         </CommunityContainer>
-      ))}
+      ))}</UserContent>
     </ProfileLayout>
   );
 };

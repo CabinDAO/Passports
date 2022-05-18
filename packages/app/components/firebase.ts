@@ -7,7 +7,11 @@ import {
   where,
 } from "firebase/firestore/lite";
 import { getStorage, list, ref, getBytes } from "firebase/storage";
-import { firebaseConfig } from "./constants";
+import { getStampContract, getWeb3 } from "./backend";
+import { firebaseConfig, networkNameById } from "./constants";
+import type { ContractSendMethod } from "web3-eth-contract";
+import { bytes32ToIpfsHash } from "./utils";
+import axios from "axios";
 
 export const getVersionByAddress = (address: string, chain: number) => {
   const app = initializeApp(firebaseConfig);
@@ -99,4 +103,77 @@ export const getAdminStamps = ({
       }),
     };
   });
+};
+
+export const getStampsByUser = ({
+  address,
+  chainId,
+}: {
+  address: string;
+  chainId: number;
+}) => {
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const urlCol = collection(db, "stamps");
+  return getDocs(
+    query(
+      urlCol,
+      where("address", "==", address.toLowerCase()),
+      where("chain", "==", chainId)
+    )
+  )
+    .then((stamps) => {
+      const tokensByAddress = stamps.docs
+        .map((doc) => {
+          const docData = doc.data();
+          return {
+            address: docData["contract"] as string,
+            token: docData["token"] as number,
+          };
+        })
+        .reduce((p, c) => {
+          if (p[c.address]) {
+            p[c.address].push(c.token);
+          } else {
+            p[c.address] = [c.token];
+          }
+          return p;
+        }, {} as Record<string, number[]>);
+      const network = networkNameById[chainId];
+      const web3 = getWeb3(networkNameById[chainId]);
+      return Promise.all(
+        Object.entries(tokensByAddress).map(([address, tokens]) =>
+          getStampContract({ web3, network, address })
+            .then(({ contract }) =>
+              Promise.all([
+                (contract.methods.name() as ContractSendMethod)
+                  .call()
+                  .then((r) => r as string),
+                (contract.methods.symbol() as ContractSendMethod)
+                  .call()
+                  .then((r) => r as string),
+                (contract.methods.metadataHash() as ContractSendMethod)
+                  .call()
+                  .then((hash) => bytes32ToIpfsHash(hash))
+                  .then((hash) =>
+                    axios.get<{ thumbnail: string }>(
+                      `https://ipfs.io/ipfs/${hash}`
+                    )
+                  )
+                  .then((r) => `https://ipfs.io/ipfs/${r.data.thumbnail}`),
+              ])
+            )
+            .then(([name, symbol, thumbnail]) =>
+              tokens.map((token) => ({
+                token,
+                address,
+                name,
+                symbol,
+                thumbnail,
+              }))
+            )
+        )
+      );
+    })
+    .then((stamps) => stamps.flat());
 };
