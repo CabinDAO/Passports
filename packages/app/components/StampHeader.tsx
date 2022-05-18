@@ -11,6 +11,7 @@ const CardTitle = styled("h1", {
 const Separator = styled("div", {
   height: "2px",
   width: "25%",
+  minWidth: "15rem",
   marginBottom: "1rem",
   background: "$sprout",
 });
@@ -26,21 +27,22 @@ const Flex = styled("div", {
 
 const Container = styled("div");
 
-const StampHeader = () => {
+const StampHeader = ({ name, symbol, image, supply }) => {
+
   return (
     <Card>
       <Flex css={{ justifyContent: "space-between", alignItems: "center" }}>
         <Container>
-          <CardTitle>Stamp Name</CardTitle>
+          <CardTitle>{name} ({symbol})</CardTitle>
           <Separator />
-          <Text css={{ color: "$sand", mb: "2rem" }}>Supply: 100</Text>
+          <Text css={{ color: "$sand", mb: "2rem" }}>Supply: {supply}</Text>
           <Button type="primary" tone="wheat">
             Stamp a Passport
           </Button>
         </Container>
         <Container>
           <Image
-            src={"/placeholder.png"}
+            src={image}
             alt={"stock"}
             width={"100%"}
             height={"100%"}

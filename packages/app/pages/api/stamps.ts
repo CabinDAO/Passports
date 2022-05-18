@@ -15,14 +15,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const urlCol = collection(db, "stamps");
+
   switch (req.method) {
     case "GET":
       return getDocs(
         query(
           urlCol,
           where("contract", "==", (req.query.contract as string).toLowerCase()),
-          where("chain", "==", Number(req.query.chain))
-        )
+          where("chain", "==", Number(req.query.chain)),
+        ),
       )
         .then((stamps) => {
           res.status(200).json({
@@ -47,6 +48,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         .catch((e) => {
           res.status(500).json({ message: e.message });
         });
+
     case "POST":
       const { tokens, contract, chain } = req.body;
       return Promise.all(
@@ -56,8 +58,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             contract: contract.toLowerCase(),
             chain: Number(chain),
             token: Number(token.tokenId),
-          })
-        )
+          }),
+        ),
       )
         .then(() => {
           res.status(200).json({ success: true });
@@ -66,6 +68,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           console.error(e);
           res.status(500).json({ message: e.message });
         });
+
     default:
       res.setHeader("Allow", ["GET"]);
       res.status(405).end(`Method ${req.method} Not Allowed`);

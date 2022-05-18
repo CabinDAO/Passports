@@ -126,6 +126,29 @@ const StampCard = (stamp: IStampProps) => {
   );
 };
 
+<<<<<<< HEAD
+=======
+const AdditionalFieldRow = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  "& input": {
+    marginRight: "8px",
+  },
+});
+
+const ShortInputContainer = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+  "> div": {
+    marginRight: "16px",
+    "&:last-child": {
+      marginRight: 0,
+    },
+  },
+});
+
+>>>>>>> 9e20eb2 (finish static version of stamp detail page)
 const CreateStampContainer = styled("div", {
   borderRadius: "48px",
   border: "1px solid $forest",

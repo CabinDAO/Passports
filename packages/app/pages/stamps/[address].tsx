@@ -764,34 +764,40 @@ type PageProps = {
 
 const Container = styled("div");
 
+const CreateStampContainer = styled("div", {
+  borderRadius: "48px",
+  border: "1px solid $forest",
+  background: "rgba(29, 43, 42, 0.05)",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: "72px",
+  fontWeight: 600,
+});
+
+const CreateStampHeader = styled("h1", {
+  fontSize: "24px",
+  lineHeight: "31.2px",
+  fontFamily: "$mono",
+});
+
+const stamp = {
+  name: "ACME Corporation",
+  symbol: "AC",
+  image: "/placeholder.png",
+  supply: 100,
+};
+
 const StampDetailPage = () => {
   const router = useRouter();
   const { address } = router.query;
-  const [stamp, setStamp] = useState({});
   const chainId = useChainId();
   const web3 = useWeb3();
 
-  console.log(address, chainId);
-
-  useEffect(() => {
-    //setShowLoading(true)
-    axios
-      .get(`/api/stamps?contract=${address}&chain=${chainId}`)
-      .then((r) =>
-        Promise.all(
-          Object.entries(r.data.users).map(([addr, ids]) =>
-            lookupAddress(addr, web3).then((addr) => [addr, ids]),
-          ),
-        ),
-      )
-      .then(console.log);
-    //.then((entries) => setUsers(Object.fromEntries(entries)));
-    //.finally(() => setShowLoading(false));
-  });
-
   return (
     <Layout title={<PageTitle>Stamps / Stamp Name</PageTitle>}>
-      <StampHeader />
+      <StampHeader {...stamp} />
       <Container css={{ pt: "2rem" }}>
         <Tabs>
           <TabList>
@@ -801,7 +807,12 @@ const StampDetailPage = () => {
           </TabList>
           <TabPanels>
             <TabPanel active>
-              <h2>Panel 1</h2>
+              <CreateStampContainer>
+                <CreateStampHeader>Get started using stamps</CreateStampHeader>
+                <Button type="primary" tone="wheat">
+                  Stamp a Passport
+                </Button>
+              </CreateStampContainer>
             </TabPanel>
             <TabPanel>
               <h2>Panel 2</h2>
