@@ -4,7 +4,9 @@ import Layout from "../components/Layout";
 import { Button, styled } from "@cabindao/topo";
 import PageTitle from "../components/PageTitle";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
+import type { User } from "@clerk/clerk-sdk-node";
 import { useRouter } from "next/router";
+import { getCommunitiesByUser } from "../components/firebase";
 
 const UserProfileContainer = styled("div", {
   display: "flex",
@@ -82,9 +84,10 @@ export const ProfileLayout: React.FC<{
   name: string;
   passportNumber: string;
   avatar: string;
-  colSpan: 3 | 4;
-}> = ({ children, tab, name, passportNumber, avatar, colSpan }) => {
+}> = ({ children, tab, name, passportNumber, avatar }) => {
   const router = useRouter();
+  const { asPath } = router;
+  const base = asPath.replace(/\/stamps$/, "");
   return (
     <UserProfileContainer>
       <UserProfileHero>
@@ -102,7 +105,7 @@ export const ProfileLayout: React.FC<{
               css={{
                 minWidth: "144px",
               }}
-              onClick={() => router.push('/passport')}
+              onClick={() => router.push(base)}
             >
               Communities
             </Button>
@@ -113,7 +116,7 @@ export const ProfileLayout: React.FC<{
               css={{
                 minWidth: "144px",
               }}
-              onClick={() => router.push('/passport/stamps')}
+              onClick={() => router.push(`${base}/stamps`)}
             >
               Stamps
             </Button>
@@ -204,47 +207,41 @@ const MembershipValue = styled("span", {
 
 const ProfileContent = ({ communities, ...rest }: PageProps) => {
   return (
-    <ProfileLayout tab="communities" colSpan={3} {...rest}>
+    <ProfileLayout tab="communities" {...rest}>
       <UserContent>
-      {communities.map((c) => (
-        <CommunityContainer key={c.symbol}>
-          <CommunityHeader>
-            {c.name} ({c.symbol})
-          </CommunityHeader>
-          <CommunityContent>
-            <CommunityThumbnail>
-              <Image
-                src={c.thumbnail}
-                alt={"Thumbnail"}
-                height={"100%"}
-                width={"100%"}
-              />
-            </CommunityThumbnail>
-            <CommunityDescription>{c.description}</CommunityDescription>
-            <CommunityFields>
-              <MembershipStamp>
-                <MembershipField>Membership Stamp</MembershipField>
-                <MembershipValue>
-                  {c.name} ({c.symbol})
-                </MembershipValue>
-              </MembershipStamp>
-              <MembershipQuantity>
-                <MembershipField>Quantity</MembershipField>
-                <MembershipValue>{c.quantity}</MembershipValue>
-              </MembershipQuantity>
-            </CommunityFields>
-          </CommunityContent>
-        </CommunityContainer>
-      ))}</UserContent>
+        {communities.map((c) => (
+          <CommunityContainer key={c.symbol}>
+            <CommunityHeader>
+              {c.name} ({c.symbol})
+            </CommunityHeader>
+            <CommunityContent>
+              <CommunityThumbnail>
+                <Image
+                  src={c.thumbnail}
+                  alt={"Thumbnail"}
+                  height={"100%"}
+                  width={"100%"}
+                />
+              </CommunityThumbnail>
+              <CommunityDescription>{c.description}</CommunityDescription>
+              <CommunityFields>
+                <MembershipStamp>
+                  <MembershipField>Membership Stamp</MembershipField>
+                  <MembershipValue>
+                    {c.name} ({c.symbol})
+                  </MembershipValue>
+                </MembershipStamp>
+                <MembershipQuantity>
+                  <MembershipField>Quantity</MembershipField>
+                  <MembershipValue>{c.quantity}</MembershipValue>
+                </MembershipQuantity>
+              </CommunityFields>
+            </CommunityContent>
+          </CommunityContainer>
+        ))}
+      </UserContent>
     </ProfileLayout>
   );
-};
-
-type PageProps = {
-  communities: Awaited<ReturnType<typeof getCommunitiesByUser>>;
-  name: string;
-  passportNumber: string;
-  avatar: string;
 };
 
 const Profile = (props: PageProps) => {
@@ -255,35 +252,22 @@ const Profile = (props: PageProps) => {
   );
 };
 
-// fetch user data
-const getCommunitiesByUser = async (userId: string) => {
-  const dummy = [
-    {
-      name: "ACME Corporation",
-      symbol: "AC",
-      description:
-        "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
-      quantity: 3000,
-      thumbnail: "/logo.png",
-    },
-    {
-      name: "House DAO",
-      symbol: "HDAO",
-      description:
-        "House DAO is a member-owned global network of independent, innovative hubs powered by web3.",
-      quantity: 230,
-      thumbnail: "/logo.png",
-    },
-    {
-      name: "Rocket Science",
-      symbol: "RS",
-      description:
-        "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
-      quantity: 7100403,
-      thumbnail: "/logo.png",
-    },
-  ];
-  return [dummy, dummy].flat();
+type PageProps = Awaited<ReturnType<typeof getProfileProps>>;
+
+export const getProfileProps = (user: User) => {
+  const userId = user.id!;
+  return getCommunitiesByUser(userId).then((communities) => ({
+    communities,
+    name:
+      user.username ||
+      `${user.firstName} ${user.lastName}`.trim() ||
+      user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
+        ?.emailAddress ||
+      user.web3Wallets[0].web3Wallet ||
+      userId,
+    passportNumber: userId,
+    avatar: user.profileImageUrl || "/logo.png",
+  }));
 };
 
 export const getServerSideProps: GetServerSideProps<PageProps, {}> =
@@ -298,19 +282,8 @@ export const getServerSideProps: GetServerSideProps<PageProps, {}> =
             destination: "/",
           },
         };
-      return getCommunitiesByUser(userId).then((communities) => ({
-        props: {
-          communities,
-          name:
-            user.username ||
-            `${user.firstName} ${user.lastName}`.trim() ||
-            user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
-              ?.emailAddress ||
-            user.web3Wallets[0].web3Wallet ||
-            userId,
-          passportNumber: userId,
-          avatar: user.profileImageUrl || "/logo.png",
-        },
+      return getProfileProps(user).then((props) => ({
+        props,
       }));
     },
     { loadUser: true }

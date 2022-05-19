@@ -8,6 +8,7 @@ import Image from "next/image";
 import { ProfileLayout } from "../passport";
 import { getStampsByUser } from "../../components/firebase";
 import { useRouter } from "next/router";
+import type { User } from "@clerk/clerk-sdk-node";
 
 const StampContainer = styled("div", {
   display: "flex",
@@ -86,7 +87,7 @@ const ProfileContent = ({ stamps, communities, ...rest }: PageProps) => {
   const router = useRouter();
   const activeTab = (router.query["community"] as string) || "";
   return (
-    <ProfileLayout colSpan={4} tab="stamps" {...rest}>
+    <ProfileLayout tab="stamps" {...rest}>
       <TabContainer>
         {communities.map((c) => (
           <Tab
@@ -129,13 +130,34 @@ const ProfileStamps = (props: PageProps) => {
   );
 };
 
-type PageProps = {
-  stamps: Awaited<ReturnType<typeof getStampsByUser>>;
-  name: string;
-  passportNumber: string;
-  avatar: string;
-  communities: { name: string; id: string }[];
+export const getProfileProps = (user: User) => {
+  const userId = user.id!;
+  const address = user.web3Wallets[0].web3Wallet;
+  const chainId = user.unsafeMetadata.chainId as number;
+  if (!address || !chainId) {
+    throw new Error("Missing address or chainId");
+  }
+  return getStampsByUser({ address, chainId }).then((stamps) => ({
+    stamps,
+    name:
+      user.username ||
+      `${user.firstName} ${user.lastName}`.trim() ||
+      user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
+        ?.emailAddress ||
+      user.web3Wallets[0].web3Wallet ||
+      userId,
+    passportNumber: userId,
+    avatar: user.profileImageUrl || "/logo.png",
+    communities: [
+      { id: "CBN", name: "Cabin" },
+      { id: "ACME", name: "Acme Corporation" },
+      { id: "haus", name: "House DAO" },
+      { id: "RS", name: "Rocket Science" },
+    ],
+  }));
 };
+
+type PageProps = Awaited<ReturnType<typeof getProfileProps>>;
 
 export const getServerSideProps: GetServerSideProps<PageProps, {}> =
   withServerSideAuth(
@@ -149,36 +171,16 @@ export const getServerSideProps: GetServerSideProps<PageProps, {}> =
             destination: "/",
           },
         };
-      const address = user.web3Wallets[0].web3Wallet;
-      const chainId = user.unsafeMetadata.chainId as number;
-      if (!address || !chainId) {
-        return {
+      return getProfileProps(user)
+        .then((props) => ({
+          props: props,
+        }))
+        .catch(() => ({
           redirect: {
             statusCode: 302,
             destination: "/",
           },
-        };
-      }
-      return getStampsByUser({ address, chainId }).then((stamps) => ({
-        props: {
-          stamps,
-          name:
-            user.username ||
-            `${user.firstName} ${user.lastName}`.trim() ||
-            user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
-              ?.emailAddress ||
-            user.web3Wallets[0].web3Wallet ||
-            userId,
-          passportNumber: userId,
-          avatar: user.profileImageUrl || "/logo.png",
-          communities: [
-            { id: "CBN", name: "Cabin" },
-            { id: "ACME", name: "Acme Corporation" },
-            { id: "haus", name: "House DAO" },
-            { id: "RS", name: "Rocket Science" },
-          ],
-        },
-      }));
+        }));
     },
     { loadUser: true }
   );

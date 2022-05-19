@@ -177,3 +177,34 @@ export const getStampsByUser = ({
     })
     .then((stamps) => stamps.flat());
 };
+
+// fetch user data
+export const getCommunitiesByUser = async (userId: string) => {
+  const dummy = [
+    {
+      name: "ACME Corporation",
+      symbol: "AC",
+      description:
+        "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
+      quantity: 3000,
+      thumbnail: "/logo.png",
+    },
+    {
+      name: "House DAO",
+      symbol: "HDAO",
+      description:
+        "House DAO is a member-owned global network of independent, innovative hubs powered by web3.",
+      quantity: 230,
+      thumbnail: "/logo.png",
+    },
+    {
+      name: "Rocket Science",
+      symbol: "RS",
+      description:
+        "Acme Corporation is a member-owned global network of independent, innovative hubs powered by web3.",
+      quantity: 7100403,
+      thumbnail: "/logo.png",
+    },
+  ];
+  return [dummy, dummy].flat();
+};
