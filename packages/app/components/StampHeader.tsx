@@ -27,13 +27,24 @@ const Flex = styled("div", {
 
 const Container = styled("div");
 
-const StampHeader = ({ name, symbol, image, supply }) => {
-
+const StampHeader = ({
+  name,
+  symbol,
+  image,
+  supply,
+}: {
+  name: string;
+  symbol: string;
+  image: string;
+  supply: string;
+}) => {
   return (
     <Card>
       <Flex css={{ justifyContent: "space-between", alignItems: "center" }}>
         <Container>
-          <CardTitle>{name} ({symbol})</CardTitle>
+          <CardTitle>
+            {name} ({symbol})
+          </CardTitle>
           <Separator />
           <Text css={{ color: "$sand", mb: "2rem" }}>Supply: {supply}</Text>
           <Button type="primary" tone="wheat">
@@ -41,12 +52,7 @@ const StampHeader = ({ name, symbol, image, supply }) => {
           </Button>
         </Container>
         <Container>
-          <Image
-            src={image}
-            alt={"stock"}
-            width={"100%"}
-            height={"100%"}
-          />
+          <Image src={image} alt={"stock"} width={"100%"} height={"100%"} />
         </Container>
       </Flex>
     </Card>
