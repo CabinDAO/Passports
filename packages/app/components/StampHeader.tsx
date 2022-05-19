@@ -36,7 +36,7 @@ const StampHeader = ({
   name: string;
   symbol: string;
   image: string;
-  supply: string;
+  supply: number;
 }) => {
   return (
     <Card>
