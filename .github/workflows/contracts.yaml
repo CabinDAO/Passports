@@ -22,7 +22,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 14.17.6
+          node-version: 16.14.0
       - name: install
         run: npm install
         working-directory: packages/contracts
@@ -33,7 +33,7 @@ jobs:
         run: npm run test
         working-directory: packages/contracts
       # We only are deploying a test and stake token. Since we are not using
-      # either right now, let's avoid deploying those to test nets. This 
+      # either right now, let's avoid deploying those to test nets. This
       # unblocks firebase deploys
       # - name: Deploy to Kovan
       #   run: npm run migrate:kovan

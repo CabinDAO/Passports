@@ -20,8 +20,6 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
 
-const HEADER_HEIGHT = 64;
-
 const Page = styled("div", {
   background: "$sand",
   display: "flex",
@@ -71,6 +69,7 @@ const AddressLabel = styled("span", {
   color: "$forest",
   marginRight: "16px",
   fontWeight: 600,
+  minWidth: "96px",
 });
 
 const NavIndicator = ({ src, path }: { src: string; path: string }) => {

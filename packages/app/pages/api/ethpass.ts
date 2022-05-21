@@ -50,12 +50,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           });
         })
         .then((r) => {
-          console.log(
-            "Successfully created ethpass",
-            r.data.id,
-            "at",
-            r.data.fileURL
-          );
           return res
             .status(200)
             .json({ fileURL: r.data.fileURL, id: r.data.id });

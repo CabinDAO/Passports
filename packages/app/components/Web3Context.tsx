@@ -47,7 +47,7 @@ export const useDisconnect = () => {
 
 export const Web3Provider: React.FC = ({ children }) => {
   const [address, setAddress] = useState("");
-  const [displayAddress, setDisplayAddress] = useState("");
+  const [displayAddress, setDisplayAddress] = useState("Loading...");
   const [chainId, setChainId] = useState(0);
   const web3 = useRef<Web3>(
     new Web3(Web3.givenProvider || "ws://localhost:8545")
@@ -71,18 +71,18 @@ export const Web3Provider: React.FC = ({ children }) => {
       if (user.user) {
         const data = user.user.unsafeMetadata;
         if (!data.chainId || data.chainId !== chainId) {
-          user.user
+          return user.user
             ?.update({
               unsafeMetadata: {
                 ...data,
                 chainId,
               },
             })
+            // TODO - we should instead refire `getServerSideProps` on all pages, which is the Remix way
             .then(() => window.location.reload());
-        } else {
-          setChainId(Number(chainId));
         }
       }
+      setChainId(Number(chainId));
     },
     [setChainId, user]
   );
@@ -97,7 +97,9 @@ export const Web3Provider: React.FC = ({ children }) => {
           clerk
             .signOut()
             .then(() => switchAddress(s))
-            .then(() => clerk.authenticateWithMetamask());
+            .then(() => clerk.authenticateWithMetamask())
+            // TODO - we should instead refire `getServerSideProps` on all pages, which is the Remix way
+            .then(() => window.location.reload());
         }
       });
       web3.current.givenProvider.on("chainChanged", switchChain);

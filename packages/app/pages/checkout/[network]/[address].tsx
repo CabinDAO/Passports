@@ -186,7 +186,6 @@ const CheckoutPageContent = ({
           (contract.methods.balanceOf(account) as ContractSendMethod).call()
         )
         .then((a) => {
-          console.log(a);
           setOwned(a);
         });
   }, [address, web3, version, account]);

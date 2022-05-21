@@ -18,7 +18,6 @@ import axios from "axios";
 import {
   bytes32ToIpfsHash,
   getAllManagedStamps,
-  getStampContract,
   ipfsAdd,
   ipfsHashToBytes32,
 } from "../components/utils";
@@ -31,6 +30,7 @@ import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import { users } from "@clerk/clerk-sdk-node";
 import { getAdminStamps } from "../components/firebase";
 import Link from "next/link";
+import { getWeb3, getStampContract } from "../components/backend";
 
 const ViewStampContainer = styled("div", {
   display: "flex",
@@ -100,33 +100,7 @@ interface IStampProps {
   version: string;
 }
 
-const StampCard = (props: IStampProps) => {
-  const [stamp, setStamp] = useState(props);
-  const web3 = useWeb3();
-  useEffect(() => {
-    if (!stamp.name) {
-      getStampContract({
-        web3,
-        address: stamp.address,
-        version: stamp.version,
-      })
-        .then((contract) =>
-          (contract.methods.get() as ContractSendMethod).call()
-        )
-        .then((p) => {
-          const metadataHash = bytes32ToIpfsHash(p[5]);
-          axios.get(`https://ipfs.io/ipfs/${metadataHash}`).then((r) => {
-            setStamp({
-              address: stamp.address,
-              name: p[0],
-              symbol: p[1],
-              thumbnail: r.data.thumbnail,
-              version: stamp.version,
-            });
-          });
-        });
-    }
-  }, [setStamp, stamp, web3]);
+const StampCard = (stamp: IStampProps) => {
   return (
     <StampCardContainer>
       <CardImageContainer>
@@ -144,7 +118,7 @@ const StampCard = (props: IStampProps) => {
       <StampCardDivider />
       <StampName>
         <Link href={`/stamps/${stamp.address}`}>
-          {stamp.name || "Name Loading..."}
+          {stamp.name}
         </Link>
         <br />({stamp.symbol})
       </StampName>
@@ -632,39 +606,14 @@ const CreateStampModal = () => {
   );
 };
 
-const StampTabContent = ({
-  serverSideStamps,
-}: {
-  serverSideStamps: IStampProps[];
-}) => {
-  const [stamps, setStamps] = useState<IStampProps[]>(serverSideStamps);
-  const address = useAddress();
-  const web3 = useWeb3();
-  const chainId = useChainId();
-  useEffect(() => {
-    if (address && chainId) {
-      getAllManagedStamps({ web3, chainId, from: address })
-        .then((r) => {
-          setStamps(
-            r.map(({ address, version }) => ({
-              address,
-              name: "",
-              symbol: "",
-              thumbnail: "",
-              version,
-            }))
-          );
-        })
-        .catch(console.error);
-    }
-  }, [web3, chainId, address]);
+const StampTabContent = ({ stamps }: { stamps: IStampProps[] }) => {
   return (
     <>
       {stamps.length ? (
         <ViewStampContainer>
           <StampContainer>
             {stamps.map((m) => (
-              <StampCard key={`${chainId}-${m.address}`} {...m} />
+              <StampCard key={m.address} {...m} />
             ))}
           </StampContainer>
           <ViewStampFooter>
@@ -686,46 +635,93 @@ const StampTabContent = ({
 const StampsPage = ({ stamps }: { stamps: IStampProps[] }) => {
   return (
     <Layout>
-      <StampTabContent serverSideStamps={stamps} />
+      <StampTabContent stamps={stamps} />
     </Layout>
   );
 };
 
 export const getServerSideProps: GetServerSideProps<
-  { stamps: Pick<IStampProps, "address" | "version">[] }, // TODO: load the rest of the props server side
+  { stamps: IStampProps[] },
   {}
-> = withServerSideAuth((context) => {
-  const { userId } = context.req.auth;
-  if (!userId) {
-    return {
-      redirect: {
-        statusCode: 302,
-        destination: "/",
-      },
-    };
-  }
-  return users
-    .getUser(userId)
-    .then((user) =>
-      Promise.all(
-        user.web3Wallets
-          .map((wal) => wal.web3Wallet as string)
-          .filter((addr) => !!addr)
-          .map((address) =>
-            getAdminStamps({
-              address,
-              chainId: user.unsafeMetadata.chainId as number,
-            })
-          )
-      )
-    )
-    .then((data) => {
+> = withServerSideAuth(
+  (context) => {
+    const { user } = context.req;
+    const userId = user?.id;
+    if (!userId || !user) {
       return {
-        props: {
-          stamps: data.flatMap((d) => d.contracts),
+        redirect: {
+          statusCode: 302,
+          destination: "/",
         },
       };
-    });
-});
+    }
+    const chainId = user.unsafeMetadata.chainId as number;
+    const network = networkNameById[chainId];
+    const web3 = getWeb3(network);
+    return users
+      .getUser(userId)
+      .then((user) =>
+        Promise.all(
+          user.web3Wallets
+            .map((wal) => wal.web3Wallet as string)
+            .filter((addr) => !!addr)
+            .map((address) =>
+              getAdminStamps({
+                address,
+                chainId: user.unsafeMetadata.chainId as number,
+              }).then(({ contracts }) =>
+                Promise.all(
+                  contracts.map((c) =>
+                    getStampContract({
+                      web3,
+                      network,
+                      address: c.address,
+                    })
+                      .then(({ contract }) =>
+                        Promise.all([
+                          (contract.methods.name() as ContractSendMethod)
+                            .call()
+                            .then((r) => r as string),
+                          (contract.methods.symbol() as ContractSendMethod)
+                            .call()
+                            .then((r) => r as string),
+                          (
+                            contract.methods.metadataHash() as ContractSendMethod
+                          )
+                            .call()
+                            .then((hash) => bytes32ToIpfsHash(hash))
+                            .then((hash) =>
+                              axios.get<{ thumbnail: string }>(
+                                `https://ipfs.io/ipfs/${hash}`
+                              )
+                            )
+                            .then(
+                              (r) => `https://ipfs.io/ipfs/${r.data.thumbnail}`
+                            ),
+                        ])
+                      )
+                      .then(([name, symbol, thumbnail]) => ({
+                        name,
+                        symbol,
+                        thumbnail,
+                        version: c.version,
+                        address: c.address,
+                      }))
+                  )
+                )
+              )
+            )
+        )
+      )
+      .then((data) => {
+        return {
+          props: {
+            stamps: data.flat(),
+          },
+        };
+      });
+  },
+  { loadUser: true }
+);
 
 export default StampsPage;
