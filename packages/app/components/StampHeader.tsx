@@ -1,6 +1,7 @@
 import React from "react";
 import { styled, Button, Text } from "@cabindao/topo";
 import Image from "next/image";
+import IpfsAsset from "./IpfsAsset";
 
 const CardTitle = styled("h1", {
   color: "$sand",
@@ -30,12 +31,12 @@ const Container = styled("div");
 const StampHeader = ({
   name,
   symbol,
-  image,
+  thumbnail,
   supply,
 }: {
   name: string;
   symbol: string;
-  image: string;
+  thumbnail: string;
   supply: number;
 }) => {
   return (
@@ -52,7 +53,7 @@ const StampHeader = ({
           </Button>
         </Container>
         <Container>
-          <Image src={image} alt={"stock"} width={"100%"} height={"100%"} />
+          <IpfsAsset cid={thumbnail} width={"100%"} height={"100%"} />
         </Container>
       </Flex>
     </Card>

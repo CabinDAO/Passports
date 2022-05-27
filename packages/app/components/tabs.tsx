@@ -27,6 +27,7 @@ export const TabPanel = styled("div", {
 
 export const Tab = styled("div", {
   padding: "0.5rem 1.25rem",
+  cursor: "pointer",
 
   variants: {
     active: {

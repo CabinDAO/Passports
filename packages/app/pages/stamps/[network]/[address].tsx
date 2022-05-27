@@ -17,17 +17,27 @@ import {
   getStampContract,
   ipfsAdd,
   resolveAddress,
-} from "../../components/utils";
-import { useAddress, useChainId, useWeb3 } from "../../components/Web3Context";
-import Layout from "../../components/Layout";
-import StampHeader from "../../components/StampHeader";
-import { Tabs, TabList, TabPanels, Tab, TabPanel } from "../../components/tabs";
+} from "../../../components/utils";
+import {
+  useAddress,
+  useChainId,
+  useWeb3,
+} from "../../../components/Web3Context";
+import Layout from "../../../components/Layout";
+import StampHeader from "../../../components/StampHeader";
+import {
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+} from "../../../components/tabs";
 import { GetServerSideProps } from "next";
 import Papa from "papaparse";
-import { networkNameById } from "../../components/constants";
-import IpfsAsset from "../../components/IpfsAsset";
-import Loading from "../../components/Loading";
-import PageTitle from "../../components/PageTitle";
+import { networkNameById } from "../../../components/constants";
+import IpfsAsset from "../../../components/IpfsAsset";
+import Loading from "../../../components/Loading";
+import PageTitle from "../../../components/PageTitle";
 import {
   Pencil1Icon,
   Share1Icon,
@@ -40,7 +50,12 @@ import {
 } from "@radix-ui/react-icons";
 import type { ContractSendMethod } from "web3-eth-contract";
 import type { TransactionReceipt } from "web3-core";
-import { lookupAddress } from "../../components/utils";
+import { lookupAddress } from "../../../components/utils";
+import {
+  getStampContract as backendGetStampContract,
+  getWeb3,
+} from "../../../components/backend";
+import { getCustomization } from "../../api/customization";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -232,61 +247,10 @@ const StampCard = (props: IStampProps) => {
   const open = useCallback(() => setIsOpen(true), [setIsOpen]);
   const [fileLoading, setFileLoading] = useState(false);
   const chainId = useChainId();
-  useEffect(() => {
-    if (!stamp.name) {
-      Promise.all([
-        getStampContract({
-          web3,
-          address: stamp.address,
-          version: stamp.version,
-        }).then((contract) =>
-          (contract.methods.get() as ContractSendMethod).call()
-        ),
-        axios
-          .post("/api/customizations", {
-            addresses: [stamp.address],
-          })
-          .then(
-            (result: {
-              data: { customizations: Record<string, Record<string, string>> };
-            }) => {
-              return result.data["customizations"][stamp.address] || {};
-            }
-          ),
-        web3.eth.getBalance(stamp.address),
-      ]).then(([p, customization, balance]) => {
-        const metadataHash = bytes32ToIpfsHash(p[5]);
-        axios
-          .get(`https://ipfs.io/ipfs/${metadataHash}`)
-          .then((r) => {
-            return r.data;
-          })
-          .then(({ thumbnail, ...metadata }) =>
-            setStamp({
-              address: stamp.address,
-              name: p[0],
-              symbol: p[1],
-              supply: Number(p[2]),
-              mintIndex: Number(p[3]),
-              price: web3.utils.fromWei(p[4], "ether"),
-              metadataHash,
-              royalty: p[6] / 100,
-              version: stamp.version,
-              isPrivate: p[7],
-              paused: p[9] || false,
-              customization,
-              thumbnail,
-              metadata,
-              balance: web3.utils.fromWei(balance, "ether"),
-            })
-          );
-      });
-    }
-  }, [setStamp, stamp, web3]);
   const [toastMessage, setToastMessage] = useState("");
   return (
     <StampCardContainer>
-      <div>
+      <div style={{ marginBottom: 16 }}>
         <Tooltip content={"Share Stamp Ownership"}>
           <Button onClick={() => setShareIsOpen(true)} type="icon">
             <Share1Icon width={20} height={20} color={theme.colors.wheat} />
@@ -660,94 +624,79 @@ const StampCard = (props: IStampProps) => {
           </p>
         </Modal>
       </div>
-      {stamp.name ? (
-        <>
-          <StampName>
-            {stamp.name}
-            <br />({stamp.symbol})
-          </StampName>
-          <StampCardDivider />
-          <StampCardRow>
-            <span>BALANCE</span>
-            <StampCardValue>
-              {((Number(stamp.balance) * 39) / 40).toFixed(2)} ETH
-              <Tooltip content={"Withdraw"}>
-                <Button
-                  type={"icon"}
-                  disabled={stamp.balance === "0"}
-                  onClick={(e) => {
-                    getStampContract({
-                      web3,
-                      address: stamp.address,
-                      version: stamp.version,
-                    }).then((contract) =>
-                      (contract.methods.claimEth() as ContractSendMethod)
-                        .send({ from: address })
-                        .on("receipt", () => {
-                          setToastMessage(
-                            `Successfully Claimed ${stamp.balance} ETH!`
-                          );
-                          setStamp({
-                            ...stamp,
-                            balance: "0",
-                          });
-                        })
-                    );
-                    e.stopPropagation();
-                  }}
-                >
-                  <ExitIcon color={theme.colors.wheat} width={12} height={12} />
-                </Button>
-              </Tooltip>
-            </StampCardValue>
-          </StampCardRow>
-          <StampCardRow>
-            <span>MINTED</span>
-            <StampCardValue>
-              {stamp.mintIndex}
-              <Tooltip content={"Copy checkout link"}>
-                <Button
-                  onClick={(e) => {
-                    window.navigator.clipboard.writeText(
-                      `${window.location.origin}/checkout/${
-                        networkNameById[Number(networkId)]
-                      }/${stamp.address}`
-                    );
-                    setToastMessage("Copied checkout link!");
-                    e.stopPropagation();
-                  }}
-                  type="icon"
-                >
-                  <Link1Icon
-                    width={12}
-                    height={12}
-                    color={theme.colors.wheat}
-                  />
-                </Button>
-              </Tooltip>
-            </StampCardValue>
-          </StampCardRow>
-          <EditableStampCardRow
-            field={"supply"}
-            stamp={stamp}
-            setStamp={setStamp}
-          />
-          <EditableStampCardRow
-            field={"price"}
-            stamp={stamp}
-            setStamp={setStamp}
-            decorator={" ETH"}
-          />
-          <EditableStampCardRow
-            field={"royalty"}
-            stamp={stamp}
-            setStamp={setStamp}
-            decorator={"%"}
-          />
-        </>
-      ) : (
-        <Loading />
-      )}
+      <StampCardRow>
+        <span>BALANCE</span>
+        <StampCardValue>
+          {((Number(stamp.balance) * 39) / 40).toFixed(2)} ETH
+          <Tooltip content={"Withdraw"}>
+            <Button
+              type={"icon"}
+              disabled={stamp.balance === "0"}
+              onClick={(e) => {
+                getStampContract({
+                  web3,
+                  address: stamp.address,
+                  version: stamp.version,
+                }).then((contract) =>
+                  (contract.methods.claimEth() as ContractSendMethod)
+                    .send({ from: address })
+                    .on("receipt", () => {
+                      setToastMessage(
+                        `Successfully Claimed ${stamp.balance} ETH!`
+                      );
+                      setStamp({
+                        ...stamp,
+                        balance: "0",
+                      });
+                    })
+                );
+                e.stopPropagation();
+              }}
+            >
+              <ExitIcon color={theme.colors.wheat} width={12} height={12} />
+            </Button>
+          </Tooltip>
+        </StampCardValue>
+      </StampCardRow>
+      <StampCardRow>
+        <span>MINTED</span>
+        <StampCardValue>
+          {stamp.mintIndex}
+          <Tooltip content={"Copy checkout link"}>
+            <Button
+              onClick={(e) => {
+                window.navigator.clipboard.writeText(
+                  `${window.location.origin}/checkout/${
+                    networkNameById[Number(networkId)]
+                  }/${stamp.address}`
+                );
+                setToastMessage("Copied checkout link!");
+                e.stopPropagation();
+              }}
+              type="icon"
+            >
+              <Link1Icon width={12} height={12} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+        </StampCardValue>
+      </StampCardRow>
+      <EditableStampCardRow
+        field={"supply"}
+        stamp={stamp}
+        setStamp={setStamp}
+      />
+      <EditableStampCardRow
+        field={"price"}
+        stamp={stamp}
+        setStamp={setStamp}
+        decorator={" ETH"}
+      />
+      <EditableStampCardRow
+        field={"royalty"}
+        stamp={stamp}
+        setStamp={setStamp}
+        decorator={"%"}
+      />
       <Toast
         isOpen={!!toastMessage}
         onClose={() => setToastMessage("")}
@@ -756,10 +705,6 @@ const StampCard = (props: IStampProps) => {
       />
     </StampCardContainer>
   );
-};
-
-type PageProps = {
-  address: string;
 };
 
 const Container = styled("div");
@@ -782,31 +727,40 @@ const CreateStampHeader = styled("h1", {
   fontFamily: "$mono",
 });
 
-const stamp = {
-  name: "ACME Corporation",
-  symbol: "AC",
-  image: "/placeholder.png",
-  supply: 100,
-};
-
-const StampDetailPage = () => {
+const StampDetailPage = (props: IStampProps) => {
   const router = useRouter();
-  const { address } = router.query;
-  const chainId = useChainId();
-  const web3 = useWeb3();
+  const { tab, address, network } = router.query;
+  const base = router.pathname
+    .replace("[address]", address as string)
+    .replace("[network]", network as string);
 
   return (
-    <Layout title={<PageTitle>Stamps / Stamp Name</PageTitle>}>
-      <StampHeader {...stamp} />
+    <Layout title={<PageTitle>Stamps / {props.name}</PageTitle>}>
+      <StampHeader {...props} />
       <Container css={{ pt: "2rem" }}>
         <Tabs>
           <TabList>
-            <Tab active>Holders</Tab>
-            <Tab disabled>Transactions</Tab>
-            <Tab disabled>Settings</Tab>
+            <Tab
+              active={!tab || tab === "holders"}
+              onClick={() => router.push(`${base}?tab=holders`)}
+            >
+              Holders
+            </Tab>
+            <Tab
+              active={tab === "transactions"}
+              onClick={() => router.push(`${base}?tab=transactions`)}
+            >
+              Transactions
+            </Tab>
+            <Tab
+              active={tab === "settings"}
+              onClick={() => router.push(`${base}?tab=settings`)}
+            >
+              Settings
+            </Tab>
           </TabList>
           <TabPanels>
-            <TabPanel active>
+            <TabPanel active={!tab || tab === "holders"}>
               <CreateStampContainer>
                 <CreateStampHeader>Get started using stamps</CreateStampHeader>
                 <Button type="primary" tone="wheat">
@@ -814,11 +768,11 @@ const StampDetailPage = () => {
                 </Button>
               </CreateStampContainer>
             </TabPanel>
-            <TabPanel>
+            <TabPanel active={tab === "transactions"}>
               <h2>Panel 2</h2>
             </TabPanel>
-            <TabPanel>
-              <h2>Panel 3</h2>
+            <TabPanel active={tab === "settings"}>
+              <StampCard {...props} />
             </TabPanel>
           </TabPanels>
         </Tabs>
@@ -827,14 +781,63 @@ const StampDetailPage = () => {
   );
 };
 
+type QueryParams = {
+  address: string;
+  network: string;
+};
+
 export const getServerSideProps: GetServerSideProps<
-  PageProps,
-  { address: string }
+  IStampProps,
+  QueryParams
 > = (context) => {
-  // TODO: server side render a bunch of stamp data just like in the checkout page
-  return Promise.resolve({
-    props: context.params || { address: "" },
-  });
+  const { network = "", address = "" } = context.params || {};
+  const web3 = getWeb3(network);
+  const { tab = "" } = context.query; // TODO - SSR holders, transactions, or settings
+  return Promise.all([
+    backendGetStampContract({ address, web3, network }).then(
+      ({ contract, version }) =>
+        (contract.methods.get() as ContractSendMethod)
+          .call()
+          .then((data) => ({ data, version }))
+    ),
+    getCustomization(address),
+    web3.eth.getBalance(address).then((b) => web3.utils.fromWei(b, "ether")),
+  ])
+    .then(([{ data, version }, customization, balance]) => {
+      const metadataHash = bytes32ToIpfsHash(data[5]);
+      return axios
+        .get<{ thumbnail: string } & Record<string, string>>(
+          `https://ipfs.io/ipfs/${metadataHash}`
+        )
+        .then((r) => r.data)
+        .then(({ thumbnail, ...metadata }) => ({
+          props: {
+            address,
+            name: data[0],
+            symbol: data[1],
+            supply: data[2] - data[3],
+            price: web3.utils.fromWei(data[4], "ether"),
+            thumbnail,
+            network,
+            version,
+            limit: Number(data[8]),
+            customization,
+            balance,
+            metadataHash,
+            metadata,
+            mintIndex: Number(data[3]),
+            royalty: data[6] / 100,
+            isPrivate: data[7],
+            paused: data[9] || false,
+          },
+        }));
+    })
+    .catch((e) => {
+      console.error(e);
+      return {
+        notFound: true,
+      };
+    });
 };
 
 export default StampDetailPage;
