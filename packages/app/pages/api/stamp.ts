@@ -9,10 +9,7 @@ import {
   where,
 } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
-import {
-  firebaseConfig,
-  networkNameById,
-} from "../../components/constants";
+import { firebaseConfig, networkNameById } from "../../components/constants";
 import { bytes32ToIpfsHash } from "../../components/utils";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
@@ -47,7 +44,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       } = req.query as Record<string, string>;
       const adminCol = collection(db, "admin_stamps");
       return getDocs(
-        query(adminCol, where("contract", "==", contractAddress.toLowerCase())),
+        query(adminCol, where("contract", "==", contractAddress.toLowerCase()))
       ).then((data) => {
         if (!data.docs.length) {
           return res
@@ -57,12 +54,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         const doc = data.docs[0].data();
         const networkId = doc["chain"];
         const networkName = networkNameById[networkId];
-<<<<<<< HEAD
         return getStampContract({
           network: networkName,
           address: contractAddress,
         })
-          .then(({contract, version}) => {
+          .then(({ contract, version }) => {
             return Promise.all([
               (contract.methods.name() as ContractSendMethod)
                 .call()
@@ -94,56 +90,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                 })),
             ]);
           })
-=======
-        return getVersionByAddress(contractAddress, networkId)
-          .then((version) =>
-            getAbi("stamp", version)
-              .then((stampJson) => {
-                const web3 = getWeb3(networkName);
-                const contract = new web3.eth.Contract(
-                  getAbiFromJson(stampJson),
-                  contractAddress,
-                );
-                return Promise.all([
-                  (contract.methods.name() as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get name: ${e.message}`,
-                    })),
-                  (contract.methods.symbol() as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get symbol: ${e.message}`,
-                    })),
-                  (contract.methods.metadataHash() as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get metadata hash: ${e.message}`,
-                    })),
-                  (contract.methods.tokenURI(1) as ContractSendMethod)
-                    .call()
-                    .then((s) => ({ success: true, value: s as string }))
-                    .catch((e) => ({
-                      success: false,
-                      value: `Failed to get tokenUri: ${e.message}`,
-                    })),
-                ]);
-              })
-              .catch((e) =>
-                res
-                  .status(500)
-                  .end(
-                    `Failed to get abi for version ${version}: ${e.message}`,
-                  ),
-              ),
-          )
->>>>>>> 9e20eb2 (finish static version of stamp detail page)
           .then((args) => {
             if (!args) return;
             const failures = args.filter((s) => !s.success);
@@ -153,7 +99,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                 .end(
                   `Querying Contract failed. Errors:\n${failures
                     .map((s) => ` - ${s.value}`)
-                    .join("\n")}`,
+                    .join("\n")}`
                 );
             return axios
               .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[2].value)}`)
@@ -165,7 +111,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                   image: `https://ipfs.io/ipfs/${thumbnail}`,
                   name: args[0].value,
                   attributes: Object.entries(fields).map(
-                    ([trait_type, value]) => ({ trait_type, value }),
+                    ([trait_type, value]) => ({ trait_type, value })
                   ),
                 };
                 res.status(200).send(nftStandard);
@@ -174,16 +120,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                 res
                   .status(500)
                   .end(
-                    `Failed to get metadata ${args?.[2]?.value}: ${e.message}`,
-                  ),
+                    `Failed to get metadata ${args?.[2]?.value}: ${e.message}`
+                  )
               );
           })
           .catch((e) =>
             res
               .status(500)
               .end(
-                `Failed to get versions for stamp ${contractAddress} in network ${networkName}: ${e.message}`,
-              ),
+                `Failed to get versions for stamp ${contractAddress} in network ${networkName}: ${e.message}`
+              )
           );
       });
 
