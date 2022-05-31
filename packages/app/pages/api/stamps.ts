@@ -10,44 +10,25 @@ import {
 } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { firebaseConfig } from "../../components/constants";
+import { getStampOwners } from "../../components/firebase";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const urlCol = collection(db, "stamps");
   switch (req.method) {
     case "GET":
-      return getDocs(
-        query(
-          urlCol,
-          where("contract", "==", (req.query.contract as string).toLowerCase()),
-          where("chain", "==", Number(req.query.chain))
-        )
-      )
+      return getStampOwners({
+        contract: req.query.contract as string,
+        chain: Number(req.query.chain),
+      })
         .then((stamps) => {
-          res.status(200).json({
-            users: stamps.docs
-              .map((doc) => {
-                const docData = doc.data();
-                return {
-                  address: docData["address"] as string,
-                  token: docData["token"] as number,
-                };
-              })
-              .reduce((p, c) => {
-                if (p[c.address]) {
-                  p[c.address].push(c.token);
-                } else {
-                  p[c.address] = [c.token];
-                }
-                return p;
-              }, {} as Record<string, number[]>),
-          });
+          res.status(200).json(stamps);
         })
         .catch((e) => {
           res.status(500).json({ message: e.message });
         });
     case "POST":
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const urlCol = collection(db, "stamps");
       const { tokens, contract, chain } = req.body;
       return Promise.all(
         (tokens as { tokenId: string; address: string }[]).map((token) =>
@@ -66,6 +47,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           console.error(e);
           res.status(500).json({ message: e.message });
         });
+
     default:
       res.setHeader("Allow", ["GET"]);
       res.status(405).end(`Method ${req.method} Not Allowed`);

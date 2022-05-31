@@ -9,10 +9,7 @@ import {
   where,
 } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
-import {
-  firebaseConfig,
-  networkNameById,
-} from "../../components/constants";
+import { firebaseConfig, networkNameById } from "../../components/constants";
 import { bytes32ToIpfsHash } from "../../components/utils";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
@@ -21,6 +18,7 @@ import { getStampContract } from "../../components/backend";
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
   switch (req.method) {
     case "POST":
       const { address, contract, chain, token } = req.body;
@@ -38,6 +36,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         .catch((e) => {
           res.status(500).json({ message: e.message });
         });
+
     case "GET":
       const {
         address: contractAddress,
@@ -59,7 +58,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           network: networkName,
           address: contractAddress,
         })
-          .then(({contract, version}) => {
+          .then(({ contract, version }) => {
             return Promise.all([
               (contract.methods.name() as ContractSendMethod)
                 .call()

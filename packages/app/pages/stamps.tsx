@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ContractSendMethod } from "web3-eth-contract";
+import type { ContractSendMethod } from "web3-eth-contract";
 import {
   Modal,
   Input,
@@ -101,6 +101,7 @@ interface IStampProps {
 }
 
 const StampCard = (stamp: IStampProps) => {
+  const chainId = useChainId();
   return (
     <StampCardContainer>
       <CardImageContainer>
@@ -117,7 +118,7 @@ const StampCard = (stamp: IStampProps) => {
       </CardImageContainer>
       <StampCardDivider />
       <StampName>
-        <Link href={`/stamps/${stamp.address}`}>
+        <Link href={`/stamps/${networkNameById[chainId]}/${stamp.address}`}>
           {stamp.name}
         </Link>
         <br />({stamp.symbol})
@@ -330,10 +331,10 @@ const CreateStampModal = () => {
     return ipfsAdd(
       JSON.stringify({
         ...Object.fromEntries(
-          additionalFields.map(({ key, value }) => [key, value])
+          additionalFields.map(({ key, value }) => [key, value]),
         ),
         ...(cid ? { thumbnail: cid } : {}),
-      })
+      }),
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price || "0", "ether");
       const royalty = Number(royaltyPcnt || "0") * 100;
@@ -369,7 +370,7 @@ const CreateStampModal = () => {
                 files: [cid, metadataHash],
               })
               .then(() => {
-                router.push(`/stamps/${contractAddress}`);
+                router.push(`/stamps/${networkNameById[chainId]}/${contractAddress}`);
                 onClose();
               });
           });
@@ -421,7 +422,7 @@ const CreateStampModal = () => {
         {children}
       </>
     ),
-    [setStage]
+    [setStage],
   );
   const stageTitles = [
     "Enter Stamp Details",
@@ -696,7 +697,7 @@ export const getServerSideProps: GetServerSideProps<
                               )
                             )
                             .then(
-                              (r) => `https://ipfs.io/ipfs/${r.data.thumbnail}`
+                              (r) => r.data.thumbnail
                             ),
                         ])
                       )
