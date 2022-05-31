@@ -34,7 +34,10 @@ import {
 } from "../../../components/tabs";
 import { GetServerSideProps } from "next";
 import Papa from "papaparse";
-import { networkNameById } from "../../../components/constants";
+import {
+  networkIdByName,
+  networkNameById,
+} from "../../../components/constants";
 import IpfsAsset from "../../../components/IpfsAsset";
 import Loading from "../../../components/Loading";
 import PageTitle from "../../../components/PageTitle";
@@ -56,6 +59,7 @@ import {
   getWeb3,
 } from "../../../components/backend";
 import { getCustomization } from "../../api/customization";
+import { getStampOwners } from "../../../components/firebase";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -227,10 +231,13 @@ interface IStampProps {
   isPrivate: boolean;
   version: string;
   paused: boolean;
-  customization: Record<string, string>;
-  balance: string;
   thumbnail: string;
   metadata: Record<string, string>;
+  // based on query params - should prob separate into individual routes
+  users?: Record<string, number[]>;
+  transactions?: unknown[];
+  balance?: string;
+  customization?: Record<string, string>;
 }
 
 const StampCard = (props: IStampProps) => {
@@ -286,14 +293,14 @@ const StampCard = (props: IStampProps) => {
           setIsOpen={setIsOpen}
           title="Customize Checkout"
           onConfirm={() => {
-            let upsertData: Record<string, string> = {
-              redirect_url: stamp.customization.url,
+            let upsertData: Record<string, string | undefined> = {
+              redirect_url: stamp.customization?.url,
               contractAddr: stamp.address,
-              brand_color: stamp.customization.brandColor,
-              accent_color: stamp.customization.accColor,
-              text_color: stamp.customization.textColor,
-              button_txt: stamp.customization.buttonTxt,
-              logo_cid: stamp.customization.logoCid,
+              brand_color: stamp.customization?.brandColor,
+              accent_color: stamp.customization?.accColor,
+              text_color: stamp.customization?.textColor,
+              button_txt: stamp.customization?.buttonTxt,
+              logo_cid: stamp.customization?.logoCid,
             };
             return axios
               .post("/api/updateCustomization", {
@@ -313,7 +320,7 @@ const StampCard = (props: IStampProps) => {
             <ModalLabel>{`${stamp.name} (${stamp.symbol})`}</ModalLabel>
             <ModalInput
               label={"Redirect URL"}
-              value={stamp.customization.url}
+              value={stamp.customization?.url}
               onChange={(e) =>
                 setStamp({
                   ...stamp,
@@ -330,7 +337,7 @@ const StampCard = (props: IStampProps) => {
                 type="color"
                 id="bcolor"
                 name="bcolor"
-                value={stamp.customization.brandColor || "#fdf3e7"}
+                value={stamp.customization?.brandColor || "#fdf3e7"}
                 onChange={(e) =>
                   setStamp({
                     ...stamp,
@@ -348,7 +355,7 @@ const StampCard = (props: IStampProps) => {
                 type="color"
                 id="acolor"
                 name="acolor"
-                value={stamp.customization.accColor || "#324841"}
+                value={stamp.customization?.accColor || "#324841"}
                 onChange={(e) =>
                   setStamp({
                     ...stamp,
@@ -366,7 +373,7 @@ const StampCard = (props: IStampProps) => {
                 type="color"
                 id="textColor"
                 name="textColor"
-                value={stamp.customization.textColor || "#ffffff"}
+                value={stamp.customization?.textColor || "#ffffff"}
                 onChange={(e) =>
                   setStamp({
                     ...stamp,
@@ -380,7 +387,7 @@ const StampCard = (props: IStampProps) => {
             </ModalInputBox>
             <ModalInput
               label={"Button Text"}
-              value={stamp.customization.buttonTxt}
+              value={stamp.customization?.buttonTxt}
               onChange={(e) =>
                 setStamp({
                   ...stamp,
@@ -394,7 +401,7 @@ const StampCard = (props: IStampProps) => {
             <ModalInputBox>
               <Label
                 label={
-                  stamp.customization.logoCid ? "Change Logo" : "Upload Logo"
+                  stamp.customization?.logoCid ? "Change Logo" : "Upload Logo"
                 }
               >
                 <input
@@ -741,8 +748,8 @@ const StampDetailPage = (props: IStampProps) => {
         <Tabs>
           <TabList>
             <Tab
-              active={!tab || tab === "holders"}
-              onClick={() => router.push(`${base}?tab=holders`)}
+              active={!tab || tab === "owners"}
+              onClick={() => router.push(`${base}?tab=owners`)}
             >
               Holders
             </Tab>
@@ -760,13 +767,39 @@ const StampDetailPage = (props: IStampProps) => {
             </Tab>
           </TabList>
           <TabPanels>
-            <TabPanel active={!tab || tab === "holders"}>
-              <CreateStampContainer>
-                <CreateStampHeader>Get started using stamps</CreateStampHeader>
-                <Button type="primary" tone="wheat">
-                  Stamp a Passport
-                </Button>
-              </CreateStampContainer>
+            <TabPanel active={!tab || tab === "owners"}>
+              {Object.keys(props.users || {}).length ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>NAME</th>
+                      <th>ADDRESS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(props.users || {})
+                      .flatMap(([addr, ids]) => ids.map((id) => [id, addr] as const))
+                      .sort((a, b) => a[0] - b[0])
+                      .map((a) => (
+                        <tr key={a[0]}>
+                          <td>{a[0]}</td>
+                          <td>{a[1]}</td>
+                          <td>{a[1]}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              ) : (
+                <CreateStampContainer>
+                  <CreateStampHeader>
+                    Get started using stamps
+                  </CreateStampHeader>
+                  <Button type="primary" tone="wheat" disabled>
+                    Stamp a Passport
+                  </Button>
+                </CreateStampContainer>
+              )}
             </TabPanel>
             <TabPanel active={tab === "transactions"}>
               <h2>Panel 2</h2>
@@ -792,7 +825,7 @@ export const getServerSideProps: GetServerSideProps<
 > = (context) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
-  const { tab = "" } = context.query; // TODO - SSR holders, transactions, or settings
+  const { tab = "" } = context.query; // TODO - SSR owners, transactions, or settings
   return Promise.all([
     backendGetStampContract({ address, web3, network }).then(
       ({ contract, version }) =>
@@ -800,10 +833,18 @@ export const getServerSideProps: GetServerSideProps<
           .call()
           .then((data) => ({ data, version }))
     ),
-    getCustomization(address),
-    web3.eth.getBalance(address).then((b) => web3.utils.fromWei(b, "ether")),
+    tab === "settings"
+      ? Promise.all([
+          getCustomization(address).then(),
+          web3.eth
+            .getBalance(address)
+            .then((b) => web3.utils.fromWei(b, "ether")),
+        ]).then(([customization, balance]) => ({ customization, balance }))
+      : tab === "transactions"
+      ? { transactions: [] }
+      : getStampOwners({ contract: address, chain: networkIdByName[network] }),
   ])
-    .then(([{ data, version }, customization, balance]) => {
+    .then(([{ data, version }, rest]) => {
       const metadataHash = bytes32ToIpfsHash(data[5]);
       return axios
         .get<{ thumbnail: string } & Record<string, string>>(
@@ -821,14 +862,13 @@ export const getServerSideProps: GetServerSideProps<
             network,
             version,
             limit: Number(data[8]),
-            customization,
-            balance,
             metadataHash,
             metadata,
             mintIndex: Number(data[3]),
             royalty: data[6] / 100,
             isPrivate: data[7],
             paused: data[9] || false,
+            ...rest,
           },
         }));
     })

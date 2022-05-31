@@ -208,3 +208,39 @@ export const getCommunitiesByUser = async (userId: string) => {
   ];
   return [dummy, dummy].flat();
 };
+
+export const getStampOwners = ({
+  contract,
+  chain,
+}: {
+  contract: string;
+  chain: number;
+}) => {
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const urlCol = collection(db, "stamps");
+  return getDocs(
+    query(
+      urlCol,
+      where("contract", "==", contract.toLowerCase()),
+      where("chain", "==", chain)
+    )
+  ).then((stamps) => ({
+    users: stamps.docs
+      .map((doc) => {
+        const docData = doc.data();
+        return {
+          address: docData["address"] as string,
+          token: docData["token"] as number,
+        };
+      })
+      .reduce((p, c) => {
+        if (p[c.address]) {
+          p[c.address].push(c.token);
+        } else {
+          p[c.address] = [c.token];
+        }
+        return p;
+      }, {} as Record<string, number[]>),
+  }));
+};
