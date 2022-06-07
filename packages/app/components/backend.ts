@@ -13,8 +13,8 @@ export const getWeb3 = (networkName: string) =>
       : `https://${networkName}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
   );
 
-export const addPins = (files: string[]) => {
-  const client = create({
+const getIpfsClient = () =>
+  create({
     host: "ipfs.infura.io",
     port: 5001,
     protocol: "https",
@@ -24,6 +24,9 @@ export const addPins = (files: string[]) => {
       ).toString("base64")}`,
     },
   });
+
+export const addPins = (files: string[]) => {
+  const client = getIpfsClient();
   const addPin = (hash: string) => {
     return client.pin.add(hash).catch((e) => {
       console.error(`Failed to pin hash ${hash}:`);
@@ -32,6 +35,16 @@ export const addPins = (files: string[]) => {
     });
   };
   return Promise.all(files.map(addPin));
+};
+
+export const lsPins = async (paths: string[]) => {
+  const client = getIpfsClient();
+  const iter = client.pin.ls({ paths });
+  const results = [];
+  for await (const res of iter) {
+    results.push(res);
+  }
+  return results;
 };
 
 export const getStampContract = ({

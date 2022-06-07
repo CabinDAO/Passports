@@ -38,8 +38,6 @@ import {
   networkIdByName,
   networkNameById,
 } from "../../../components/constants";
-import IpfsAsset from "../../../components/IpfsAsset";
-import Loading from "../../../components/Loading";
 import PageTitle from "../../../components/PageTitle";
 import {
   Pencil1Icon,
@@ -53,13 +51,14 @@ import {
 } from "@radix-ui/react-icons";
 import type { ContractSendMethod } from "web3-eth-contract";
 import type { TransactionReceipt } from "web3-core";
-import { lookupAddress } from "../../../components/utils";
+import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   getStampContract as backendGetStampContract,
   getWeb3,
 } from "../../../components/backend";
 import { getCustomization } from "../../api/customization";
 import { getStampOwners } from "../../../components/firebase";
+import Link from "next/link";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -72,22 +71,6 @@ const StampCardContainer = styled("div", {
   verticalAlign: "top",
   border: "1px solid $sprout",
   borderRadius: "20px",
-});
-
-const StampName = styled("h1", {
-  fontWeight: 600,
-  fontFamily: "$mono",
-  textTransform: "uppercase",
-  lineHeight: "23px",
-  fontSize: "18px",
-  margin: 0,
-});
-
-const StampCardDivider = styled("hr", {
-  background: "$sprout",
-  margin: "16px 0",
-  height: "1px",
-  border: 0,
 });
 
 const StampCardRow = styled("div", {
@@ -137,19 +120,6 @@ const ModalInputLabel = styled(`label`, {
   fontSize: `var(--fontSizes-sm)`,
   textTransform: "uppercase",
   marginRight: 10,
-});
-
-const CardImageContainer = styled("div", {
-  width: "100%",
-  height: "160px",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom: "40px",
-  "> span": {
-    border: "1px solid $forest !important",
-    borderRadius: "10px",
-  },
 });
 
 const EditableStampCardRow = ({
@@ -234,7 +204,7 @@ interface IStampProps {
   thumbnail: string;
   metadata: Record<string, string>;
   // based on query params - should prob separate into individual routes
-  users?: Record<string, number[]>;
+  users?: Record<string, { tokens: number[]; name: string }>;
   transactions?: unknown[];
   balance?: string;
   customization?: Record<string, string>;
@@ -734,6 +704,28 @@ const CreateStampHeader = styled("h1", {
   fontFamily: "$mono",
 });
 
+const OwnerTable = styled("table", {
+  textAlign: "left",
+  fontWeight: 600,
+  color: "$forest",
+  textTransform: "capitalize",
+  fontSize: "14px",
+  fontFamily: "$mono",
+  borderCollapse: "separate",
+});
+
+const OwnerTableRow = styled("tr", {
+  borderBottom: "1px solid $forest",
+});
+
+const OwnerTableCell = styled("td", {
+  padding: "4px 12px",
+});
+
+const OwnerTableHeaderCell = styled("td", {
+  padding: "4px 12px",
+});
+
 const StampDetailPage = (props: IStampProps) => {
   const router = useRouter();
   const { tab, address, network } = router.query;
@@ -742,7 +734,13 @@ const StampDetailPage = (props: IStampProps) => {
     .replace("[network]", network as string);
 
   return (
-    <Layout title={<PageTitle>Stamps / {props.name}</PageTitle>}>
+    <Layout
+      title={
+        <PageTitle>
+          <Link href={"/stamps"}>Stamps</Link> / {props.name}
+        </PageTitle>
+      }
+    >
       <StampHeader {...props} />
       <Container css={{ pt: "2rem" }}>
         <Tabs>
@@ -756,6 +754,7 @@ const StampDetailPage = (props: IStampProps) => {
             <Tab
               active={tab === "transactions"}
               onClick={() => router.push(`${base}?tab=transactions`)}
+              disabled
             >
               Transactions
             </Tab>
@@ -769,27 +768,31 @@ const StampDetailPage = (props: IStampProps) => {
           <TabPanels>
             <TabPanel active={!tab || tab === "owners"}>
               {Object.keys(props.users || {}).length ? (
-                <table>
+                <OwnerTable>
                   <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>NAME</th>
-                      <th>ADDRESS</th>
-                    </tr>
+                    <OwnerTableRow>
+                      <OwnerTableHeaderCell css={{ width: "64px" }}>
+                        ID
+                      </OwnerTableHeaderCell>
+                      <OwnerTableHeaderCell>NAME</OwnerTableHeaderCell>
+                      <OwnerTableHeaderCell>ADDRESS</OwnerTableHeaderCell>
+                    </OwnerTableRow>
                   </thead>
                   <tbody>
                     {Object.entries(props.users || {})
-                      .flatMap(([addr, ids]) => ids.map((id) => [id, addr] as const))
+                      .flatMap(([addr, { tokens, name }]) =>
+                        tokens.map((id) => [id, name, addr] as const)
+                      )
                       .sort((a, b) => a[0] - b[0])
                       .map((a) => (
-                        <tr key={a[0]}>
-                          <td>{a[0]}</td>
-                          <td>{a[1]}</td>
-                          <td>{a[1]}</td>
-                        </tr>
+                        <OwnerTableRow key={a[0]}>
+                          <OwnerTableCell>{a[0]}</OwnerTableCell>
+                          <OwnerTableCell>{a[1]}</OwnerTableCell>
+                          <OwnerTableCell>{a[2]}</OwnerTableCell>
+                        </OwnerTableRow>
                       ))}
                   </tbody>
-                </table>
+                </OwnerTable>
               ) : (
                 <CreateStampContainer>
                   <CreateStampHeader>
@@ -806,6 +809,16 @@ const StampDetailPage = (props: IStampProps) => {
             </TabPanel>
             <TabPanel active={tab === "settings"}>
               <StampCard {...props} />
+              <Button
+                type={"icon"}
+                onClick={() =>
+                  axios.put(`/api/stamp/refresh`, {
+                    paths: [props.metadataHash, props.thumbnail],
+                  })
+                }
+              >
+                <ReloadIcon />
+              </Button>
             </TabPanel>
           </TabPanels>
         </Tabs>
@@ -825,7 +838,7 @@ export const getServerSideProps: GetServerSideProps<
 > = (context) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
-  const { tab = "" } = context.query; // TODO - SSR owners, transactions, or settings
+  const { tab = "" } = context.query;
   return Promise.all([
     backendGetStampContract({ address, web3, network }).then(
       ({ contract, version }) =>
@@ -840,7 +853,7 @@ export const getServerSideProps: GetServerSideProps<
             .getBalance(address)
             .then((b) => web3.utils.fromWei(b, "ether")),
         ]).then(([customization, balance]) => ({ customization, balance }))
-      : tab === "transactions"
+      : tab === "transactions" // TODO - SSR owners, transactions, or settings
       ? { transactions: [] }
       : getStampOwners({ contract: address, chain: networkIdByName[network] }),
   ])

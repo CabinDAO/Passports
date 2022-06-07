@@ -12,6 +12,7 @@ import { firebaseConfig, networkNameById } from "./constants";
 import type { ContractSendMethod } from "web3-eth-contract";
 import { bytes32ToIpfsHash } from "./utils";
 import axios from "axios";
+import { users } from "@clerk/clerk-sdk-node";
 
 export const getVersionByAddress = (address: string, chain: number) => {
   const app = initializeApp(firebaseConfig);
@@ -225,22 +226,49 @@ export const getStampOwners = ({
       where("contract", "==", contract.toLowerCase()),
       where("chain", "==", chain)
     )
-  ).then((stamps) => ({
-    users: stamps.docs
-      .map((doc) => {
-        const docData = doc.data();
-        return {
-          address: docData["address"] as string,
-          token: docData["token"] as number,
-        };
-      })
-      .reduce((p, c) => {
-        if (p[c.address]) {
-          p[c.address].push(c.token);
-        } else {
-          p[c.address] = [c.token];
-        }
-        return p;
-      }, {} as Record<string, number[]>),
-  }));
+  )
+    .then((stamps) =>
+      stamps.docs
+        .map((doc) => {
+          const docData = doc.data();
+          return {
+            address: docData["address"] as string,
+            token: docData["token"] as number,
+          };
+        })
+        .reduce((p, c) => {
+          if (p[c.address]) {
+            p[c.address].push(c.token);
+          } else {
+            p[c.address] = [c.token];
+          }
+          return p;
+        }, {} as Record<string, number[]>)
+    )
+    .then((addresses) =>
+      users
+        .getUserList({ web3Wallet: Object.keys(addresses) })
+        .then((userList) => {
+          const userByAddress = Object.fromEntries(
+            userList.flatMap((u) =>
+              u.web3Wallets.map((w) => [
+                w.web3Wallet || "",
+                u.firstName
+                  ? u.lastName
+                    ? `${u.firstName} ${u.lastName}`
+                    : u.firstName
+                  : "Anonymous User",
+              ])
+            )
+          );
+          return {
+            users: Object.fromEntries(
+              Object.entries(addresses).map(([addr, tokens]) => [
+                addr,
+                { tokens, name: userByAddress[addr] || "Anonymous User" },
+              ])
+            ),
+          };
+        })
+    );
 };

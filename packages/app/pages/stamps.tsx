@@ -331,10 +331,10 @@ const CreateStampModal = () => {
     return ipfsAdd(
       JSON.stringify({
         ...Object.fromEntries(
-          additionalFields.map(({ key, value }) => [key, value]),
+          additionalFields.map(({ key, value }) => [key, value])
         ),
         ...(cid ? { thumbnail: cid } : {}),
-      }),
+      })
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price || "0", "ether");
       const royalty = Number(royaltyPcnt || "0") * 100;
@@ -370,7 +370,9 @@ const CreateStampModal = () => {
                 files: [cid, metadataHash],
               })
               .then(() => {
-                router.push(`/stamps/${networkNameById[chainId]}/${contractAddress}`);
+                router.push(
+                  `/stamps/${networkNameById[chainId]}/${contractAddress}`
+                );
                 onClose();
               });
           });
@@ -422,7 +424,7 @@ const CreateStampModal = () => {
         {children}
       </>
     ),
-    [setStage],
+    [setStage]
   );
   const stageTitles = [
     "Enter Stamp Details",
@@ -696,9 +698,8 @@ export const getServerSideProps: GetServerSideProps<
                                 `https://ipfs.io/ipfs/${hash}`
                               )
                             )
-                            .then(
-                              (r) => r.data.thumbnail
-                            ),
+                            .then((r) => r.data.thumbnail)
+                            .catch(() => ""),
                         ])
                       )
                       .then(([name, symbol, thumbnail]) => ({

@@ -26,48 +26,51 @@ const IpfsAsset = ({
   const [imageState, setImageStats] = useState({ width, height });
   useEffect(() => {
     if (!assetData) {
-      axios.get(src, { responseType: "blob" }).then((r) => {
-        const contentType =
-          r.headers["content-type"] || r.headers["Content-Type"];
-        const assetSrc = URL.createObjectURL(r.data);
-        if (contentType.startsWith("image")) {
-          const parent = (document.getElementById(id) as HTMLDivElement)
-            ?.parentElement;
-          if (
-            imageState.height === "100%" &&
-            imageState.width === "100%" &&
-            parent
-          ) {
-            const dummyImage = new Image();
-            dummyImage.src = assetSrc;
-            dummyImage.style.visibility = "hidden";
-            dummyImage.onload = () => {
-              document.body.appendChild(dummyImage);
-              const { clientWidth, clientHeight } = dummyImage;
-              dummyImage.remove();
-              const {
-                clientWidth: containerWidth,
-                clientHeight: containerHeight,
-              } = parent;
-              const ratio = Math.min(
-                containerWidth / clientWidth,
-                containerHeight / clientHeight
-              );
+      axios
+        .get(src, { responseType: "blob" })
+        .then((r) => {
+          const contentType =
+            r.headers["content-type"] || r.headers["Content-Type"];
+          const assetSrc = URL.createObjectURL(r.data);
+          if (contentType.startsWith("image")) {
+            const parent = (document.getElementById(id) as HTMLDivElement)
+              ?.parentElement;
+            if (
+              imageState.height === "100%" &&
+              imageState.width === "100%" &&
+              parent
+            ) {
+              const dummyImage = new Image();
+              dummyImage.src = assetSrc;
+              dummyImage.style.visibility = "hidden";
+              dummyImage.onload = () => {
+                document.body.appendChild(dummyImage);
+                const { clientWidth, clientHeight } = dummyImage;
+                dummyImage.remove();
+                const {
+                  clientWidth: containerWidth,
+                  clientHeight: containerHeight,
+                } = parent;
+                const ratio = Math.min(
+                  containerWidth / clientWidth,
+                  containerHeight / clientHeight
+                );
+                setAssetData({ src: assetSrc, type: "image" });
+                setImageStats({
+                  width: clientWidth * ratio,
+                  height: clientHeight * ratio,
+                });
+              };
+            } else {
               setAssetData({ src: assetSrc, type: "image" });
-              setImageStats({
-                width: clientWidth * ratio,
-                height: clientHeight * ratio,
-              });
-            };
+            }
+          } else if (contentType.startsWith("video")) {
+            setAssetData({ src: assetSrc, type: "video" });
           } else {
-            setAssetData({ src: assetSrc, type: "image" });
+            setAssetData({ src: assetSrc, type: "unknown" });
           }
-        } else if (contentType.startsWith("video")) {
-          setAssetData({ src: assetSrc, type: "video" });
-        } else {
-          setAssetData({ src: assetSrc, type: "unknown" });
-        }
-      });
+        })
+        .catch((e) => console.error(e));
     }
   }, [
     id,
