@@ -2,6 +2,7 @@ import React from "react";
 import { styled, Button, Text } from "@cabindao/topo";
 import Image from "next/image";
 import IpfsAsset from "./IpfsAsset";
+import StampAPassport from "./StampAPassport";
 
 const CardTitle = styled("h1", {
   color: "$sand",
@@ -48,9 +49,7 @@ const StampHeader = ({
           </CardTitle>
           <Separator />
           <Text css={{ color: "$sand", mb: "2rem" }}>Supply: {supply}</Text>
-          <Button type="primary" tone="wheat">
-            Stamp a Passport
-          </Button>
+          <StampAPassport />
         </Container>
         <Container>
           <IpfsAsset cid={thumbnail} width={"100%"} height={"100%"} />

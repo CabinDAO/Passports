@@ -59,6 +59,7 @@ import {
 import { getCustomization } from "../../api/customization";
 import { getStampOwners } from "../../../components/firebase";
 import Link from "next/link";
+import StampAPassport from "../../../components/StampAPassport";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -798,9 +799,7 @@ const StampDetailPage = (props: IStampProps) => {
                   <CreateStampHeader>
                     Get started using stamps
                   </CreateStampHeader>
-                  <Button type="primary" tone="wheat" disabled>
-                    Stamp a Passport
-                  </Button>
+                  <StampAPassport />
                 </CreateStampContainer>
               )}
             </TabPanel>
