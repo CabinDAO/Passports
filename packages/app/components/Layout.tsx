@@ -92,11 +92,9 @@ const SignedInIndicator = () => {
     <span>
       <NetworkIndicator chainId={chainId} />
       <AddressLabel>
-        {displayAddress.endsWith(".eth")
+        {displayAddress.endsWith(".eth") || displayAddress.length <= 12
           ? displayAddress
-          : displayAddress
-          ? `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`
-          : ""}
+          : `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`}
       </AddressLabel>
       <Button onClick={disconnectWallet} tone="forest">
         Disconnect wallet

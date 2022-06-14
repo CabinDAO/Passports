@@ -1,11 +1,11 @@
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import Head from "next/head";
 import Link from "next/link";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { styled } from "@cabindao/topo";
 import { useAddress } from "./Web3Context";
 import Layout from "./Layout";
+import Loading from "./Loading";
 
 const DRAWER_WIDTH = 200;
 
@@ -54,12 +54,27 @@ const useTab = () => {
   );
 };
 
+const LinkContent = styled("span", {
+  display: "inline-flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+});
+
 const Tab: React.FC<{ to: string; disabled: boolean }> = ({ to, disabled }) => {
   const tab = useTab();
+  const [loading, setLoading] = useState(false);
   return (
-    <TabContainer active={tab === to} disabled={disabled}>
+    <TabContainer
+      active={tab === to}
+      disabled={disabled}
+      onClick={() => setLoading(true)}
+    >
       <Link href={`/${to}`} passHref>
-        <span onClick={(e) => disabled && e.preventDefault()}>{to}</span>
+        <LinkContent onClick={(e) => disabled && e.preventDefault()}>
+          {to}
+          {loading && <Loading size={12} thickness={2}/>}
+        </LinkContent>
       </Link>
     </TabContainer>
   );
@@ -105,9 +120,7 @@ const PageMain = styled("main", {
   marginLeft: DRAWER_WIDTH,
 });
 
-const CommunityLayoutContent: React.FC<{}> = ({
-  children,
-}) => {
+const CommunityLayoutContent: React.FC<{}> = ({ children }) => {
   const address = useAddress();
   return (
     <>

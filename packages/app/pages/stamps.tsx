@@ -674,8 +674,9 @@ export const getServerSideProps: GetServerSideProps<
                 chainId: user.unsafeMetadata.chainId as number,
               }).then(({ contracts }) =>
                 Promise.all(
-                  contracts.map((c) =>
-                    getStampContract({
+                  contracts.map((c) => {
+                    const start = new Date();
+                    return getStampContract({
                       web3,
                       network,
                       address: c.address,
@@ -702,14 +703,22 @@ export const getServerSideProps: GetServerSideProps<
                             .catch(() => ""),
                         ])
                       )
-                      .then(([name, symbol, thumbnail]) => ({
-                        name,
-                        symbol,
-                        thumbnail,
-                        version: c.version,
-                        address: c.address,
-                      }))
-                  )
+                      .then(([name, symbol, thumbnail]) => {
+                        console.log(
+                          "took",
+                          new Date().valueOf() - start.valueOf(),
+                          "to load",
+                          name
+                        );
+                        return {
+                          name,
+                          symbol,
+                          thumbnail,
+                          version: c.version,
+                          address: c.address,
+                        };
+                      });
+                  })
                 )
               )
             )

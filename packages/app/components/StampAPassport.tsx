@@ -1,4 +1,4 @@
-import { Button, Input, Modal, styled } from "@cabindao/topo";
+import { Button, Checkbox, Input, Label, Modal, styled } from "@cabindao/topo";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { CrossCircledIcon } from "@radix-ui/react-icons";
 
@@ -39,6 +39,7 @@ const Body = styled("p", {
 
 const UserContainer = styled("ol", {
   marginTop: "32px",
+  paddingLeft: "20px",
   "& > li > div": {
     display: "flex",
     justifyContent: "space-between",
@@ -83,6 +84,11 @@ const SearchForCommunityMembers = () => {
             <div>
               <span>{u}</span>
               <Button
+                // @ts-ignore
+                css={{
+                  background: "unset",
+                  color: "$forest",
+                }}
                 type={"icon"}
                 onClick={() => {
                   const newUsers = users.filter((user) => user !== u);
@@ -100,7 +106,7 @@ const SearchForCommunityMembers = () => {
 };
 
 const ConfirmTransactionScreen = () => {
-  const { users, setConfirmed } = useContext(ScreenContext);
+  const { users, setConfirmed, setUsers } = useContext(ScreenContext);
   return (
     <>
       <Title>2. Confirm Transaction</Title>
@@ -108,6 +114,38 @@ const ConfirmTransactionScreen = () => {
         Whose passport do you want to stamp? Search your community to send this
         stamp to them.
       </Body>
+      <UserContainer>
+        {users.map((u) => (
+          <li key={u}>
+            <div>
+              <span>{u}</span>
+              <Button
+                // @ts-ignore
+                css={{
+                  background: "unset",
+                  color: "$forest",
+                }}
+                type={"icon"}
+                onClick={() => {
+                  const newUsers = users.filter((user) => user !== u);
+                  setUsers(newUsers);
+                }}
+              >
+                <CrossCircledIcon />
+              </Button>
+            </div>
+          </li>
+        ))}
+      </UserContainer>
+      <Label
+        label="Confirmation"
+        description="This will update the contract and require signing a transaction and paying a gas fee"
+      >
+        <Checkbox
+          defaultChecked={false}
+          onCheckedChange={(b) => setConfirmed(b === true)}
+        />
+      </Label>
     </>
   );
 };
@@ -129,6 +167,11 @@ const StampAPassport = () => {
       },
       {
         Body: ConfirmTransactionScreen,
+        cancelText: "Back",
+        onCancel: () => {
+          setScreen(0);
+          return true;
+        },
       },
     ],
     []
@@ -143,7 +186,7 @@ const StampAPassport = () => {
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         title={"Stamp a Passport"}
-        disabled={!confirmed || !users.length}
+        disabled={!users.length || (screen === 1 && !confirmed)}
         confirmText={"Next"}
         {...props}
       >
