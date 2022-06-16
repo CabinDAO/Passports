@@ -1,6 +1,28 @@
-import { Button, Checkbox, Input, Label, Modal, styled } from "@cabindao/topo";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  Checkbox,
+  Input,
+  Label,
+  Modal,
+  styled,
+  Toast,
+} from "@cabindao/topo";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { CrossCircledIcon } from "@radix-ui/react-icons";
+import { getStampContract } from "./utils";
+import { useAddress, useChainId, useWeb3 } from "./Web3Context";
+import type { ContractSendMethod } from "web3-eth-contract";
+import axios from "axios";
+import Loading from "./Loading";
+import { networkNameById } from "./constants";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 // TODO: migrate to TOPO at some point
 const AutocompleteInput = ({
@@ -55,7 +77,15 @@ const ScreenContext = createContext<{
   setUsers: (u: string[]) => void;
   setConfirmed: (b: boolean) => void;
   users: string[];
-}>({ setUsers: () => {}, setConfirmed: () => {}, users: [] });
+  label: string;
+  txHash: string;
+}>({
+  setUsers: () => {},
+  setConfirmed: () => {},
+  users: [],
+  label: "",
+  txHash: "",
+});
 
 const SearchForCommunityMembers = () => {
   const [value, setValue] = useState("");
@@ -106,13 +136,13 @@ const SearchForCommunityMembers = () => {
 };
 
 const ConfirmTransactionScreen = () => {
-  const { users, setConfirmed, setUsers } = useContext(ScreenContext);
+  const { users, setConfirmed, setUsers, label } = useContext(ScreenContext);
   return (
     <>
       <Title>2. Confirm Transaction</Title>
       <Body>
-        Whose passport do you want to stamp? Search your community to send this
-        stamp to them.
+        Would you like to mint the {label} stamp for the following community
+        members?
       </Body>
       <UserContainer>
         {users.map((u) => (
@@ -150,16 +180,128 @@ const ConfirmTransactionScreen = () => {
   );
 };
 
-const StampAPassport = () => {
+const LoadingContainer = styled("div", {
+  display: "flex",
+  alignItems: "center",
+  margin: "64px 0",
+  justifyContent: "center",
+});
+
+const EtherscanContainer = styled("a", {
+  display: "flex",
+  alignItems: "center",
+  fontFamily: "$mono",
+  fontSize: "16px",
+  margin: "16px 0",
+  textTransform: "uppercase",
+  color: "$forest",
+  gap: "16px",
+  cursor: "pointer",
+  textDecoration: "none",
+  justifyContent: "center",
+  span: {
+    textDecoration: "underline",
+  },
+});
+
+const ConfirmingTransactionScreen = () => {
+  const { label, txHash } = useContext(ScreenContext);
+  const chainId = useChainId();
+  return (
+    <>
+      <Title>2. Confirm Transaction</Title>
+      <Body>Updating the {label} stamp. This may take a few minutes.</Body>
+      <LoadingContainer>
+        <Loading />
+      </LoadingContainer>
+      {txHash && (
+        <EtherscanContainer
+          href={`https://${
+            networkNameById[chainId] === "ethereum"
+              ? ""
+              : `${networkNameById[chainId]}.`
+          }etherscan.io/tx/${txHash}`}
+          target={"_blank"}
+          rel={"noreferrer"}
+        >
+          <span>View on etherscan</span>
+          <ArrowRightIcon />
+        </EtherscanContainer>
+      )}
+    </>
+  );
+};
+
+const StampAPassport = ({
+  label,
+  version,
+  address,
+  onStampSuccess
+}: {
+  label: string;
+  version: string;
+  address: string;
+  onStampSuccess: (args: {tokenId: string, address: string}[]) => void
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [screen, setScreen] = useState(0);
   const [users, setUsers] = useState<string[]>([]);
   const [confirmed, setConfirmed] = useState(false);
+  const account = useAddress();
+  const web3 = useWeb3();
+  const chainId = useChainId();
+  const [toastMessage, setToastMessage] = useState("");
+  const [txHash, setTxHash] = useState("");
+  const onStamp = useCallback((): Promise<void> => {
+    setScreen(2);
+    return getStampContract({
+      web3,
+      address,
+      version,
+    })
+      .then(
+        (contract) =>
+          new Promise<void>((resolve, reject) =>
+            (contract.methods.airdrop(users) as ContractSendMethod)
+              .send({
+                from: account,
+              })
+              .on("receipt", (receipt) => {
+                const transferEvents = receipt.events?.["Transfer"];
+                const transfers = Array.isArray(transferEvents)
+                  ? transferEvents
+                  : [transferEvents];
+                const tokens = transfers.map((t) => ({
+                  tokenId: t?.returnValues?.tokenId as string,
+                  address: t?.returnValues?.to as string,
+                }));
+                axios
+                  .post("/api/stamps", {
+                    chain: chainId,
+                    tokens,
+                    contract: address,
+                  })
+                  .then(() => {
+                    setToastMessage("Users Successfully Received Stamps!");
+                    resolve();
+                    onStampSuccess(tokens);
+                  });
+              })
+              .on("transactionHash", (transactionHash) => {
+                setTxHash(transactionHash);
+              })
+              .on("error", reject)
+          )
+      )
+      .catch((e) => {
+        setToastMessage(`ERROR: ${e.message}`);
+      });
+  }, [web3, account, version, address, users, chainId, onStampSuccess]);
   const screens = useMemo(
     () => [
       {
         Body: SearchForCommunityMembers,
-        onConfirm: () => {
+        onConfirm: (): boolean => {
           setScreen(1);
           return true;
         },
@@ -173,12 +315,19 @@ const StampAPassport = () => {
           return true;
         },
       },
+      {
+        Body: "",
+        cancelText: "",
+        onConfirm: onStamp,
+      },
     ],
-    []
+    [onStamp, setScreen]
   );
   const { Body, ...props } = screens[screen];
   return (
-    <ScreenContext.Provider value={{ setUsers, setConfirmed, users }}>
+    <ScreenContext.Provider
+      value={{ setUsers, setConfirmed, users, label, txHash }}
+    >
       <Button type="primary" tone="wheat" onClick={() => setIsOpen(true)}>
         Stamp a Passport
       </Button>
@@ -192,6 +341,12 @@ const StampAPassport = () => {
       >
         <Body />
       </Modal>
+      <Toast
+        isOpen={!!toastMessage}
+        onClose={() => setToastMessage("")}
+        message={toastMessage}
+        intent={toastMessage.startsWith("ERROR") ? "error" : "success"}
+      />
     </ScreenContext.Provider>
   );
 };

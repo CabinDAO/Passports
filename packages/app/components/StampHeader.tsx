@@ -34,22 +34,32 @@ const StampHeader = ({
   symbol,
   thumbnail,
   supply,
+  version,
+  address,
+  onStampSuccess,
 }: {
   name: string;
   symbol: string;
   thumbnail: string;
   supply: number;
+  version: string;
+  address: string;
+  onStampSuccess: (args: { tokenId: string; address: string }[]) => void;
 }) => {
+  const label = `${name} (${symbol})`;
   return (
     <Card>
       <Flex css={{ justifyContent: "space-between", alignItems: "center" }}>
         <Container>
-          <CardTitle>
-            {name} ({symbol})
-          </CardTitle>
+          <CardTitle>{label}</CardTitle>
           <Separator />
           <Text css={{ color: "$sand", mb: "2rem" }}>Supply: {supply}</Text>
-          <StampAPassport />
+          <StampAPassport
+            label={label}
+            version={version}
+            address={address}
+            onStampSuccess={onStampSuccess}
+          />
         </Container>
         <Container>
           <IpfsAsset cid={thumbnail} width={"100%"} height={"100%"} />

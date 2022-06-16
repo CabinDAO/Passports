@@ -733,6 +733,10 @@ const StampDetailPage = (props: IStampProps) => {
   const base = router.pathname
     .replace("[address]", address as string)
     .replace("[network]", network as string);
+  const loadOwners = useCallback(
+    () => router.push(`${base}?tab=owners`),
+    [router, base]
+  );
 
   return (
     <Layout
@@ -742,14 +746,15 @@ const StampDetailPage = (props: IStampProps) => {
         </PageTitle>
       }
     >
-      <StampHeader {...props} />
+      <StampHeader
+        {...props}
+        // TODO replace with a callback that edits UI directly
+        onStampSuccess={loadOwners}
+      />
       <Container css={{ pt: "2rem" }}>
         <Tabs>
           <TabList>
-            <Tab
-              active={!tab || tab === "owners"}
-              onClick={() => router.push(`${base}?tab=owners`)}
-            >
+            <Tab active={!tab || tab === "owners"} onClick={loadOwners}>
               Holders
             </Tab>
             <Tab
@@ -799,7 +804,13 @@ const StampDetailPage = (props: IStampProps) => {
                   <CreateStampHeader>
                     Get started using stamps
                   </CreateStampHeader>
-                  <StampAPassport />
+                  <StampAPassport
+                    label={`${props.name} (${props.symbol})`}
+                    version={props.version}
+                    address={props.address}
+                    // TODO replace with a callback that edits UI directly
+                    onStampSuccess={loadOwners}
+                  />
                 </CreateStampContainer>
               )}
             </TabPanel>
