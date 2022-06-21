@@ -24,7 +24,6 @@ import {
   Web3Provider,
 } from "../../../components/Web3Context";
 import QRCode from "qrcode";
-import { getAbi, getVersionByAddress } from "../../../components/firebase";
 import NetworkIndicator from "../../../components/NetworkIndicator";
 import { getCustomization } from "../../api/customization";
 
@@ -393,7 +392,7 @@ const CheckoutPageContent = ({
 
 const CheckoutPage = (props: PageProps) => {
   return (
-    <Web3Provider>
+    <Web3Provider anonymous>
       <CheckoutPageContent {...props} />
     </Web3Provider>
   );

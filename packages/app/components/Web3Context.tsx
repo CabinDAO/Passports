@@ -45,7 +45,10 @@ export const useDisconnect = () => {
 //
 // We're going to need this when Clerk supports Wallet Connect
 
-export const Web3Provider: React.FC = ({ children }) => {
+export const Web3Provider: React.FC<{ anonymous?: boolean }> = ({
+  children,
+  anonymous = false,
+}) => {
   const [address, setAddress] = useState("");
   const [displayAddress, setDisplayAddress] = useState("Loading...");
   const [chainId, setChainId] = useState(0);
@@ -71,26 +74,31 @@ export const Web3Provider: React.FC = ({ children }) => {
       if (user.user) {
         const data = user.user.unsafeMetadata;
         if (!data.chainId || data.chainId !== chainId) {
-          return user.user
-            ?.update({
-              unsafeMetadata: {
-                ...data,
-                chainId,
-              },
-            })
-            // TODO - we should instead refire `getServerSideProps` on all pages, which is the Remix way
-            .then(() => window.location.reload());
+          return (
+            user.user
+              ?.update({
+                unsafeMetadata: {
+                  ...data,
+                  chainId,
+                },
+              })
+              // TODO - we should instead refire `getServerSideProps` on all pages, which is the Remix way
+              .then(() => window.location.reload())
+          );
         }
       }
       setChainId(Number(chainId));
     },
     [setChainId, user]
   );
-  const setup = useCallback(() => {
+  const setup = useCallback(async () => {
     if (!loaded.current && web3.current) {
       loaded.current = true;
+      if (anonymous && !web3.current.givenProvider.isConnected()) {
+        await web3.current.givenProvider.enable();
+      }
       web3.current.givenProvider.on("close", async () => {
-        clerk.signOut();
+        if (user.isSignedIn) clerk.signOut();
       });
       web3.current.givenProvider.on("accountsChanged", (s: string[]) => {
         if (user.isSignedIn) {
@@ -112,15 +120,27 @@ export const Web3Provider: React.FC = ({ children }) => {
         switchAddress(addresses);
       });
     }
-  }, [loaded, switchAddress, clerk, web3, switchChain, user.isSignedIn]);
+  }, [
+    loaded,
+    switchAddress,
+    clerk,
+    web3,
+    switchChain,
+    user.isSignedIn,
+    anonymous,
+  ]);
 
   useEffect(() => {
-    clerk.addListener(({ session, user }) => {
-      if (session && user && session.user === user) {
-        setup();
-      }
-    });
-  }, [setup, clerk]);
+    if (anonymous) {
+      setup();
+    } else {
+      clerk.addListener(({ session, user }) => {
+        if (session && user && session.user === user) {
+          setup();
+        }
+      });
+    }
+  }, [setup, clerk, anonymous]);
   useEffect(() => {
     if (user.isSignedIn)
       switchAddress(user.user.web3Wallets.map((a) => a.web3Wallet));
