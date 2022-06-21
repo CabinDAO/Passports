@@ -939,7 +939,7 @@ export const getServerSideProps: GetServerSideProps<
       : getStampOwners({
           contract: address,
           chain: networkIdByName[network],
-          offset: Number(offset),
+          offset: Number(offset) || 0,
         }),
   ])
     .then(([{ data, version }, rest]) => {
@@ -949,7 +949,8 @@ export const getServerSideProps: GetServerSideProps<
           `https://ipfs.io/ipfs/${metadataHash}`
         )
         .then((r) => r.data)
-        .then(({ thumbnail, ...metadata }) => ({
+        .catch(() => ({} as Record<string, string>))
+        .then(({ thumbnail = '', ...metadata }) => ({
           props: {
             address,
             name: data[0],

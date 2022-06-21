@@ -659,6 +659,14 @@ export const getServerSideProps: GetServerSideProps<
       };
     }
     const chainId = user.unsafeMetadata.chainId as number;
+    if (!chainId) {
+      return {
+        redirect: {
+          statusCode: 302,
+          destination: "/",
+        },
+      };
+    }
     const network = networkNameById[chainId];
     const web3 = getWeb3(network);
     return users

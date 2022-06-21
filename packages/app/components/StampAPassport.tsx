@@ -236,12 +236,12 @@ const StampAPassport = ({
   label,
   version,
   address,
-  onStampSuccess
+  onStampSuccess,
 }: {
   label: string;
   version: string;
   address: string;
-  onStampSuccess: (args: {tokenId: string, address: string}[]) => void
+  onStampSuccess: (args: { tokenId: string; address: string }[]) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [screen, setScreen] = useState(0);
@@ -314,11 +314,11 @@ const StampAPassport = ({
           setScreen(0);
           return true;
         },
+        onConfirm: onStamp,
       },
       {
-        Body: "",
-        cancelText: "",
-        onConfirm: onStamp,
+        Body: ConfirmingTransactionScreen,
+        hideFooter: true,
       },
     ],
     [onStamp, setScreen]
