@@ -213,9 +213,13 @@ export const getCommunitiesByUser = async (userId: string) => {
 export const getStampOwners = ({
   contract,
   chain,
+  offset = 0,
+  size = 10,
 }: {
   contract: string;
   chain: number;
+  offset?: number;
+  size?: number;
 }) => {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
@@ -245,9 +249,11 @@ export const getStampOwners = ({
           return p;
         }, {} as Record<string, number[]>)
     )
-    .then((addresses) =>
-      users
-        .getUserList({ web3Wallet: Object.keys(addresses) })
+    .then((tokensByAddress) => {
+      const allAddresses = Object.keys(tokensByAddress).sort();
+      const paginatedAddresses = allAddresses.slice(offset, offset + size);
+      return users
+        .getUserList({ web3Wallet: paginatedAddresses })
         .then((userList) => {
           const userByAddress = Object.fromEntries(
             userList.flatMap((u) =>
@@ -263,12 +269,16 @@ export const getStampOwners = ({
           );
           return {
             users: Object.fromEntries(
-              Object.entries(addresses).map(([addr, tokens]) => [
+              paginatedAddresses.map((addr) => [
                 addr,
-                { tokens, name: userByAddress[addr] || "Anonymous User" },
+                {
+                  tokens: tokensByAddress[addr],
+                  name: userByAddress[addr] || "Anonymous User",
+                },
               ])
             ),
+            userTotal: allAddresses.length,
           };
-        })
-    );
+        });
+    });
 };

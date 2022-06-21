@@ -24,6 +24,13 @@ const Page = styled("div", {
   background: "$sand",
   display: "flex",
   height: "100vh",
+  variants: {
+    loading: {
+      true: {
+        cursor: "progress",
+      },
+    },
+  },
 });
 
 const PageContent = styled("div", {
@@ -112,13 +119,16 @@ const PageMain = styled("main", {
   overflow: "auto",
 });
 
-const LayoutContent: React.FC<{ title?: React.ReactNode }> = ({
+type LayoutProps = { title?: React.ReactNode; loading?: boolean };
+
+const LayoutContent: React.FC<LayoutProps> = ({
   children,
   title = "Passports",
+  loading,
 }) => {
   const user = useUser();
   return (
-    <Page>
+    <Page loading={loading}>
       <Head>
         <title>Passports</title>
         <meta name="description" content="App | Passports" />
@@ -154,10 +164,12 @@ const LayoutContent: React.FC<{ title?: React.ReactNode }> = ({
   );
 };
 
-const Layout: NextPage<{ title?: React.ReactNode }> = ({ children, title }) => {
+const Layout: NextPage<LayoutProps> = ({ children, title, loading }) => {
   return (
     <Web3Provider>
-      <LayoutContent title={title}>{children}</LayoutContent>
+      <LayoutContent title={title} loading={loading}>
+        {children}
+      </LayoutContent>
     </Web3Provider>
   );
 };

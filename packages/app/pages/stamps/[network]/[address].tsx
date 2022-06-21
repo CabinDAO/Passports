@@ -204,8 +204,9 @@ interface IStampProps {
   paused: boolean;
   thumbnail: string;
   metadata: Record<string, string>;
-  // based on query params - should prob separate into individual routes
+  // based on query params - should prob separate into individual routes based on path params
   users?: Record<string, { tokens: number[]; name: string }>;
+  userTotal?: number;
   transactions?: unknown[];
   balance?: string;
   customization?: Record<string, string>;
@@ -723,13 +724,24 @@ const OwnerTableCell = styled("td", {
   padding: "4px 12px",
 });
 
+const PaginatedContainer = styled("td", {
+  display: "flex",
+  gap: "16px",
+});
+
 const OwnerTableHeaderCell = styled("td", {
   padding: "4px 12px",
 });
 
 const StampDetailPage = (props: IStampProps) => {
   const router = useRouter();
-  const { tab, address, network } = router.query;
+  const {
+    tab = "owners",
+    address,
+    network,
+    offset = "0",
+    size = "10",
+  } = router.query;
   const base = router.pathname
     .replace("[address]", address as string)
     .replace("[network]", network as string);
@@ -737,6 +749,19 @@ const StampDetailPage = (props: IStampProps) => {
     () => router.push(`${base}?tab=owners`),
     [router, base]
   );
+  const [pageLoading, setPageLoading] = React.useState<boolean>(false);
+  React.useEffect(() => {
+    const handleStart = () => {
+      setPageLoading(true);
+    };
+    const handleComplete = () => {
+      setPageLoading(false);
+    };
+
+    router.events.on("routeChangeStart", handleStart);
+    router.events.on("routeChangeComplete", handleComplete);
+    router.events.on("routeChangeError", handleComplete);
+  }, [router, setPageLoading]);
 
   return (
     <Layout
@@ -745,6 +770,7 @@ const StampDetailPage = (props: IStampProps) => {
           <Link href={"/stamps"}>Stamps</Link> / {props.name}
         </PageTitle>
       }
+      loading={pageLoading}
     >
       <StampHeader
         {...props}
@@ -755,7 +781,7 @@ const StampDetailPage = (props: IStampProps) => {
         <Tabs>
           <TabList>
             <Tab active={!tab || tab === "owners"} onClick={loadOwners}>
-              Holders
+              Owners
             </Tab>
             <Tab
               active={tab === "transactions"}
@@ -798,6 +824,51 @@ const StampDetailPage = (props: IStampProps) => {
                         </OwnerTableRow>
                       ))}
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <OwnerTableCell />
+                      <OwnerTableCell>
+                        Page {Number(offset) / Number(size) + 1} of{" "}
+                        {Math.ceil((props.userTotal || 0) / Number(size))}
+                      </OwnerTableCell>
+                      <OwnerTableCell>
+                        <PaginatedContainer>
+                          <Button
+                            disabled={pageLoading || offset === "0"}
+                            onClick={() => {
+                              const params = new URLSearchParams({
+                                offset: (
+                                  Number(offset) - Number(size)
+                                ).toString(),
+                                tab: tab as string,
+                              });
+                              router.push(`${base}?${params.toString()}`);
+                            }}
+                          >
+                            Prev
+                          </Button>
+                          <Button
+                            disabled={
+                              pageLoading ||
+                              Number(offset) + Number(size) >=
+                                (props.userTotal || 0)
+                            }
+                            onClick={() => {
+                              const params = new URLSearchParams({
+                                offset: (
+                                  Number(offset) + Number(size)
+                                ).toString(),
+                                tab: tab as string,
+                              });
+                              router.push(`${base}?${params.toString()}`);
+                            }}
+                          >
+                            Next
+                          </Button>
+                        </PaginatedContainer>
+                      </OwnerTableCell>
+                    </tr>
+                  </tfoot>
                 </OwnerTable>
               ) : (
                 <CreateStampContainer>
@@ -848,7 +919,7 @@ export const getServerSideProps: GetServerSideProps<
 > = (context) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
-  const { tab = "" } = context.query;
+  const { tab = "", offset } = context.query;
   return Promise.all([
     backendGetStampContract({ address, web3, network }).then(
       ({ contract, version }) =>
@@ -863,9 +934,13 @@ export const getServerSideProps: GetServerSideProps<
             .getBalance(address)
             .then((b) => web3.utils.fromWei(b, "ether")),
         ]).then(([customization, balance]) => ({ customization, balance }))
-      : tab === "transactions" // TODO - SSR owners, transactions, or settings
+      : tab === "transactions" // TODO - SSR transactions
       ? { transactions: [] }
-      : getStampOwners({ contract: address, chain: networkIdByName[network] }),
+      : getStampOwners({
+          contract: address,
+          chain: networkIdByName[network],
+          offset: Number(offset),
+        }),
   ])
     .then(([{ data, version }, rest]) => {
       const metadataHash = bytes32ToIpfsHash(data[5]);

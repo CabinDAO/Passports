@@ -1,10 +1,7 @@
 import { create } from "ipfs-http-client";
-import AbortController from "abort-controller";
 import Web3 from "web3";
 import { getAbiFromJson, networkIdByName } from "./constants";
 import { getAbi, getVersionByAddress } from "./firebase";
-
-global.AbortController = AbortController;
 
 export const getWeb3 = (networkName: string) =>
   new Web3(
@@ -57,11 +54,12 @@ export const getStampContract = ({
   web3?: Web3;
 }) => {
   return getVersionByAddress(address, networkIdByName[network]).then(
-    (version) =>
-      getAbi("stamp", version)
+    (version) => {
+      return getAbi("stamp", version)
         .then((stampJson) => {
           return new web3.eth.Contract(getAbiFromJson(stampJson), address);
         })
-        .then((contract) => ({ contract, version }))
+        .then((contract) => ({ contract, version }));
+    }
   );
 };
