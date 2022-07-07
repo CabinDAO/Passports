@@ -1,5 +1,5 @@
 import { NextPage } from "next";
-import CommunityLayout from "../components/CommunityLayout";
+import CommunityLayout from "../components/Layout/CommunityLayout";
 import { styled } from "@cabindao/topo";
 
 const ProfileContent = () => {

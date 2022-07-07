@@ -1,11 +1,11 @@
-import type { NextPage } from "next";
+import type { NextPge } from "next";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { styled } from "@cabindao/topo";
-import { useAddress } from "./Web3Context";
-import Layout from "./Layout";
-import Loading from "./Loading";
+import { useAddress } from "../Web3Context";
+import Layout from "./PageLayout";
+import Loading from "../Loading";
 
 const DRAWER_WIDTH = 200;
 
@@ -50,7 +50,7 @@ const useTab = () => {
   const router = useRouter();
   return useMemo(
     () => router.asPath.replace(/^\/#?/, "").replace(/(#.*)$/, ""),
-    [router]
+    [router],
   );
 };
 
@@ -73,7 +73,7 @@ const Tab: React.FC<{ to: string; disabled: boolean }> = ({ to, disabled }) => {
       <Link href={`/${to}`} passHref>
         <LinkContent onClick={(e) => disabled && e.preventDefault()}>
           {to}
-          {loading && <Loading size={12} thickness={2}/>}
+          {loading && <Loading size={12} thickness={2} />}
         </LinkContent>
       </Link>
     </TabContainer>

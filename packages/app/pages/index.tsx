@@ -1,5 +1,5 @@
 import type { NextPage } from "next/types";
-import Layout from "../components/CommunityLayout";
+import BaseLayout from "../components/Layout/Base";
 import { Button, styled, Wrapper } from "@cabindao/topo";
 
 const Row = styled("div", {
@@ -98,6 +98,7 @@ const HeroContainer = styled("div", {
   height: 328,
   position: "relative",
   marginBottom: 80,
+  marginTop: 80
 });
 
 const ProductHeading = styled("div", {
@@ -155,41 +156,20 @@ const Content = styled("div", {
 
 const Home: NextPage = () => {
   return (
-    <Layout>
+    <BaseLayout>
       <Wrapper>
         <HeroContainer>
           <HeroPattern width={17} height={6} />
           <ProductHeading>
             <Title>PASSPORTS</Title>
             <HeaderBackground>
-              <Header>
-                Create and mint Stamp NFTs representing membership
-              </Header>
+              <Header>Protocol for belonging</Header>
+              <Button tone="wheat">Bring your community</Button>
             </HeaderBackground>
           </ProductHeading>
         </HeroContainer>
       </Wrapper>
-      <Container id="about">
-        <Wrapper>
-          <Content>
-            <h2>{"Why Passports?"}</h2>
-            <div>
-              <p>
-                NFTs are the best way to grant and manage membership, but until
-                now have been mired in complicated contracts and messy manual
-                tracking. And while you may be web3 tech savvy, your growing
-                community may not. You need a simple and effective way to grant
-                access that reduces friction and seamlessly onboards new
-                members. With NFT Passports, we{"'"}re changing what{"'"}s
-                possible for on-chain membership, giving you one place to easily
-                create, mint, and manage your membership NFTs. Connect your
-                wallet on the top right to get started!
-              </p>
-            </div>
-          </Content>
-        </Wrapper>
-      </Container>
-    </Layout>
+    </BaseLayout>
   );
 };
 

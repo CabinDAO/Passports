@@ -5,7 +5,7 @@ import { contractAddressesByNetworkId, getAbiFromJson } from "../components/cons
 import stakingJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Staking.sol/Staking.json";
 import testTokenJson from "@cabindao/nft-passport-contracts/artifacts/contracts/TestToken.sol/TestToken.json";
 import { Button } from "@cabindao/topo";
-import Layout from "../components/CommunityLayout";
+import Layout from "../components/Layout/CommunityLayout";
 
 const useFaucet = () => {
   const address = useAddress();

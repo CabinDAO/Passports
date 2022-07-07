@@ -1,6 +1,6 @@
 import type { GetServerSideProps, NextPage } from "next";
 import Image from "next/image";
-import Layout from "../components/Layout";
+import Layout from "../components/Layout/PageLayout";
 import { Button, styled } from "@cabindao/topo";
 import PageTitle from "../components/PageTitle";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
