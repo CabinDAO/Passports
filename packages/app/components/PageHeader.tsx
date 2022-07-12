@@ -4,16 +4,15 @@ import {
   SignedOut,
   SignInWithMetamaskButton,
   useClerk,
-  useUser,
 } from "@clerk/nextjs";
-import {
-  useDisplayAddress,
-  useChainId,
-  useDisconnect
-} from "./Web3Context"
-import NetworkIndicator from "./NetworkIndicator"
+import { useDisplayAddress, useChainId, useDisconnect } from "./Web3Context";
+import NetworkIndicator from "./NetworkIndicator";
 
 const Header = styled("header", {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
   display: "flex",
   alignItems: "center",
   justifyContent: "flex-end",

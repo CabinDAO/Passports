@@ -4,6 +4,7 @@ import { Web3Provider } from "../Web3Context";
 import PageHeader from "../PageHeader";
 
 const Page = styled("div", {
+  position: "relative",
   display: "flex",
   flexDirection: "column",
   background: "$sand",
@@ -19,7 +20,8 @@ const Page = styled("div", {
 
 const Box = styled("div", {
   flex: 1,
-})
+  display: "flex",
+});
 
 type LayoutProps = { title?: React.ReactNode; loading?: boolean };
 
@@ -32,9 +34,7 @@ const BaseLayout = ({ children, title = "Passports", loading }) => (
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <PageHeader title={title} />
-      <Box>
-        {children}
-      </Box>
+      <Box>{children}</Box>
     </Page>
   </Web3Provider>
 );

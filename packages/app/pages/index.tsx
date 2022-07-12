@@ -1,124 +1,13 @@
+import { useEffect } from "react";
 import type { NextPage } from "next/types";
+import { useRouter } from "next/router";
 import BaseLayout from "../components/Layout/Base";
-import { Button, styled, Wrapper } from "@cabindao/topo";
-
-const Row = styled("div", {
-  display: "flex",
-  justifyContent: "space-between",
-});
-
-const HeroElement = styled("div", {
-  marginTop: 2.31,
-  width: 8,
-  height: 4.62,
-  backgroundColor: "$sprout",
-  position: "relative",
-  "&:before": {
-    content: "",
-    borderLeft: "4px solid transparent",
-    borderRight: "4px solid transparent",
-    position: "absolute",
-    top: -2.31,
-    borderBottom: "2.31px solid $sprout",
-  },
-  "&:after": {
-    content: "",
-    borderLeft: "4px solid transparent",
-    borderRight: "4px solid transparent",
-    position: "absolute",
-    bottom: -2.31,
-    borderTop: "2.31px solid $sprout",
-  },
-});
-
-const InnerHeroElement = styled(HeroElement, {
-  transform: "scale(0.7,0.7)",
-  backgroundColor: "$sand",
-  zIndex: 1,
-  marginTop: 0,
-  "&:before": {
-    borderBottomColor: "$sand",
-  },
-  "&:after": {
-    borderTopColor: "$sand",
-  },
-});
-
-const HeroPattern = ({ width, height }: { width: number; height: number }) => (
-  <>
-    {Array(height)
-      .fill(null)
-      .map((_, i) => (
-        <Row key={i}>
-          {Array(width)
-            .fill(null)
-            .map((_, j) => (
-              <HeroElement key={j}>
-                <InnerHeroElement />
-              </HeroElement>
-            ))}
-        </Row>
-      ))}
-  </>
-);
+import Hero from "../components/Hero";
+import { Button, styled, Wrapper, Heading } from "@cabindao/topo";
+import { useUser } from "@clerk/nextjs";
 
 const Container = styled("section", {
   pt: "$12",
-});
-
-const Title = styled("h2", {
-  background: "$sand",
-  fontFamily: "$mono",
-  fontSize: "16px",
-  lineHeight: "21px",
-  padding: "8px 16px",
-  margin: 0,
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "center",
-  alignItems: "center",
-  width: "fit-content",
-});
-
-const Header = styled("h1", {
-  fontSize: 32,
-  lineHeight: "44px",
-  color: "$forest",
-  fontFamily: "$mono",
-  mt: 0,
-  mb: 24,
-  background: "$sand",
-  textAlign: "center",
-});
-
-const HeroContainer = styled("div", {
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-  height: 328,
-  position: "relative",
-  marginBottom: 80,
-  marginTop: 80
-});
-
-const ProductHeading = styled("div", {
-  position: "absolute",
-  left: "50%",
-  top: "50%",
-  transform: "translate(-50%,-50%)",
-  textAlign: "center",
-  zIndex: 1,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  width: "100%",
-});
-
-const HeaderBackground = styled("div", {
-  padding: "8px 16px",
-  background: "$sand",
-  maxWidth: "676px",
-  width: "100%",
 });
 
 const Content = styled("div", {
@@ -155,19 +44,36 @@ const Content = styled("div", {
 });
 
 const Home: NextPage = () => {
+  const user = useUser();
+  const router = useRouter();
+
+  console.log(user);
+
+  useEffect(() => {
+    if (user.isSignedIn) {
+      router.push("/passport");
+    }
+  }, [user]);
+
   return (
     <BaseLayout>
       <Wrapper>
-        <HeroContainer>
-          <HeroPattern width={17} height={6} />
-          <ProductHeading>
-            <Title>PASSPORTS</Title>
-            <HeaderBackground>
-              <Header>Protocol for belonging</Header>
-              <Button tone="wheat">Bring your community</Button>
-            </HeaderBackground>
-          </ProductHeading>
-        </HeroContainer>
+        <Hero title="PASSPORTS">
+          <Heading
+            mono
+            css={{
+              color: "$forest",
+              fontSize: "$xxxl",
+              mt: 0,
+              mb: "$6",
+              bg: "$sand",
+              textAlign: "center",
+            }}
+          >
+            Protocol for belonging
+          </Heading>
+          <Button tone="wheat">Bring your community</Button>
+        </Hero>
       </Wrapper>
     </BaseLayout>
   );
