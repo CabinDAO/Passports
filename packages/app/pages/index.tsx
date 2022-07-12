@@ -49,12 +49,6 @@ const Home: NextPage = () => {
 
   console.log(user);
 
-  useEffect(() => {
-    if (user.isSignedIn) {
-      router.push("/passport");
-    }
-  }, [user]);
-
   return (
     <BaseLayout>
       <Wrapper>
@@ -72,7 +66,13 @@ const Home: NextPage = () => {
           >
             Protocol for belonging
           </Heading>
-          <Button tone="wheat">Bring your community</Button>
+          {
+            user.isSignedIn ? (
+              <Button tone="forest" onClick={() => {router.push("/passport")}}>Enter</Button>
+            ) : (
+              <Button tone="wheat">Bring your community</Button>
+            )
+          }
         </Hero>
       </Wrapper>
     </BaseLayout>
