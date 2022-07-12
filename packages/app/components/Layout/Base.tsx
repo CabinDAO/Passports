@@ -1,4 +1,4 @@
-import { styled } from "@cabindao/topo";
+import { styled, Box } from "@cabindao/topo";
 import Head from "next/head";
 import { Web3Provider } from "../Web3Context";
 import PageHeader from "../PageHeader";
@@ -18,11 +18,6 @@ const Page = styled("div", {
   },
 });
 
-const Box = styled("div", {
-  flex: 1,
-  display: "flex",
-});
-
 type LayoutProps = { title?: React.ReactNode; loading?: boolean };
 
 const BaseLayout = ({ children, title = "Passports", loading }) => (
@@ -34,7 +29,7 @@ const BaseLayout = ({ children, title = "Passports", loading }) => (
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <PageHeader title={title} />
-      <Box>{children}</Box>
+      <Box css={{ flex: 1, display: "flex" }}>{children}</Box>
     </Page>
   </Web3Provider>
 );
