@@ -1,10 +1,8 @@
 import { Button, styled } from "@cabindao/topo";
 import { PlusIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
-import Link from "next/link"
-import {
-  useUser,
-} from "@clerk/nextjs";
+import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 
 const OuterNav = styled("nav", {
   width: "80px",
@@ -38,7 +36,6 @@ const NavIndicator = ({ src, path }: { src: string; path: string }) => {
           <NavImage width={60} height={60} src={src} />
         </a>
       </Link>
-
     </NavButton>
   );
 };
@@ -52,13 +49,13 @@ const CommunitySwitch = () => {
           src={user.user?.profileImageUrl || "/logo.png"}
           path={"/passport"}
         />
-        <NavIndicator src={"/logo.png"} path={"/"} />
+        <NavIndicator src={"/logo.png"} path={"/stamps"} />
       </OrganizationNav>
       <Button tone="wheat" type="primary">
         <PlusIcon height={"16px"} width={"16px"} />
       </Button>
     </OuterNav>
   );
-}
+};
 
 export default CommunitySwitch;
