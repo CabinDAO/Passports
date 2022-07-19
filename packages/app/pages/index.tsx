@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import type { NextPage } from "next/types";
 import { useRouter } from "next/router";
-import BaseLayout from "../components/Layout/Base";
-import Hero from "../components/Hero";
+import Hero from "@/components/Hero"
+import BaseLayout from "@/layout/Base";
 import { Button, styled, Wrapper, Heading } from "@cabindao/topo";
 import { useUser } from "@clerk/nextjs";
 
@@ -66,13 +66,18 @@ const Home: NextPage = () => {
           >
             Protocol for belonging
           </Heading>
-          {
-            user.isSignedIn ? (
-              <Button tone="forest" onClick={() => {router.push("/passport")}}>Enter</Button>
-            ) : (
-              <Button tone="wheat">Bring your community</Button>
-            )
-          }
+          {user.isSignedIn ? (
+            <Button
+              tone="forest"
+              onClick={() => {
+                router.push("/passport");
+              }}
+            >
+              Enter
+            </Button>
+          ) : (
+            <Button tone="wheat">Bring your community</Button>
+          )}
         </Hero>
       </Wrapper>
     </BaseLayout>

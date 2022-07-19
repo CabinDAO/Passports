@@ -1,12 +1,12 @@
 import type { GetServerSideProps, NextPage } from "next";
-import Layout from "../components/Layout/PageLayout";
+import Layout from "@/components/Layout/PageLayout";
 import { styled, Button, Box, Heading, Text } from "@cabindao/topo";
-import PageTitle from "../components/PageTitle";
+import PageTitle from "@/components/PageTitle";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import type { User } from "@clerk/clerk-sdk-node";
-import { getCommunitiesByUser } from "../components/firebase";
-import ProfileHeader from "../components/ProfileHeader";
-import CommunityCard from "../components/CommunityCard";
+import { getCommunitiesByUser } from "@/components/firebase";
+import ProfileHeader from "@/components/ProfileHeader";
+import CommunityCard from "@/components/CommunityCard";
 
 const UserContent = styled("div", {
   display: "grid",
@@ -48,10 +48,12 @@ const Profile = (props: PageProps) => {
 
 type PageProps = Awaited<ReturnType<typeof getProfileProps>>;
 
-{/*
-  * TODO: User will have to already be signed in in order to see this page, so
-  * we should already have the user object
-  */}
+{
+  /*
+   * TODO: User will have to already be signed in in order to see this page, so
+   * we should already have the user object
+   */
+}
 export const getProfileProps = (user: User) => {
   const userId = user.id!;
   return getCommunitiesByUser(userId).then((communities) => ({

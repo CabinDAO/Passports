@@ -17,28 +17,28 @@ import {
   getStampContract,
   ipfsAdd,
   resolveAddress,
-} from "../../../components/utils";
+} from "@/components/utils";
 import {
   useAddress,
   useChainId,
   useWeb3,
-} from "../../../components/Web3Context";
-import Layout from "../../../components/Layout/PageLayout";
-import StampHeader from "../../../components/StampHeader";
+} from "@/components/Web3Context";
+import Layout from "@/components/Layout/PageLayout";
+import StampHeader from "@/components/StampHeader";
 import {
   Tabs,
   TabList,
   TabPanels,
   Tab,
   TabPanel,
-} from "../../../components/tabs";
+} from "@/components/tabs";
 import { GetServerSideProps } from "next";
 import Papa from "papaparse";
 import {
   networkIdByName,
   networkNameById,
-} from "../../../components/constants";
-import PageTitle from "../../../components/PageTitle";
+} from "@/components/constants";
+import PageTitle from "@/components/PageTitle";
 import {
   Pencil1Icon,
   Share1Icon,
@@ -55,11 +55,11 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   getStampContract as backendGetStampContract,
   getWeb3,
-} from "../../../components/backend";
+} from "@/components/backend";
 import { getCustomization } from "../../api/customization";
-import { getStampOwners } from "../../../components/firebase";
+import { getStampOwners } from "@/components/firebase";
 import Link from "next/link";
-import StampAPassport from "../../../components/StampAPassport";
+import StampAPassport from "@/components/StampAPassport";
 
 const StampCardContainer = styled("div", {
   background: "$forest",

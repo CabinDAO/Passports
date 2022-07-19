@@ -10,7 +10,7 @@ import {
   styled,
 } from "@cabindao/topo";
 import type { ContractSendMethod } from "web3-eth-contract";
-import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
+import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
 import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
 import Papa from "papaparse";
@@ -18,8 +18,8 @@ import {
   getAllManagedStamps,
   resolveAddress,
   getStampContract,
-} from "../components/utils";
-import Layout from "../components/CommunityLayout";
+} from "@/components/utils";
+import Layout from "@/components/CommunityLayout";
 
 const SmallBox = styled(Box, {
   width: "25%",
