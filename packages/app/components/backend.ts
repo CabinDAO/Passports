@@ -7,7 +7,7 @@ export const getWeb3 = (networkName: string) =>
   new Web3(
     networkName === "localhost"
       ? "http://localhost:8545"
-      : `https://${networkName}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
+      : `https://${networkName}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`,
   );
 
 const getIpfsClient = () =>
@@ -17,7 +17,7 @@ const getIpfsClient = () =>
     protocol: "https",
     headers: {
       authorization: `Basic ${Buffer.from(
-        `${process.env.IPFS_INFURA_ID}:${process.env.IPFS_INFURA_SECRET}`
+        `${process.env.IPFS_INFURA_ID}:${process.env.IPFS_INFURA_SECRET}`,
       ).toString("base64")}`,
     },
   });
@@ -59,7 +59,11 @@ export const getStampContract = ({
         .then((stampJson) => {
           return new web3.eth.Contract(getAbiFromJson(stampJson), address);
         })
-        .then((contract) => ({ contract, version }));
-    }
+        .then((contract) => ({ contract, version }))
+        .catch((e) => {
+          console.log("failed: getVersionByAddress", network);
+          console.log("error: ", e);
+        });
+    },
   );
 };
