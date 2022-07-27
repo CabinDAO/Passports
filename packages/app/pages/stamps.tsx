@@ -331,10 +331,10 @@ const CreateStampModal = () => {
     return ipfsAdd(
       JSON.stringify({
         ...Object.fromEntries(
-          additionalFields.map(({ key, value }) => [key, value])
+          additionalFields.map(({ key, value }) => [key, value]),
         ),
         ...(cid ? { thumbnail: cid } : {}),
-      })
+      }),
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price || "0", "ether");
       const royalty = Number(royaltyPcnt || "0") * 100;
@@ -371,7 +371,7 @@ const CreateStampModal = () => {
               })
               .then(() => {
                 router.push(
-                  `/stamps/${networkNameById[chainId]}/${contractAddress}`
+                  `/stamps/${networkNameById[chainId]}/${contractAddress}`,
                 );
                 onClose();
               });
@@ -424,7 +424,7 @@ const CreateStampModal = () => {
         {children}
       </>
     ),
-    [setStage]
+    [setStage],
   );
   const stageTitles = [
     "Enter Stamp Details",
@@ -680,57 +680,77 @@ export const getServerSideProps: GetServerSideProps<
               getAdminStamps({
                 address,
                 chainId: user.unsafeMetadata.chainId as number,
-              }).then(({ contracts }) =>
-                Promise.all(
-                  contracts.map((c) => {
-                    const start = new Date();
-                    return getStampContract({
-                      web3,
-                      network,
-                      address: c.address,
-                    })
-                      .then(({ contract }) =>
-                        Promise.all([
-                          (contract.methods.name() as ContractSendMethod)
-                            .call()
-                            .then((r) => r as string),
-                          (contract.methods.symbol() as ContractSendMethod)
-                            .call()
-                            .then((r) => r as string),
-                          (
-                            contract.methods.metadataHash() as ContractSendMethod
-                          )
-                            .call()
-                            .then((hash) => bytes32ToIpfsHash(hash))
-                            .then((hash) =>
-                              axios.get<{ thumbnail: string }>(
-                                `https://ipfs.io/ipfs/${hash}`
-                              )
+              })
+                .then(({ contracts }) =>
+                  Promise.all(
+                    contracts.map((c) => {
+                      const start = new Date();
+                      return getStampContract({
+                        web3,
+                        network,
+                        address: c.address,
+                      })
+                        .then(({ contract }) =>
+                          Promise.all([
+                            (contract.methods.name() as ContractSendMethod)
+                              .call()
+                              .then((r) => r as string),
+                            (contract.methods.symbol() as ContractSendMethod)
+                              .call()
+                              .then((r) => r as string),
+                            (
+                              contract.methods.metadataHash() as ContractSendMethod
                             )
-                            .then((r) => r.data.thumbnail)
-                            .catch(() => ""),
-                        ])
-                      )
-                      .then(([name, symbol, thumbnail]) => {
-                        console.log(
-                          "took",
-                          new Date().valueOf() - start.valueOf(),
-                          "to load",
-                          name
-                        );
-                        return {
-                          name,
-                          symbol,
-                          thumbnail,
-                          version: c.version,
-                          address: c.address,
-                        };
-                      });
-                  })
+                              .call()
+                              .then((hash) => bytes32ToIpfsHash(hash))
+                              .then((hash) =>
+                                axios.get<{ thumbnail: string }>(
+                                  `https://ipfs.io/ipfs/${hash}`,
+                                ),
+                              )
+                              .then((r) => r.data.thumbnail)
+                              .catch((e) => {
+                                console.log(
+                                  "failed: getting contract data",
+                                  chainId,
+                                  network,
+                                );
+                                console.log("error: ", e);
+                              }),
+                          ]),
+                        )
+                        .then(([name, symbol, thumbnail]) => {
+                          console.log(
+                            "took",
+                            new Date().valueOf() - start.valueOf(),
+                            "to load",
+                            name,
+                          );
+                          return {
+                            name,
+                            symbol,
+                            thumbnail,
+                            version: c.version,
+                            address: c.address,
+                          };
+                        })
+                        .catch((e) => {
+                          console.log(
+                            "failed: getStampContract",
+                            chainId,
+                            network,
+                          );
+                          console.log("error: ", e);
+                        });
+                    }),
+                  ),
                 )
-              )
-            )
-        )
+                .catch((e) => {
+                  console.log("failed: getAdminStamps", chainId, network);
+                  console.log("error: ", e);
+                }),
+            ),
+        ),
       )
       .then((data) => {
         return {
@@ -738,9 +758,13 @@ export const getServerSideProps: GetServerSideProps<
             stamps: data.flat(),
           },
         };
+      })
+      .catch((e) => {
+        console.log(`failed: getUser`, chainId, network);
+        console.log("error: ", e);
       });
   },
-  { loadUser: true }
+  { loadUser: true },
 );
 
 export default StampsPage;
