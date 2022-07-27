@@ -217,7 +217,7 @@ const ConfirmingTransactionScreen = () => {
       {txHash && (
         <EtherscanContainer
           href={`https://${
-            networkNameById[chainId] === "ethereum"
+            networkNameById[chainId] === "mainnet"
               ? ""
               : `${networkNameById[chainId]}.`
           }etherscan.io/tx/${txHash}`}
@@ -290,8 +290,8 @@ const StampAPassport = ({
               .on("transactionHash", (transactionHash) => {
                 setTxHash(transactionHash);
               })
-              .on("error", reject)
-          )
+              .on("error", reject),
+          ),
       )
       .catch((e) => {
         setToastMessage(`ERROR: ${e.message}`);
@@ -321,7 +321,7 @@ const StampAPassport = ({
         hideFooter: true,
       },
     ],
-    [onStamp, setScreen]
+    [onStamp, setScreen],
   );
   const { Body, ...props } = screens[screen];
   return (

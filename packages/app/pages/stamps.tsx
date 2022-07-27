@@ -590,7 +590,7 @@ const CreateStampModal = () => {
               {txHash && (
                 <EtherscanContainer
                   href={`https://${
-                    networkNameById[chainId] === "ethereum"
+                    networkNameById[chainId] === "mainnet"
                       ? ""
                       : `${networkNameById[chainId]}.`
                   }etherscan.io/tx/${txHash}`}
@@ -685,6 +685,7 @@ export const getServerSideProps: GetServerSideProps<
                   Promise.all(
                     contracts.map((c) => {
                       const start = new Date();
+
                       return getStampContract({
                         web3,
                         network,

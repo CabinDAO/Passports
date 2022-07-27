@@ -29,19 +29,19 @@ export const networkNameById: {
   [LOCALHOST_NETWORK_ID]: "localhost",
   [KOVAN_NETWORK_ID]: "kovan",
   [ROPSTEN_NETWORK_ID]: "ropsten",
-  [MAINNET_NETWORK_ID]: "ethereum",
+  [MAINNET_NETWORK_ID]: "mainnet",
   [RINKEBY_NETWORK_ID]: "rinkeby",
   [OPTIMISM_NETWORK_ID]: "optimism-mainnet",
   [OPTIMISM_KOVAN_NETWORK_ID]: "optimism-kovan",
   [POLYGON_MAIN_NETWORK_ID]: "polygon-mainnet",
   [POLYGON_TEST_NETWORK_ID]: "polygon-mumbai",
   [GOERLI_NETWORK_ID]: "goerli",
-  [ARBITRUM_TEST_NETWORK_ID]: 'arbitrum-rinkeby',
-  [ARBITRUM_NETWORK_ID]: 'arbitrum-mainnet',
+  [ARBITRUM_TEST_NETWORK_ID]: "arbitrum-rinkeby",
+  [ARBITRUM_NETWORK_ID]: "arbitrum-mainnet",
 };
 
 export const networkIdByName = Object.fromEntries(
-  Object.entries(networkNameById).map(([id, name]) => [name, Number(id)])
+  Object.entries(networkNameById).map(([id, name]) => [name, Number(id)]),
 );
 
 export const contractAddressesByNetworkId: {
