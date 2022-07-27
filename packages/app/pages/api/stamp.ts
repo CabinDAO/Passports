@@ -44,7 +44,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       } = req.query as Record<string, string>;
       const adminCol = collection(db, "admin_stamps");
       return getDocs(
-        query(adminCol, where("contract", "==", contractAddress.toLowerCase()))
+        query(adminCol, where("contract", "==", contractAddress.toLowerCase())),
       ).then((data) => {
         if (!data.docs.length) {
           return res
@@ -99,7 +99,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                 .end(
                   `Querying Contract failed. Errors:\n${failures
                     .map((s) => ` - ${s.value}`)
-                    .join("\n")}`
+                    .join("\n")}`,
                 );
             return axios
               .get(`https://ipfs.io/ipfs/${bytes32ToIpfsHash(args[2].value)}`)
@@ -111,7 +111,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                   image: `https://ipfs.io/ipfs/${thumbnail}`,
                   name: args[0].value,
                   attributes: Object.entries(fields).map(
-                    ([trait_type, value]) => ({ trait_type, value })
+                    ([trait_type, value]) => ({ trait_type, value }),
                   ),
                 };
                 res.status(200).send(nftStandard);
@@ -120,17 +120,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                 res
                   .status(500)
                   .end(
-                    `Failed to get metadata ${args?.[2]?.value}: ${e.message}`
-                  )
+                    `Failed to get metadata ${args?.[2]?.value}: ${e.message}`,
+                  ),
               );
           })
-          .catch((e) =>
+          .catch((e) => {
+            console.log(
+              "caught getStampContract",
+              networkName,
+              contractAddress,
+            );
+            console.log("error: ", e);
             res
               .status(500)
               .end(
-                `Failed to get versions for stamp ${contractAddress} in network ${networkName}: ${e.message}`
-              )
-          );
+                `Failed to get versions for stamp ${contractAddress} in network ${networkName}: ${e.message}`,
+              );
+          });
       });
 
     default:

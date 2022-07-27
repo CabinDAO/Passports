@@ -23,8 +23,8 @@ export const getVersionByAddress = (address: string, chain: number) => {
       versionsCol,
       where("contract", "==", "stamp"),
       where("address", "==", address.toLowerCase()),
-      where("chain", "==", chain)
-    )
+      where("chain", "==", chain),
+    ),
   ).then((d) => {
     return d.docs.length ? (d.docs[0].data()["version"] as string) : "0.0.0";
   });
@@ -56,8 +56,8 @@ export const getAbi = (contract: string, version: string) => {
       });
   return versionToUse.then((version) =>
     getBytes(ref(storage, `abis/production/${version}/${contract}.json`)).then(
-      (bytes) => ({ ...JSON.parse(Buffer.from(bytes).toString()), version })
-    )
+      (bytes) => ({ ...JSON.parse(Buffer.from(bytes).toString()), version }),
+    ),
   );
 };
 
@@ -77,21 +77,21 @@ export const getAdminStamps = ({
       query(
         adminStampsCol,
         where("address", "==", address.toLowerCase()),
-        where("chain", "==", chainId)
-      )
+        where("chain", "==", chainId),
+      ),
     ),
     getDocs(
       query(
         versionsCol,
         where("contract", "==", "stamp"),
-        where("chain", "==", chainId)
-      )
+        where("chain", "==", chainId),
+      ),
     ),
   ]).then(([memberships, versions]) => {
     const versionByContract = Object.fromEntries(
       versions.docs
         .map((d) => d.data())
-        .map((data) => [data["address"], data["version"]])
+        .map((data) => [data["address"], data["version"]]),
     );
     return {
       contracts: memberships.docs.map((doc) => {
@@ -120,8 +120,8 @@ export const getStampsByUser = ({
     query(
       urlCol,
       where("address", "==", address.toLowerCase()),
-      where("chain", "==", chainId)
-    )
+      where("chain", "==", chainId),
+    ),
   )
     .then((stamps) => {
       const tokensByAddress = stamps.docs
@@ -140,12 +140,14 @@ export const getStampsByUser = ({
           }
           return p;
         }, {} as Record<string, number[]>);
+
       const network = networkNameById[chainId];
       const web3 = getWeb3(networkNameById[chainId]);
+
       return Promise.all(
         Object.entries(tokensByAddress).map(([address, tokens]) =>
           getStampContract({ web3, network, address })
-            .then(({ contract }) =>
+            .then(({ contract }: any) =>
               Promise.all([
                 (contract.methods.name() as ContractSendMethod)
                   .call()
@@ -158,11 +160,11 @@ export const getStampsByUser = ({
                   .then((hash) => bytes32ToIpfsHash(hash))
                   .then((hash) =>
                     axios.get<{ thumbnail: string }>(
-                      `https://ipfs.io/ipfs/${hash}`
-                    )
+                      `https://ipfs.io/ipfs/${hash}`,
+                    ),
                   )
                   .then((r) => `https://ipfs.io/ipfs/${r.data.thumbnail}`),
-              ])
+              ]),
             )
             .then(([name, symbol, thumbnail]) =>
               tokens.map((token) => ({
@@ -171,9 +173,14 @@ export const getStampsByUser = ({
                 name,
                 symbol,
                 thumbnail,
-              }))
+              })),
             )
-        )
+            // .catch((e) => {
+            //   console.log("caught getStampContract", network, address);
+            //   console.log("error: ", e);
+            //   return [];
+            // })
+        ),
       );
     })
     .then((stamps) => stamps.flat());
@@ -228,8 +235,8 @@ export const getStampOwners = ({
     query(
       urlCol,
       where("contract", "==", contract.toLowerCase()),
-      where("chain", "==", chain)
-    )
+      where("chain", "==", chain),
+    ),
   )
     .then((stamps) =>
       stamps.docs
@@ -247,7 +254,7 @@ export const getStampOwners = ({
             p[c.address] = [c.token];
           }
           return p;
-        }, {} as Record<string, number[]>)
+        }, {} as Record<string, number[]>),
     )
     .then((tokensByAddress) => {
       const allAddresses = Object.keys(tokensByAddress).sort();
@@ -264,8 +271,8 @@ export const getStampOwners = ({
                     ? `${u.firstName} ${u.lastName}`
                     : u.firstName
                   : "Anonymous User",
-              ])
-            )
+              ]),
+            ),
           );
           return {
             users: Object.fromEntries(
@@ -275,7 +282,7 @@ export const getStampOwners = ({
                   tokens: tokensByAddress[addr],
                   name: userByAddress[addr] || "Anonymous User",
                 },
-              ])
+              ]),
             ),
             userTotal: allAddresses.length,
           };

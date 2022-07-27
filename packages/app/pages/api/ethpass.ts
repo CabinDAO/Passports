@@ -17,7 +17,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       } = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       return getStampContract({ address, network })
         .then(({ contract }) =>
-          (contract.methods.symbol() as ContractSendMethod).call()
+          (contract.methods.symbol() as ContractSendMethod).call(),
         )
         .then((description) => {
           const body = {
@@ -54,7 +54,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             .status(200)
             .json({ fileURL: r.data.fileURL, id: r.data.id });
         })
-        .catch((e) => res.status(500).send(e.response?.data || e.message));
+        .catch(e => {
+          console.log("caught getStampContract", address, network)
+          console.log("error: ", e)
+          res.status(500).send(e.response?.data || e.message)
+        })
     default:
       res.setHeader("Allow", ["POST"]);
       res.status(405).end(`Method ${req.method} Not Allowed`);

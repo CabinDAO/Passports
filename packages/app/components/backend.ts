@@ -60,10 +60,10 @@ export const getStampContract = ({
           return new web3.eth.Contract(getAbiFromJson(stampJson), address);
         })
         .then((contract) => ({ contract, version }))
-        .catch((e) => {
-          console.log("failed: getVersionByAddress", network);
-          console.log("error: ", e);
-        });
+        // .catch((e) => {
+        //   console.log("failed: getVersionByAddress", network, address);
+        //   console.log("error: ", e);
+        // });
     },
   );
 };

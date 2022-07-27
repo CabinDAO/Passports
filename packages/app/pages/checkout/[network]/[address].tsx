@@ -427,7 +427,8 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
       },
     }))
     .catch((e) => {
-      console.error(e);
+      console.log("caught getStampContract", network, address);
+      console.log("error: ", e);
       return {
         props: {
           address,
