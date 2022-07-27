@@ -647,7 +647,7 @@ export const getServerSideProps: GetServerSideProps<
   { stamps: IStampProps[] },
   {}
 > = withServerSideAuth(
-  (context) => {
+  (context:any):any => {
     const { user } = context.req;
     const userId = user?.id;
     if (!userId || !user) {
