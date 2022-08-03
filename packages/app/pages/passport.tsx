@@ -1,10 +1,13 @@
 import type { GetServerSideProps, NextPage } from "next";
-import Layout from "@/layouts/PageLayout";
-import { styled, Button, Box, Heading, Text } from "@cabindao/topo";
-import PageTitle from "@/components/PageTitle";
+
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import type { User } from "@clerk/clerk-sdk-node";
+
 import { getCommunitiesByUser } from "@/utils/firebase";
+
+import { styled, Button, Box, Heading, Text } from "@cabindao/topo";
+import Layout from "@/layouts/PageLayout";
+import PageTitle from "@/components/PageTitle";
 import ProfileHeader from "@/components/ProfileHeader";
 import CommunityCard from "@/components/CommunityCard";
 

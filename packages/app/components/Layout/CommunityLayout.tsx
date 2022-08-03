@@ -1,11 +1,13 @@
+import React, { useMemo, useState } from "react";
+
 import type { NextPge } from "next";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import React, { useMemo, useState } from "react";
+
 import { styled } from "@cabindao/topo";
-import { useAddress } from "../Web3Context";
 import Layout from "@/layouts/PageLayout";
-import Loading from "../Loading";
+import { useAddress } from "../Web3Context";
+import Loading from "@/components/Loading";
 
 const DRAWER_WIDTH = 200;
 

@@ -1,6 +1,8 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { initializeApp } from "firebase/app";
 import { collection, doc, getFirestore, setDoc } from "firebase/firestore/lite";
-import type { NextApiRequest, NextApiResponse } from "next";
+
 import { addPins } from "@/utils/backend";
 import { firebaseConfig } from "@/utils/constants";
 

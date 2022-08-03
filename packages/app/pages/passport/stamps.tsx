@@ -1,13 +1,17 @@
-import { styled } from "@cabindao/topo";
-import { withServerSideAuth } from "@clerk/nextjs/ssr";
-import { GetServerSideProps } from "next";
 import React from "react";
+import { GetServerSideProps } from "next";
+import Image from "next/image";
+import { useRouter } from "next/router";
+
+import { styled } from "@cabindao/topo";
+
 import Layout from "@/layouts/PageLayout";
 import PageTitle from "@/components/PageTitle";
-import Image from "next/image";
 import { ProfileLayout } from "../passport";
+
 import { getStampsByUser } from "@/utils/firebase";
-import { useRouter } from "next/router";
+
+import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import type { User } from "@clerk/clerk-sdk-node";
 
 const StampContainer = styled("div", {

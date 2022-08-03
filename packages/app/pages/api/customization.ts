@@ -1,6 +1,8 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { initializeApp } from "firebase/app";
 import { collection, doc, getDoc, getFirestore } from "firebase/firestore/lite";
-import type { NextApiRequest, NextApiResponse } from "next";
+
 import { firebaseConfig } from "@/utils/constants";
 
 export const getCustomization = (address: string) => {

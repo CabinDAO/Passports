@@ -1,5 +1,7 @@
 import { styled, Button, Box, Heading, Text } from "@cabindao/topo";
+
 import { Card, CardHeader, CardBody } from "./Card";
+
 import Image from "next/image";
 
 const CommunityThumbnail = styled("div", {
@@ -29,7 +31,13 @@ const Value = styled("span", {
   fontWeight: 500,
 });
 
-const CommunityCard = ({ name, symbol, description, thumbnail, quantity }: {
+const CommunityCard = ({
+  name,
+  symbol,
+  description,
+  thumbnail,
+  quantity,
+}: {
   name: string;
   symbol: string;
   description: string;

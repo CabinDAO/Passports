@@ -1,9 +1,10 @@
-import { GetServerSideProps } from "next";
-import { getAbiFromJson, networkIdByName } from "@/utils/constants";
-import type { ContractSendMethod } from "web3-eth-contract";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import IpfsAsset from "@/components/IpfsAsset";
+import type { ContractSendMethod } from "web3-eth-contract";
+import QRCode from "qrcode";
+
+import { GetServerSideProps } from "next";
+
 import {
   Button,
   Label,
@@ -12,21 +13,24 @@ import {
   styled,
   Toast,
 } from "@cabindao/topo";
-import { bytes32ToIpfsHash } from "@/utils/ipfs";
-import { getStampContract } from "@/utils/ipfs";
-import {
-  getStampContract as backendGetStampContract,
-  getWeb3,
-} from "@/components/backend";
 import {
   useAddress,
   useChainId,
   useWeb3,
   Web3Provider,
 } from "@/components/Web3Context";
-import QRCode from "qrcode";
+import IpfsAsset from "@/components/IpfsAsset";
 import NetworkIndicator from "@/components/NetworkIndicator";
-import { getCustomization } from "../../api/customization";
+
+import { bytes32ToIpfsHash } from "@/utils/ipfs";
+import { getStampContract } from "@/utils/ipfs";
+import {
+  getStampContract as backendGetStampContract,
+  getWeb3,
+} from "@/utils/backend";
+import { getAbiFromJson, networkIdByName } from "@/utils/constants";
+
+import { getCustomization } from "@/api/customization";
 
 type QueryParams = {
   network: string;

@@ -1,6 +1,6 @@
-import BaseLayout from "./Base";
 import { Button, styled } from "@cabindao/topo";
-import CommunitySwitch from "../CommunitySwitch";
+import BaseLayout from "@/layouts/Base";
+import CommunitySwitch from "@/components/CommunitySwitch";
 
 const PageContent = styled("div", {
   display: "flex",

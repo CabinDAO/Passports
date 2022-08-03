@@ -1,5 +1,6 @@
-import { styled, Box } from "@cabindao/topo";
 import Head from "next/head";
+
+import { styled, Box } from "@cabindao/topo";
 import { Web3Provider } from "@/components/Web3Context";
 import PageHeader from "@/components/PageHeader";
 

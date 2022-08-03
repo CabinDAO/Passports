@@ -1,7 +1,9 @@
-import { shimmer, toBase64 } from "@/utils/constants";
-import NextImage from "next/image";
 import { useEffect, useMemo, useState } from "react";
+
 import axios from "axios";
+import NextImage from "next/image";
+
+import { shimmer, toBase64 } from "@/utils/constants";
 
 const loadingShimmerSrc = `data:image/svg+xml;base64,${toBase64(
   shimmer(700, 475)

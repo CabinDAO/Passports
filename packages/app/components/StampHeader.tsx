@@ -1,6 +1,8 @@
 import React from "react";
 import { styled, Button, Text } from "@cabindao/topo";
+
 import Image from "next/image";
+
 import IpfsAsset from "./IpfsAsset";
 import StampAPassport from "./StampAPassport";
 

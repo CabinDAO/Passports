@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAddress, useWeb3, useChainId } from "@/components/Web3Context";
 import type { Contract, ContractSendMethod } from "web3-eth-contract";
+
+import { Button } from "@cabindao/topo";
+import { useAddress, useWeb3, useChainId } from "@/components/Web3Context";
+import Layout from "@/layouts/CommunityLayout";
+
 import {
   contractAddressesByNetworkId,
   getAbiFromJson,
 } from "@/components/constants";
+
 import stakingJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Staking.sol/Staking.json";
 import testTokenJson from "@cabindao/nft-passport-contracts/artifacts/contracts/TestToken.sol/TestToken.json";
-import { Button } from "@cabindao/topo";
-import Layout from "@/layouts/CommunityLayout";
 
 const useFaucet = () => {
   const address = useAddress();

@@ -1,6 +1,7 @@
+import axios from "axios";
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { ContractSendMethod } from "web3-eth-contract";
-import axios from "axios";
+
 import { networkIdByName } from "@/utils/constants";
 import { getStampContract } from "@/utils/backend";
 

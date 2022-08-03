@@ -1,7 +1,9 @@
 import { Button, styled } from "@cabindao/topo";
 import { PlusIcon } from "@radix-ui/react-icons";
+
 import Image from "next/image";
 import Link from "next/link";
+
 import { useUser } from "@clerk/nextjs";
 
 const OuterNav = styled("nav", {

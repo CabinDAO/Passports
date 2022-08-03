@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import type { NextPage } from "next/types";
 import { useRouter } from "next/router";
-import Hero from "@/components/Hero"
-import BaseLayout from "@/layout/Base";
+
 import { Button, styled, Wrapper, Heading } from "@cabindao/topo";
+import Hero from "@/components/Hero";
+import BaseLayout from "@/layouts/Base";
+
 import { useUser } from "@clerk/nextjs";
 
 const Container = styled("section", {
