@@ -60,6 +60,7 @@ import { getCustomization } from "../../api/customization";
 import { getStampOwners } from "../../../components/firebase";
 import Link from "next/link";
 import StampAPassport from "../../../components/StampAPassport";
+import StampSettings from "../../../components/screens/StampSettings/";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -139,11 +140,6 @@ const EditableStampCardRow = ({
   const address = useAddress();
   const [value, setValue] = useState(stamp[field] || 0);
 
-  if (field === "price") {
-    console.log("hello world");
-    console.log("UI value", typeof value, value);
-  }
-
   return (
     <StampCardRow>
       <StampCardKey>{field}</StampCardKey>
@@ -166,28 +162,30 @@ const EditableStampCardRow = ({
               web3,
               address: stamp.address,
               version: stamp.version,
-            }).then(
-              (contract) => {
-                // This is to account for the price being denominated in Ether
-                // in the UI, but needs to be sent in Wei.
-                let valueToSend = field === "price" ? web3.utils.toBN( web3.utils.toWei("0.5") ) : value
-                console.log("valueToSend: ", typeof valueToSend, valueToSend)
+            }).then((contract) => {
+              // This is to account for the price being denominated in Ether
+              // in the UI, but needs to be sent in Wei.
+              let valueToSend =
+                field === "price"
+                  ? web3.utils.toBN(web3.utils.toWei("0.5"))
+                  : value;
+              console.log("valueToSend: ", typeof valueToSend, valueToSend);
 
-                return new Promise<void>((resolve, reject) =>
-                                  contract.methods[
+              return new Promise<void>((resolve, reject) =>
+                contract.methods[
                   `set${field.slice(0, 1).toUpperCase()}${field.slice(1)}`
                 ](valueToSend)
-                .send({ from: address })
-                .on("receipt", () => {
-                  setStamp({
-                    ...stamp,
-                    [field]: value,
-                  });
-                  resolve();
-                })
-                .on("error", reject),
-                                 )
-              });
+                  .send({ from: address })
+                  .on("receipt", () => {
+                    setStamp({
+                      ...stamp,
+                      [field]: value,
+                    });
+                    resolve();
+                  })
+                  .on("error", reject)
+              );
+            });
           }}
         >
           <ModalInput
@@ -197,7 +195,6 @@ const EditableStampCardRow = ({
             type={"number"}
           />
         </Modal>
-
       </StampCardValue>
     </StampCardRow>
   );
@@ -240,6 +237,7 @@ const StampCard = (props: IStampProps) => {
   const [fileLoading, setFileLoading] = useState(false);
   const chainId = useChainId();
   const [toastMessage, setToastMessage] = useState("");
+
   return (
     <StampCardContainer>
       <div style={{ marginBottom: 16 }}>
@@ -272,151 +270,7 @@ const StampCard = (props: IStampProps) => {
             )}
           </Button>
         </Tooltip>
-        <Modal
-          hideCloseIcon
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          title="Customize Checkout"
-          onConfirm={() => {
-            let upsertData: Record<string, string | undefined> = {
-              redirect_url: stamp.customization?.url,
-              contractAddr: stamp.address,
-              brand_color: stamp.customization?.brandColor,
-              accent_color: stamp.customization?.accColor,
-              text_color: stamp.customization?.textColor,
-              button_txt: stamp.customization?.buttonTxt,
-              logo_cid: stamp.customization?.logoCid,
-            };
-            return axios
-              .post("/api/updateCustomization", {
-                data: upsertData,
-              })
-              .then(() =>
-                setToastMessage(
-                  "Successfully updated stamp's customized checkout experience!",
-                ),
-              )
-              .catch((e) =>
-                setToastMessage(`ERROR: ${e.response?.data || e.message}`),
-              );
-          }}
-        >
-          <ModalContent>
-            <ModalLabel>{`${stamp.name} (${stamp.symbol})`}</ModalLabel>
-            <ModalInput
-              label={"Redirect URL"}
-              value={stamp.customization?.url}
-              onChange={(e) =>
-                setStamp({
-                  ...stamp,
-                  customization: {
-                    ...stamp.customization,
-                    url: e.target.value,
-                  },
-                })
-              }
-            />
-            <ModalInputBox>
-              <ModalInputLabel htmlFor="bcolor">Brand color:</ModalInputLabel>
-              <input
-                type="color"
-                id="bcolor"
-                name="bcolor"
-                value={stamp.customization?.brandColor || "#fdf3e7"}
-                onChange={(e) =>
-                  setStamp({
-                    ...stamp,
-                    customization: {
-                      ...stamp.customization,
-                      brandColor: e.target.value,
-                    },
-                  })
-                }
-              ></input>
-            </ModalInputBox>
-            <ModalInputBox>
-              <ModalInputLabel htmlFor="acolor">Accent color:</ModalInputLabel>
-              <input
-                type="color"
-                id="acolor"
-                name="acolor"
-                value={stamp.customization?.accColor || "#324841"}
-                onChange={(e) =>
-                  setStamp({
-                    ...stamp,
-                    customization: {
-                      ...stamp.customization,
-                      accColor: e.target.value,
-                    },
-                  })
-                }
-              ></input>
-            </ModalInputBox>
-            <ModalInputBox>
-              <ModalInputLabel htmlFor="acolor">Text color:</ModalInputLabel>
-              <input
-                type="color"
-                id="textColor"
-                name="textColor"
-                value={stamp.customization?.textColor || "#ffffff"}
-                onChange={(e) =>
-                  setStamp({
-                    ...stamp,
-                    customization: {
-                      ...stamp.customization,
-                      textColor: e.target.value,
-                    },
-                  })
-                }
-              ></input>
-            </ModalInputBox>
-            <ModalInput
-              label={"Button Text"}
-              value={stamp.customization?.buttonTxt}
-              onChange={(e) =>
-                setStamp({
-                  ...stamp,
-                  customization: {
-                    ...stamp.customization,
-                    buttonTxt: e.target.value,
-                  },
-                })
-              }
-            />
-            <ModalInputBox>
-              <Label
-                label={
-                  stamp.customization?.logoCid ? "Change Logo" : "Upload Logo"
-                }
-              >
-                <input
-                  type={"file"}
-                  accept="video/*,image/*"
-                  onChange={async (e) => {
-                    if (e.target.files) {
-                      setFileLoading(true);
-                      const file = e.target.files[0];
-                      if (file) {
-                        return ipfsAdd(file)
-                          .then((logoCid) =>
-                            setStamp({
-                              ...stamp,
-                              customization: {
-                                ...stamp.customization,
-                                logoCid,
-                              },
-                            }),
-                          )
-                          .finally(() => setFileLoading(false));
-                      }
-                    }
-                  }}
-                />
-              </Label>
-              {fileLoading && "Loading..."}
-            </ModalInputBox>
-          </ModalContent>
-        </Modal>
+
         <Modal
           hideCloseIcon
           isOpen={shareIsOpen}
@@ -449,11 +303,11 @@ const StampCard = (props: IStampProps) => {
                               resolve();
                             });
                         })
-                        .on("error", reject),
+                        .on("error", reject)
                     )
                   : Promise.reject(
-                      new Error(`Invalid wallet address ${userAddress}`),
-                    ),
+                      new Error(`Invalid wallet address ${userAddress}`)
+                    )
               )
               .catch((e) => setToastMessage(`ERROR: ${e.message}`));
           }}
@@ -478,7 +332,7 @@ const StampCard = (props: IStampProps) => {
             })
               .then((contract) =>
                 Promise.all(
-                  airdropAddrList.map((addr) => resolveAddress(addr, web3)),
+                  airdropAddrList.map((addr) => resolveAddress(addr, web3))
                 ).then(
                   (addrList) =>
                     new Promise<void>((resolve, reject) =>
@@ -518,9 +372,9 @@ const StampCard = (props: IStampProps) => {
                         .on("error", (e: Error) => {
                           setToastMessage(`ERROR: ${e.message}`);
                           reject(e);
-                        }),
-                    ),
-                ),
+                        })
+                    )
+                )
               )
               .catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
           }}
@@ -549,7 +403,7 @@ const StampCard = (props: IStampProps) => {
                             ? ([] as string[])
                             : Array(Number(a.quantity) || 1)
                                 .fill(null)
-                                .map(() => a.address),
+                                .map(() => a.address)
                         );
                         setAirdropAddrList(relevantAddr);
                       },
@@ -566,6 +420,7 @@ const StampCard = (props: IStampProps) => {
             <div>{airdropAddrList.length} Addresses</div>
           ) : null}
         </Modal>
+
         <Modal
           hideCloseIcon
           isOpen={pauseIsOpen}
@@ -585,7 +440,7 @@ const StampCard = (props: IStampProps) => {
                       : contract.methods.pause?.();
                     if (!sendMethod) {
                       throw new Error(
-                        "This stamp is on an older version that does not support pausing/unpausing",
+                        "This stamp is on an older version that does not support pausing/unpausing"
                       );
                     } else {
                       return sendMethod
@@ -595,7 +450,7 @@ const StampCard = (props: IStampProps) => {
                           setToastMessage(
                             `Successfully ${
                               newPauseValue ? "paused" : "unpaused"
-                            } the stamp.`,
+                            } the stamp.`
                           );
                           setStamp({
                             ...stamp,
@@ -605,7 +460,7 @@ const StampCard = (props: IStampProps) => {
                         })
                         .on("error", reject);
                     }
-                  }),
+                  })
               )
               .catch((e) => setToastMessage(`ERROR: ${e.message}`));
           }}
@@ -617,6 +472,7 @@ const StampCard = (props: IStampProps) => {
           </p>
         </Modal>
       </div>
+
       <StampCardRow>
         <span>BALANCE</span>
         <StampCardValue>
@@ -635,13 +491,13 @@ const StampCard = (props: IStampProps) => {
                     .send({ from: address })
                     .on("receipt", () => {
                       setToastMessage(
-                        `Successfully Claimed ${stamp.balance} ETH!`,
+                        `Successfully Claimed ${stamp.balance} ETH!`
                       );
                       setStamp({
                         ...stamp,
                         balance: "0",
                       });
-                    }),
+                    })
                 );
                 e.stopPropagation();
               }}
@@ -651,6 +507,7 @@ const StampCard = (props: IStampProps) => {
           </Tooltip>
         </StampCardValue>
       </StampCardRow>
+
       <StampCardRow>
         <span>MINTED</span>
         <StampCardValue>
@@ -661,7 +518,7 @@ const StampCard = (props: IStampProps) => {
                 window.navigator.clipboard.writeText(
                   `${window.location.origin}/checkout/${
                     networkNameById[Number(networkId)]
-                  }/${stamp.address}`,
+                  }/${stamp.address}`
                 );
                 setToastMessage("Copied checkout link!");
                 e.stopPropagation();
@@ -673,23 +530,27 @@ const StampCard = (props: IStampProps) => {
           </Tooltip>
         </StampCardValue>
       </StampCardRow>
+
       <EditableStampCardRow
         field={"supply"}
         stamp={stamp}
         setStamp={setStamp}
       />
+
       <EditableStampCardRow
         field={"price"}
         stamp={stamp}
         setStamp={setStamp}
         decorator={" ETH"}
       />
+
       <EditableStampCardRow
         field={"royalty"}
         stamp={stamp}
         setStamp={setStamp}
         decorator={"%"}
       />
+
       <Toast
         isOpen={!!toastMessage}
         onClose={() => setToastMessage("")}
@@ -761,7 +622,7 @@ const StampDetailPage = (props: IStampProps) => {
     .replace("[network]", network as string);
   const loadOwners = useCallback(
     () => router.push(`${base}?tab=owners`),
-    [router, base],
+    [router, base]
   );
   const [pageLoading, setPageLoading] = React.useState<boolean>(false);
   React.useEffect(() => {
@@ -827,7 +688,7 @@ const StampDetailPage = (props: IStampProps) => {
                   <tbody>
                     {Object.entries(props.users || {})
                       .flatMap(([addr, { tokens, name }]) =>
-                        tokens.map((id) => [id, name, addr] as const),
+                        tokens.map((id) => [id, name, addr] as const)
                       )
                       .sort((a, b) => a[0] - b[0])
                       .map((a) => (
@@ -903,17 +764,24 @@ const StampDetailPage = (props: IStampProps) => {
               <h2>Panel 2</h2>
             </TabPanel>
             <TabPanel active={tab === "settings"}>
-              <StampCard {...props} />
-              <Button
-                type={"icon"}
-                onClick={() =>
-                  axios.put(`/api/stamp/refresh`, {
-                    paths: [props.metadataHash, props.thumbnail],
-                  })
-                }
-              >
-                <ReloadIcon />
-              </Button>
+              <Box>
+                <Button
+                  type={"icon"}
+                  onClick={() =>
+                    axios.put(`/api/stamp/refresh`, {
+                      paths: [props.metadataHash, props.thumbnail],
+                    })
+                  }
+                >
+                  <ReloadIcon />
+                </Button>
+              </Box>
+              <Box>
+                <StampCard {...props} />
+              </Box>
+              <Box>
+                <StampSettings {...props} />
+              </Box>
             </TabPanel>
           </TabPanels>
         </Tabs>
@@ -927,68 +795,70 @@ type QueryParams = {
   network: string;
 };
 
-export const getServerSideProps: GetServerSideProps<IStampProps, QueryParams> =
-  (context) => {
-    const { network = "", address = "" } = context.params || {};
-    const web3 = getWeb3(network);
-    const { tab = "", offset } = context.query;
-    return Promise.all([
-      backendGetStampContract({ address, web3, network }).then(
-        ({ contract, version }) =>
-          (contract.methods.get() as ContractSendMethod)
-            .call()
-            .then((data) => ({ data, version })),
-      ),
-      tab === "settings"
-        ? Promise.all([
-            getCustomization(address).then(),
-            web3.eth
-              .getBalance(address)
-              .then((b) => web3.utils.fromWei(b, "ether")),
-          ]).then(([customization, balance]) => ({ customization, balance }))
-        : tab === "transactions" // TODO - SSR transactions
-        ? { transactions: [] }
-        : getStampOwners({
-            contract: address,
-            chain: networkIdByName[network],
-            offset: Number(offset) || 0,
-          }),
-    ])
-      .then(([{ data, version }, rest]) => {
-        const metadataHash = bytes32ToIpfsHash(data[5]);
-        return axios
-          .get<{ thumbnail: string } & Record<string, string>>(
-            `https://ipfs.io/ipfs/${metadataHash}`,
-          )
-          .then((r) => r.data)
-          .catch(() => ({} as Record<string, string>))
-          .then(({ thumbnail = "", ...metadata }) => ({
-            props: {
-              address,
-              name: data[0],
-              symbol: data[1],
-              supply: data[2] - data[3],
-              price: web3.utils.fromWei(data[4], "ether"),
-              thumbnail,
-              network,
-              version,
-              limit: Number(data[8]),
-              metadataHash,
-              metadata,
-              mintIndex: Number(data[3]),
-              royalty: data[6] / 100,
-              isPrivate: data[7],
-              paused: data[9] || false,
-              ...rest,
-            },
-          }));
-      })
-      .catch((e) => {
-        console.error(e);
-        return {
-          notFound: true,
-        };
-      });
-  };
+export const getServerSideProps: GetServerSideProps<
+  IStampProps,
+  QueryParams
+> = (context) => {
+  const { network = "", address = "" } = context.params || {};
+  const web3 = getWeb3(network);
+  const { tab = "", offset } = context.query;
+  return Promise.all([
+    backendGetStampContract({ address, web3, network }).then(
+      ({ contract, version }) =>
+        (contract.methods.get() as ContractSendMethod)
+          .call()
+          .then((data) => ({ data, version }))
+    ),
+    tab === "settings"
+      ? Promise.all([
+          getCustomization(address).then(),
+          web3.eth
+            .getBalance(address)
+            .then((b) => web3.utils.fromWei(b, "ether")),
+        ]).then(([customization, balance]) => ({ customization, balance }))
+      : tab === "transactions" // TODO - SSR transactions
+      ? { transactions: [] }
+      : getStampOwners({
+          contract: address,
+          chain: networkIdByName[network],
+          offset: Number(offset) || 0,
+        }),
+  ])
+    .then(([{ data, version }, rest]) => {
+      const metadataHash = bytes32ToIpfsHash(data[5]);
+      return axios
+        .get<{ thumbnail: string } & Record<string, string>>(
+          `https://ipfs.io/ipfs/${metadataHash}`
+        )
+        .then((r) => r.data)
+        .catch(() => ({} as Record<string, string>))
+        .then(({ thumbnail = "", ...metadata }) => ({
+          props: {
+            address,
+            name: data[0],
+            symbol: data[1],
+            supply: data[2] - data[3],
+            price: web3.utils.fromWei(data[4], "ether"),
+            thumbnail,
+            network,
+            version,
+            limit: Number(data[8]),
+            metadataHash,
+            metadata,
+            mintIndex: Number(data[3]),
+            royalty: data[6] / 100,
+            isPrivate: data[7],
+            paused: data[9] || false,
+            ...rest,
+          },
+        }));
+    })
+    .catch((e) => {
+      console.error(e);
+      return {
+        notFound: true,
+      };
+    });
+};
 
 export default StampDetailPage;
