@@ -1,6 +1,18 @@
 import { Modal } from "@cabindao/topo";
+import { useAddress, useWeb3 } from "@/components/Web3Context";
+import { ModalInput } from "@/components/Modal";
 
-const EditStampField = ({ isOpen, setIsOpen, field, stamp }) => {
+import { getStampContract } from "@/utils/stamps";
+
+const EditStampField = ({
+  isOpen,
+  setIsOpen,
+  field,
+  stamp,
+  setStamp,
+  value,
+  setValue,
+}) => {
   const web3 = useWeb3();
   const address = useAddress();
 
