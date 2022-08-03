@@ -31,7 +31,7 @@ import {
   ReloadIcon,
 } from "@radix-ui/react-icons";
 import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
-import Layout from "@/components/Layout/PageLayout";
+import Layout from "@/layouts/PageLayout";
 import StampHeader from "@/components/StampHeader";
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@/components/tabs";
 import PageTitle from "@/components/PageTitle";

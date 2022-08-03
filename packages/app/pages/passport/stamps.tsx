@@ -2,7 +2,7 @@ import { styled } from "@cabindao/topo";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import { GetServerSideProps } from "next";
 import React from "react";
-import Layout from "@/components/Layout/PageLayout";
+import Layout from "@/layouts/PageLayout";
 import PageTitle from "@/components/PageTitle";
 import Image from "next/image";
 import { ProfileLayout } from "../passport";

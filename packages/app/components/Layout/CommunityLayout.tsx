@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { styled } from "@cabindao/topo";
 import { useAddress } from "../Web3Context";
-import Layout from "./PageLayout";
+import Layout from "@/layouts/PageLayout";
 import Loading from "../Loading";
 
 const DRAWER_WIDTH = 200;
@@ -50,7 +50,7 @@ const useTab = () => {
   const router = useRouter();
   return useMemo(
     () => router.asPath.replace(/^\/#?/, "").replace(/(#.*)$/, ""),
-    [router],
+    [router]
   );
 };
 

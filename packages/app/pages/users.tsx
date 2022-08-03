@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ContractSendMethod } from "web3-eth-contract";
 import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
 import { styled } from "@cabindao/topo";
-import Layout from "@/components/Layout/CommunityLayout";
+import Layout from "@/layouts/CommunityLayout";
 import { getAllManagedStamps, getStampContract } from "@/utils/stamps";
 import { lookupAddress } from "@/utils/address";
 import axios from "axios";

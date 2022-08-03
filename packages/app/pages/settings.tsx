@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAddress, useWeb3, useChainId } from "@/components/Web3Context";
 import type { Contract, ContractSendMethod } from "web3-eth-contract";
-import { contractAddressesByNetworkId, getAbiFromJson } from "@/components/constants";
+import {
+  contractAddressesByNetworkId,
+  getAbiFromJson,
+} from "@/components/constants";
 import stakingJson from "@cabindao/nft-passport-contracts/artifacts/contracts/Staking.sol/Staking.json";
 import testTokenJson from "@cabindao/nft-passport-contracts/artifacts/contracts/TestToken.sol/TestToken.json";
 import { Button } from "@cabindao/topo";
-import Layout from "@/components/Layout/CommunityLayout";
+import Layout from "@/layouts/CommunityLayout";
 
 const useFaucet = () => {
   const address = useAddress();
@@ -128,7 +131,7 @@ const SettingsPage = () => {
     <Layout>
       <SettingsTabContent />
     </Layout>
-  )
-}
+  );
+};
 
 export default SettingsPage;

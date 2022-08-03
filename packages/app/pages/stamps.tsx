@@ -19,7 +19,7 @@ import { bytes32ToIpfsHash, ipfsAdd, ipfsHashToBytes32 } from "@/utils/ipfs";
 import { getAllManagedStamps } from "@/utils/stamps";
 
 import IpfsAsset from "@/components/IpfsAsset";
-import Layout from "@/components/Layout/CommunityLayout";
+import Layout from "@/layouts/CommunityLayout";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/router";
 import type { GetServerSideProps } from "next/types";
