@@ -1,3 +1,9 @@
+import { useEffect, useMemo, useState } from "react";
+import Papa from "papaparse";
+import { TransactionReceipt } from "web3-core";
+
+import type { ContractSendMethod } from "web3-eth-contract";
+
 import {
   Box,
   Button,
@@ -8,18 +14,12 @@ import {
   Toast,
   styled,
 } from "@cabindao/topo";
-import { useEffect, useMemo, useState } from "react";
-import type { ContractSendMethod } from "web3-eth-contract";
-import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
 import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
-import { TransactionReceipt } from "web3-core";
-import Papa from "papaparse";
-import {
-  getAllManagedStamps,
-  resolveAddress,
-  getStampContract,
-} from "../components/utils";
-import Layout from "../components/CommunityLayout";
+import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
+import Layout from "@/layouts/CommunityLayout";
+
+import { getAllManagedStamps, getStampContract } from "@/utils/stamps";
+import { resolveAddress } from "@/utils/address";
 
 const SmallBox = styled(Box, {
   width: "25%",
@@ -80,8 +80,7 @@ const ManageTabContent = () => {
       ),
     [mAddresses]
   );
-  const [stampDetails, setStampDetails] =
-    useState<StampDetailMap>({});
+  const [stampDetails, setStampDetails] = useState<StampDetailMap>({});
   const [showLoading, setShowLoading] = useState<boolean>(false);
   const [allowedUsers, setAllowedUsers] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState<boolean>(false);

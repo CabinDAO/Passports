@@ -1,3 +1,5 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { initializeApp } from "firebase/app";
 import {
   collection,
@@ -8,9 +10,9 @@ import {
   setDoc,
   where,
 } from "firebase/firestore/lite";
-import type { NextApiRequest, NextApiResponse } from "next";
-import { firebaseConfig } from "../../components/constants";
-import { getStampOwners } from "../../components/firebase";
+
+import { firebaseConfig } from "@/utils/constants";
+import { getStampOwners } from "@/utils/firebase";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {

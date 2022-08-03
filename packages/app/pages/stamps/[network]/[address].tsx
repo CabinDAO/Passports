@@ -1,3 +1,13 @@
+import axios from "axios";
+import Link from "next/link";
+import Papa from "papaparse";
+import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { GetServerSideProps } from "next";
+import type { ContractSendMethod } from "web3-eth-contract";
+import type { TransactionReceipt } from "web3-core";
+
+// Components
 import {
   Box,
   Button,
@@ -9,36 +19,6 @@ import {
   Toast,
   Tooltip,
 } from "@cabindao/topo";
-import React, { useCallback, useEffect, useState } from "react";
-import axios from "axios";
-import { useRouter } from "next/router";
-import {
-  bytes32ToIpfsHash,
-  getStampContract,
-  ipfsAdd,
-  resolveAddress,
-} from "../../../components/utils";
-import {
-  useAddress,
-  useChainId,
-  useWeb3,
-} from "../../../components/Web3Context";
-import Layout from "../../../components/Layout";
-import StampHeader from "../../../components/StampHeader";
-import {
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-} from "../../../components/tabs";
-import { GetServerSideProps } from "next";
-import Papa from "papaparse";
-import {
-  networkIdByName,
-  networkNameById,
-} from "../../../components/constants";
-import PageTitle from "../../../components/PageTitle";
 import {
   Pencil1Icon,
   Share1Icon,
@@ -48,19 +28,29 @@ import {
   OpacityIcon,
   ExitIcon,
   Link1Icon,
+  ReloadIcon,
 } from "@radix-ui/react-icons";
-import type { ContractSendMethod } from "web3-eth-contract";
-import type { TransactionReceipt } from "web3-core";
-import { ReloadIcon } from "@radix-ui/react-icons";
+import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
+import Layout from "@/layouts/PageLayout";
+import StampHeader from "@/components/StampHeader";
+import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@/components/tabs";
+import PageTitle from "@/components/PageTitle";
+import StampAPassport from "@/components/StampAPassport";
+import StampSettings from "../../../components/screens/StampSettings/";
+
+// Utils
+import { bytes32ToIpfsHash, ipfsAdd } from "@/utils/ipfs";
+import { resolveAddress } from "@/utils/address";
+import { getStampContract } from "@/utils/stamps";
+import { networkIdByName, networkNameById } from "@/utils/constants";
 import {
   getStampContract as backendGetStampContract,
   getWeb3,
-} from "../../../components/backend";
-import { getCustomization } from "../../api/customization";
-import { getStampOwners } from "../../../components/firebase";
-import Link from "next/link";
-import StampAPassport from "../../../components/StampAPassport";
-import StampSettings from "../../../components/screens/StampSettings/";
+} from "@/utils/backend";
+import { getStampOwners } from "@/utils/firebase";
+
+// API methods
+import { getCustomization } from "@/api/customization";
 
 const StampCardContainer = styled("div", {
   background: "$forest",

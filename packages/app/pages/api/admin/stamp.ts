@@ -1,8 +1,10 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { initializeApp } from "firebase/app";
 import { collection, doc, getFirestore, setDoc } from "firebase/firestore/lite";
-import type { NextApiRequest, NextApiResponse } from "next";
-import { addPins } from "../../../components/backend";
-import { firebaseConfig } from "../../../components/constants";
+
+import { addPins } from "@/utils/backend";
+import { firebaseConfig } from "@/utils/constants";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {

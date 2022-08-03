@@ -1,3 +1,5 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { initializeApp } from "firebase/app";
 import {
   collection,
@@ -7,8 +9,8 @@ import {
   query,
   where,
 } from "firebase/firestore/lite";
-import type { NextApiRequest, NextApiResponse } from "next";
-import { firebaseConfig } from "../../components/constants";
+
+import { firebaseConfig } from "@/utils/constants";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {

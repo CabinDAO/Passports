@@ -1,15 +1,13 @@
-import { Box, Label, Select } from "@cabindao/topo";
+import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import type { ContractSendMethod } from "web3-eth-contract";
-import { useAddress, useChainId, useWeb3 } from "../components/Web3Context";
-import { styled } from "@cabindao/topo";
-import Layout from "../components/CommunityLayout";
-import {
-  getAllManagedStamps,
-  getStampContract,
-  lookupAddress,
-} from "../components/utils";
-import axios from "axios";
+
+import { Box, Label, Select, styled } from "@cabindao/topo";
+import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
+import Layout from "@/layouts/CommunityLayout";
+
+import { getAllManagedStamps, getStampContract } from "@/utils/stamps";
+import { lookupAddress } from "@/utils/address";
 
 interface StampDetail {
   name: string;

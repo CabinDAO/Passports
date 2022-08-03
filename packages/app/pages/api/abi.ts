@@ -1,6 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getAbi } from "../../components/firebase";
 import fs from "fs";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getAbi } from "@/utils/firebase";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {

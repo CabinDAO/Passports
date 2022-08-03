@@ -1,4 +1,3 @@
-import { useClerk, useUser } from "@clerk/nextjs";
 import React, {
   useCallback,
   useContext,
@@ -6,8 +5,12 @@ import React, {
   useRef,
   useState,
 } from "react";
+
 import Web3 from "web3";
-import { lookupAddress } from "./utils";
+
+import { useClerk, useUser } from "@clerk/nextjs";
+
+import { lookupAddress } from "@/utils/address";
 
 declare global {
   interface Window {

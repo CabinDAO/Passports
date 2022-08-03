@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { addPins, lsPins } from "../../../components/backend";
+import { addPins, lsPins } from "@/utils/backend";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
