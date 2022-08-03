@@ -1,4 +1,4 @@
-import { shimmer, toBase64 } from "./constants";
+import { shimmer, toBase64 } from "@/utils/constants";
 import NextImage from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";

@@ -4,11 +4,8 @@ import type { ContractSendMethod } from "web3-eth-contract";
 import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
 import { styled } from "@cabindao/topo";
 import Layout from "@/components/Layout/CommunityLayout";
-import {
-  getAllManagedStamps,
-  getStampContract,
-  lookupAddress,
-} from "@/components/utils";
+import { getAllManagedStamps, getStampContract } from "@/utils/stamps";
+import { lookupAddress } from "@/utils/address";
 import axios from "axios";
 
 interface StampDetail {
@@ -83,9 +80,9 @@ const UsersTabContent = () => {
         .then((r) =>
           Promise.all(
             Object.entries(r.data.users).map(([addr, ids]) =>
-              lookupAddress(addr, web3).then((addr) => [addr, ids]),
-            ),
-          ),
+              lookupAddress(addr, web3).then((addr) => [addr, ids])
+            )
+          )
         )
         .then((entries) => setUsers(Object.fromEntries(entries)))
         .finally(() => setShowLoading(false));
@@ -102,7 +99,7 @@ const UsersTabContent = () => {
           version: mAddr.version,
         })
           .then((contract) =>
-            (contract.methods.get() as ContractSendMethod).call(),
+            (contract.methods.get() as ContractSendMethod).call()
           )
           .then((p) => {
             const data: StampDetailMap = {};

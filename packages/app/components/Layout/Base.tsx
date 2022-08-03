@@ -1,7 +1,7 @@
 import { styled, Box } from "@cabindao/topo";
 import Head from "next/head";
-import { Web3Provider } from "../Web3Context";
-import PageHeader from "../PageHeader";
+import { Web3Provider } from "@/components/Web3Context";
+import PageHeader from "@/components/PageHeader";
 
 const Page = styled("div", {
   position: "relative",

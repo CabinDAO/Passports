@@ -16,12 +16,12 @@ import {
   useState,
 } from "react";
 import { CrossCircledIcon } from "@radix-ui/react-icons";
-import { getStampContract } from "./utils";
+import { getStampContract } from "@/utils/stamps";
 import { useAddress, useChainId, useWeb3 } from "./Web3Context";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
 import Loading from "./Loading";
-import { networkNameById } from "./constants";
+import { networkNameById } from "@/utils/constants";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 // TODO: migrate to TOPO at some point

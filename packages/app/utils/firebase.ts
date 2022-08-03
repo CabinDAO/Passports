@@ -1,3 +1,4 @@
+import axios from "axios";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
@@ -7,11 +8,13 @@ import {
   where,
 } from "firebase/firestore/lite";
 import { getStorage, list, ref, getBytes } from "firebase/storage";
-import { getStampContract, getWeb3 } from "./backend";
-import { firebaseConfig, networkNameById } from "./constants";
+
+import { getStampContract, getWeb3 } from "@/utils/backend";
+import { firebaseConfig, networkNameById } from "@/utils/constants";
+import { bytes32ToIpfsHash } from "@/utils/ipfs";
+
 import type { ContractSendMethod } from "web3-eth-contract";
-import { bytes32ToIpfsHash } from "./utils";
-import axios from "axios";
+
 import { users } from "@clerk/clerk-sdk-node";
 
 export const getVersionByAddress = (address: string, chain: number) => {

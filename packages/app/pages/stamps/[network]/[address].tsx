@@ -1,3 +1,13 @@
+import axios from "axios";
+import Link from "next/link";
+import Papa from "papaparse";
+import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { GetServerSideProps } from "next";
+import type { ContractSendMethod } from "web3-eth-contract";
+import type { TransactionReceipt } from "web3-core";
+
+// Components
 import {
   Box,
   Button,
@@ -9,36 +19,6 @@ import {
   Toast,
   Tooltip,
 } from "@cabindao/topo";
-import React, { useCallback, useEffect, useState } from "react";
-import axios from "axios";
-import { useRouter } from "next/router";
-import {
-  bytes32ToIpfsHash,
-  getStampContract,
-  ipfsAdd,
-  resolveAddress,
-} from "@/components/utils";
-import {
-  useAddress,
-  useChainId,
-  useWeb3,
-} from "@/components/Web3Context";
-import Layout from "@/components/Layout/PageLayout";
-import StampHeader from "@/components/StampHeader";
-import {
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-} from "@/components/tabs";
-import { GetServerSideProps } from "next";
-import Papa from "papaparse";
-import {
-  networkIdByName,
-  networkNameById,
-} from "@/components/constants";
-import PageTitle from "@/components/PageTitle";
 import {
   Pencil1Icon,
   Share1Icon,
@@ -48,18 +28,28 @@ import {
   OpacityIcon,
   ExitIcon,
   Link1Icon,
+  ReloadIcon,
 } from "@radix-ui/react-icons";
-import type { ContractSendMethod } from "web3-eth-contract";
-import type { TransactionReceipt } from "web3-core";
-import { ReloadIcon } from "@radix-ui/react-icons";
+import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
+import Layout from "@/components/Layout/PageLayout";
+import StampHeader from "@/components/StampHeader";
+import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@/components/tabs";
+import PageTitle from "@/components/PageTitle";
+import StampAPassport from "@/components/StampAPassport";
+
+// Utils
+import { bytes32ToIpfsHash, ipfsAdd } from "@/utils/ipfs";
+import { resolveAddress } from "@/utils/address";
+import { getStampContract } from "@/utils/stamps";
+import { networkIdByName, networkNameById } from "@/utils/constants";
 import {
   getStampContract as backendGetStampContract,
   getWeb3,
-} from "@/components/backend";
-import { getCustomization } from "../../api/customization";
-import { getStampOwners } from "@/components/firebase";
-import Link from "next/link";
-import StampAPassport from "@/components/StampAPassport";
+} from "@/utils/backend";
+import { getStampOwners } from "@/utils/firebase";
+
+// API methods
+import { getCustomization } from "@/api/customization";
 
 const StampCardContainer = styled("div", {
   background: "$forest",
@@ -173,8 +163,8 @@ const EditableStampCardRow = ({
                       });
                       resolve();
                     })
-                    .on("error", reject),
-                ),
+                    .on("error", reject)
+                )
             );
           }}
         >
@@ -280,11 +270,11 @@ const StampCard = (props: IStampProps) => {
               })
               .then(() =>
                 setToastMessage(
-                  "Successfully updated stamp's customized checkout experience!",
-                ),
+                  "Successfully updated stamp's customized checkout experience!"
+                )
               )
               .catch((e) =>
-                setToastMessage(`ERROR: ${e.response?.data || e.message}`),
+                setToastMessage(`ERROR: ${e.response?.data || e.message}`)
               );
           }}
         >
@@ -392,7 +382,7 @@ const StampCard = (props: IStampProps) => {
                                 ...stamp.customization,
                                 logoCid,
                               },
-                            }),
+                            })
                           )
                           .finally(() => setFileLoading(false));
                       }
@@ -436,11 +426,11 @@ const StampCard = (props: IStampProps) => {
                               resolve();
                             });
                         })
-                        .on("error", reject),
+                        .on("error", reject)
                     )
                   : Promise.reject(
-                      new Error(`Invalid wallet address ${userAddress}`),
-                    ),
+                      new Error(`Invalid wallet address ${userAddress}`)
+                    )
               )
               .catch((e) => setToastMessage(`ERROR: ${e.message}`));
           }}
@@ -464,7 +454,7 @@ const StampCard = (props: IStampProps) => {
             })
               .then((contract) =>
                 Promise.all(
-                  airdropAddrList.map((addr) => resolveAddress(addr, web3)),
+                  airdropAddrList.map((addr) => resolveAddress(addr, web3))
                 ).then(
                   (addrList) =>
                     new Promise<void>((resolve, reject) =>
@@ -504,9 +494,9 @@ const StampCard = (props: IStampProps) => {
                         .on("error", (e: Error) => {
                           setToastMessage(`ERROR: ${e.message}`);
                           reject(e);
-                        }),
-                    ),
-                ),
+                        })
+                    )
+                )
               )
               .catch((e: Error) => setToastMessage(`ERROR: ${e.message}`));
           }}
@@ -535,7 +525,7 @@ const StampCard = (props: IStampProps) => {
                             ? ([] as string[])
                             : Array(Number(a.quantity) || 1)
                                 .fill(null)
-                                .map(() => a.address),
+                                .map(() => a.address)
                         );
                         setAirdropAddrList(relevantAddr);
                       },
@@ -571,7 +561,7 @@ const StampCard = (props: IStampProps) => {
                       : contract.methods.pause?.();
                     if (!sendMethod) {
                       throw new Error(
-                        "This stamp is on an older version that does not support pausing/unpausing",
+                        "This stamp is on an older version that does not support pausing/unpausing"
                       );
                     } else {
                       return sendMethod
@@ -581,7 +571,7 @@ const StampCard = (props: IStampProps) => {
                           setToastMessage(
                             `Successfully ${
                               newPauseValue ? "paused" : "unpaused"
-                            } the stamp.`,
+                            } the stamp.`
                           );
                           setStamp({
                             ...stamp,
@@ -591,7 +581,7 @@ const StampCard = (props: IStampProps) => {
                         })
                         .on("error", reject);
                     }
-                  }),
+                  })
               )
               .catch((e) => setToastMessage(`ERROR: ${e.message}`));
           }}
@@ -621,13 +611,13 @@ const StampCard = (props: IStampProps) => {
                     .send({ from: address })
                     .on("receipt", () => {
                       setToastMessage(
-                        `Successfully Claimed ${stamp.balance} ETH!`,
+                        `Successfully Claimed ${stamp.balance} ETH!`
                       );
                       setStamp({
                         ...stamp,
                         balance: "0",
                       });
-                    }),
+                    })
                 );
                 e.stopPropagation();
               }}
@@ -647,7 +637,7 @@ const StampCard = (props: IStampProps) => {
                 window.navigator.clipboard.writeText(
                   `${window.location.origin}/checkout/${
                     networkNameById[Number(networkId)]
-                  }/${stamp.address}`,
+                  }/${stamp.address}`
                 );
                 setToastMessage("Copied checkout link!");
                 e.stopPropagation();
@@ -747,7 +737,7 @@ const StampDetailPage = (props: IStampProps) => {
     .replace("[network]", network as string);
   const loadOwners = useCallback(
     () => router.push(`${base}?tab=owners`),
-    [router, base],
+    [router, base]
   );
   const [pageLoading, setPageLoading] = React.useState<boolean>(false);
   React.useEffect(() => {
@@ -813,7 +803,7 @@ const StampDetailPage = (props: IStampProps) => {
                   <tbody>
                     {Object.entries(props.users || {})
                       .flatMap(([addr, { tokens, name }]) =>
-                        tokens.map((id) => [id, name, addr] as const),
+                        tokens.map((id) => [id, name, addr] as const)
                       )
                       .sort((a, b) => a[0] - b[0])
                       .map((a) => (
@@ -913,68 +903,70 @@ type QueryParams = {
   network: string;
 };
 
-export const getServerSideProps: GetServerSideProps<IStampProps, QueryParams> =
-  (context) => {
-    const { network = "", address = "" } = context.params || {};
-    const web3 = getWeb3(network);
-    const { tab = "", offset } = context.query;
-    return Promise.all([
-      backendGetStampContract({ address, web3, network }).then(
-        ({ contract, version }) =>
-          (contract.methods.get() as ContractSendMethod)
-            .call()
-            .then((data) => ({ data, version })),
-      ),
-      tab === "settings"
-        ? Promise.all([
-            getCustomization(address).then(),
-            web3.eth
-              .getBalance(address)
-              .then((b) => web3.utils.fromWei(b, "ether")),
-          ]).then(([customization, balance]) => ({ customization, balance }))
-        : tab === "transactions" // TODO - SSR transactions
-        ? { transactions: [] }
-        : getStampOwners({
-            contract: address,
-            chain: networkIdByName[network],
-            offset: Number(offset) || 0,
-          }),
-    ])
-      .then(([{ data, version }, rest]) => {
-        const metadataHash = bytes32ToIpfsHash(data[5]);
-        return axios
-          .get<{ thumbnail: string } & Record<string, string>>(
-            `https://ipfs.io/ipfs/${metadataHash}`,
-          )
-          .then((r) => r.data)
-          .catch(() => ({} as Record<string, string>))
-          .then(({ thumbnail = "", ...metadata }) => ({
-            props: {
-              address,
-              name: data[0],
-              symbol: data[1],
-              supply: data[2] - data[3],
-              price: web3.utils.fromWei(data[4], "ether"),
-              thumbnail,
-              network,
-              version,
-              limit: Number(data[8]),
-              metadataHash,
-              metadata,
-              mintIndex: Number(data[3]),
-              royalty: data[6] / 100,
-              isPrivate: data[7],
-              paused: data[9] || false,
-              ...rest,
-            },
-          }));
-      })
-      .catch((e) => {
-        console.error(e);
-        return {
-          notFound: true,
-        };
-      });
-  };
+export const getServerSideProps: GetServerSideProps<
+  IStampProps,
+  QueryParams
+> = (context) => {
+  const { network = "", address = "" } = context.params || {};
+  const web3 = getWeb3(network);
+  const { tab = "", offset } = context.query;
+  return Promise.all([
+    backendGetStampContract({ address, web3, network }).then(
+      ({ contract, version }) =>
+        (contract.methods.get() as ContractSendMethod)
+          .call()
+          .then((data) => ({ data, version }))
+    ),
+    tab === "settings"
+      ? Promise.all([
+          getCustomization(address).then(),
+          web3.eth
+            .getBalance(address)
+            .then((b) => web3.utils.fromWei(b, "ether")),
+        ]).then(([customization, balance]) => ({ customization, balance }))
+      : tab === "transactions" // TODO - SSR transactions
+      ? { transactions: [] }
+      : getStampOwners({
+          contract: address,
+          chain: networkIdByName[network],
+          offset: Number(offset) || 0,
+        }),
+  ])
+    .then(([{ data, version }, rest]) => {
+      const metadataHash = bytes32ToIpfsHash(data[5]);
+      return axios
+        .get<{ thumbnail: string } & Record<string, string>>(
+          `https://ipfs.io/ipfs/${metadataHash}`
+        )
+        .then((r) => r.data)
+        .catch(() => ({} as Record<string, string>))
+        .then(({ thumbnail = "", ...metadata }) => ({
+          props: {
+            address,
+            name: data[0],
+            symbol: data[1],
+            supply: data[2] - data[3],
+            price: web3.utils.fromWei(data[4], "ether"),
+            thumbnail,
+            network,
+            version,
+            limit: Number(data[8]),
+            metadataHash,
+            metadata,
+            mintIndex: Number(data[3]),
+            royalty: data[6] / 100,
+            isPrivate: data[7],
+            paused: data[9] || false,
+            ...rest,
+          },
+        }));
+    })
+    .catch((e) => {
+      console.error(e);
+      return {
+        notFound: true,
+      };
+    });
+};
 
 export default StampDetailPage;

@@ -1,5 +1,5 @@
 import { styled } from "@cabindao/topo";
-import { networkNameById } from "./constants";
+import { networkNameById } from "@/utils/constants";
 
 const NetworkIndicatorContainer = styled("span", {
   height: "27px",

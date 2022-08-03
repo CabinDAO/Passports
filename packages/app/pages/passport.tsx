@@ -4,7 +4,7 @@ import { styled, Button, Box, Heading, Text } from "@cabindao/topo";
 import PageTitle from "@/components/PageTitle";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import type { User } from "@clerk/clerk-sdk-node";
-import { getCommunitiesByUser } from "@/components/firebase";
+import { getCommunitiesByUser } from "@/utils/firebase";
 import ProfileHeader from "@/components/ProfileHeader";
 import CommunityCard from "@/components/CommunityCard";
 
@@ -86,7 +86,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, {}> =
         props,
       }));
     },
-    { loadUser: true },
+    { loadUser: true }
   );
 
 export default Profile;

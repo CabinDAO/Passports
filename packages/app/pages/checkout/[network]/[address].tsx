@@ -1,5 +1,5 @@
 import { GetServerSideProps } from "next";
-import { getAbiFromJson, networkIdByName } from "@/components/constants";
+import { getAbiFromJson, networkIdByName } from "@/utils/constants";
 import type { ContractSendMethod } from "web3-eth-contract";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
@@ -12,7 +12,8 @@ import {
   styled,
   Toast,
 } from "@cabindao/topo";
-import { bytes32ToIpfsHash, getStampContract } from "@/components/utils";
+import { bytes32ToIpfsHash } from "@/utils/ipfs";
+import { getStampContract } from "@/utils/ipfs";
 import {
   getStampContract as backendGetStampContract,
   getWeb3,
@@ -167,7 +168,7 @@ const CheckoutPageContent = ({
   const [owned, setOwned] = useState(0);
   const correctNetwork = useMemo(
     () => Number(chainId) === Number(networkIdByName[network]),
-    [network, chainId],
+    [network, chainId]
   );
   const [metadata, setMetadata] = useState<Record<string, string>>({});
   const [walletPassPlatform, setWalletPassPlatform] = useState<string>("");
@@ -182,7 +183,7 @@ const CheckoutPageContent = ({
         version,
       })
         .then((contract) =>
-          (contract.methods.balanceOf(account) as ContractSendMethod).call(),
+          (contract.methods.balanceOf(account) as ContractSendMethod).call()
         )
         .then((a) => {
           setOwned(a);
@@ -199,7 +200,7 @@ const CheckoutPageContent = ({
   useEffect(() => {
     if (qrFile)
       QRCode.toCanvas(qrCanvasRef.current, qrFile).catch((e) =>
-        setToastMessage(`ERROR: ${e.message}`),
+        setToastMessage(`ERROR: ${e.message}`)
       );
   }, [qrFile, qrCanvasRef]);
   const onBuy = useCallback(() => {
@@ -234,8 +235,8 @@ const CheckoutPageContent = ({
                     resolve(tokenId);
                   });
               })
-              .on("error", reject),
-          ),
+              .on("error", reject)
+          )
       )
       .then((tokenId) => {
         setToastMessage(`Stamp purchased!`);
@@ -251,7 +252,7 @@ const CheckoutPageContent = ({
                 signature,
                 signatureMessage,
                 platform: walletPassPlatform,
-              }),
+              })
             )
             .then((r) => setQrfile(r.data.fileURL));
         }
@@ -357,7 +358,7 @@ const CheckoutPageContent = ({
             >
               {customization.button_txt?.replace?.(
                 /{supply}/g,
-                supply.toString(),
+                supply.toString()
               ) || `Buy Stamp`}
             </Button>
           </div>
@@ -399,7 +400,7 @@ const CheckoutPage = (props: PageProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
-  context,
+  context
 ) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
@@ -408,7 +409,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
       ({ contract, version }) =>
         (contract.methods.get() as ContractSendMethod)
           .call()
-          .then((data) => ({ data, version })),
+          .then((data) => ({ data, version }))
     ),
     getCustomization(address),
   ])

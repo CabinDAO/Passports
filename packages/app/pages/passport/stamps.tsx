@@ -6,7 +6,7 @@ import Layout from "@/components/Layout/PageLayout";
 import PageTitle from "@/components/PageTitle";
 import Image from "next/image";
 import { ProfileLayout } from "../passport";
-import { getStampsByUser } from "@/components/firebase";
+import { getStampsByUser } from "@/utils/firebase";
 import { useRouter } from "next/router";
 import type { User } from "@clerk/clerk-sdk-node";
 
@@ -182,7 +182,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, {}> =
           },
         }));
     },
-    { loadUser: true },
+    { loadUser: true }
   );
 
 export default ProfileStamps;

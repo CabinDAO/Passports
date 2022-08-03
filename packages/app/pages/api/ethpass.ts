@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
-import { networkIdByName } from "../../components/constants";
-import { getStampContract } from "../../components/backend";
+import { networkIdByName } from "@/utils/constants";
+import { getStampContract } from "@/utils/backend";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {

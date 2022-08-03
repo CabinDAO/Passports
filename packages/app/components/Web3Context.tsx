@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import Web3 from "web3";
-import { lookupAddress } from "./utils";
+import { lookupAddress } from "@/utils/address";
 
 declare global {
   interface Window {

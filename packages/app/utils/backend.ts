@@ -1,7 +1,7 @@
 import { create } from "ipfs-http-client";
 import Web3 from "web3";
-import { getAbiFromJson, networkIdByName } from "./constants";
-import { getAbi, getVersionByAddress } from "./firebase";
+import { getAbiFromJson, networkIdByName } from "@/utils/constants";
+import { getAbi, getVersionByAddress } from "@/utils/firebase";
 
 export const getWeb3 = (networkName: string) =>
   new Web3(

@@ -14,12 +14,9 @@ import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
 import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { TransactionReceipt } from "web3-core";
 import Papa from "papaparse";
-import {
-  getAllManagedStamps,
-  resolveAddress,
-  getStampContract,
-} from "@/components/utils";
-import Layout from "@/components/CommunityLayout";
+import { getAllManagedStamps, getStampContract } from "@/utils/stamps";
+import { resolveAddress } from "@/utils/address";
+import Layout from "@/layouts/CommunityLayout";
 
 const SmallBox = styled(Box, {
   width: "25%",
@@ -80,8 +77,7 @@ const ManageTabContent = () => {
       ),
     [mAddresses]
   );
-  const [stampDetails, setStampDetails] =
-    useState<StampDetailMap>({});
+  const [stampDetails, setStampDetails] = useState<StampDetailMap>({});
   const [showLoading, setShowLoading] = useState<boolean>(false);
   const [allowedUsers, setAllowedUsers] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState<boolean>(false);

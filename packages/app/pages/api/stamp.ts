@@ -9,11 +9,11 @@ import {
   where,
 } from "firebase/firestore/lite";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { firebaseConfig, networkNameById } from "../../components/constants";
-import { bytes32ToIpfsHash } from "../../components/utils";
+import { firebaseConfig, networkNameById } from "@/utils/constants";
+import { bytes32ToIpfsHash } from "@/utils/ipfs";
 import type { ContractSendMethod } from "web3-eth-contract";
 import axios from "axios";
-import { getStampContract } from "../../components/backend";
+import { getStampContract } from "@/utils/backend";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const app = initializeApp(firebaseConfig);

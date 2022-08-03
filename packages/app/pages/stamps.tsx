@@ -10,17 +10,14 @@ import {
   theme,
 } from "@cabindao/topo";
 import Image from "next/image";
-import { getAbiFromJson, networkNameById } from "@/components/constants";
+import { getAbiFromJson, networkNameById } from "@/utils/constants";
 import ClipSVG from "@/components/icons/Clip.svg";
 import { ArrowLeftIcon, ArrowRightIcon } from "@radix-ui/react-icons";
 import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
 import axios from "axios";
-import {
-  bytes32ToIpfsHash,
-  getAllManagedStamps,
-  ipfsAdd,
-  ipfsHashToBytes32,
-} from "@/components/utils";
+import { bytes32ToIpfsHash, ipfsAdd, ipfsHashToBytes32 } from "@/utils/ipfs";
+import { getAllManagedStamps } from "@/utils/stamps";
+
 import IpfsAsset from "@/components/IpfsAsset";
 import Layout from "@/components/Layout/CommunityLayout";
 import Loading from "@/components/Loading";
@@ -28,9 +25,9 @@ import { useRouter } from "next/router";
 import type { GetServerSideProps } from "next/types";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import { users } from "@clerk/clerk-sdk-node";
-import { getAdminStamps } from "@/components/firebase";
+import { getAdminStamps } from "@/utils/firebase";
 import Link from "next/link";
-import { getWeb3, getStampContract } from "@/components/backend";
+import { getWeb3, getStampContract } from "@/utils/backend";
 
 const ViewStampContainer = styled("div", {
   display: "flex",
