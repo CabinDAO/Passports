@@ -1,6 +1,15 @@
 import React, { useState, useCallback } from "react";
 import axios from "axios";
-import { styled, theme, Box, Text, Tooltip, Button, Modal, Input} from "@cabindao/topo";
+import {
+  styled,
+  theme,
+  Box,
+  Text,
+  Tooltip,
+  Button,
+  Modal,
+  Input,
+} from "@cabindao/topo";
 import {
   Pencil1Icon,
   Share1Icon,
@@ -12,17 +21,9 @@ import {
   Link1Icon,
   ReloadIcon,
 } from "@radix-ui/react-icons";
-import {
-  useAddress,
-  useChainId,
-  useWeb3,
-} from "../Web3Context";
-import {
-  getStampContract,
-} from "../utils";
-import {
-  networkNameById,
-} from "../constants";
+import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
+import { getStampContract } from "@/utils/stamps";
+import { networkNameById } from "@/utils/constants";
 import type { ContractSendMethod } from "web3-eth-contract";
 
 const SettingTitle = styled(Text, {
@@ -30,7 +31,7 @@ const SettingTitle = styled(Text, {
   color: "$wheat",
   fontSize: "$sm",
   textTransform: "uppercase",
-})
+});
 
 const StampCardValue = styled(Text, {
   color: "white",
@@ -39,7 +40,7 @@ const StampCardValue = styled(Text, {
   "& > button": {
     height: "16px",
   },
-})
+});
 
 interface IStampProps {
   address: string;
@@ -75,135 +76,144 @@ const StampSettings = (props: IStampProps) => {
   const [pauseIsOpen, setPauseIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  return <Box>
-    <Box css={{display: "flex", justifyContent: "space-between", width: "100%"}}>
-      <Box>
-        <Tooltip content={"Share Stamp Ownership"}>
-          <Button onClick={() => setShareIsOpen(true)}>
-            <Share1Icon width={20} height={20} color={theme.colors.wheat} />
-          </Button>
-        </Tooltip>
-        <Tooltip content={"Customize checkout"}>
-          <Button onClick={open} >
-            <Pencil2Icon width={20} height={20} color={theme.colors.wheat} />
-          </Button>
-        </Tooltip>
-        <Tooltip content={"Airdrop stamps"}>
-          <Button onClick={() => setAirDropIsOpen(true)} >
-            <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
-          </Button>
-        </Tooltip>
-        <Tooltip content={stamp.paused ? "Unpause" : "Pause"}>
-          <Button
-            onClick={() => {
-              setPauseIsOpen(true);
-            }}
-          >
-            {stamp.paused ? (
-              <PlayIcon width={20} height={20} color={theme.colors.wheat} />
-            ) : (
-              <PauseIcon width={20} height={20} color={theme.colors.wheat} />
-            )}
-          </Button>
-        </Tooltip>
-      </Box>
-
-      <Box>
-        <Tooltip content={"Refresh IPFS pin"}>
-          <Button
-            onClick={() =>
-              axios.put(`/api/stamp/refresh`, {
-              paths: [props.metadataHash, props.thumbnail],
-            })
-            }
-          >
-            <ReloadIcon width={20} height={20} color={theme.colors.wheat}/>
-          </Button>
-        </Tooltip>
-      </Box>
-    </Box>
-
-    <Box css={{padding: "$6 $4", maxWidth: 400, background: "$forest"}}>
-      <StampCardRow>
-        <SettingTitle>Balance</SettingTitle>
-
-        <StampCardValue>
-          {((Number(stamp.balance) * 39) / 40).toFixed(2)} ETH
-          <Tooltip content={"Withdraw"}>
+  return (
+    <Box>
+      {/* Settings header toolbar */}
+      <Box
+        css={{
+          display: "flex",
+          justifyContent: "space-between",
+          width: "100%",
+        }}
+      >
+        <Box>
+          <Tooltip content={"Share Stamp Ownership"}>
+            <Button onClick={() => setShareIsOpen(true)}>
+              <Share1Icon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={"Customize checkout"}>
+            <Button onClick={open}>
+              <Pencil2Icon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={"Airdrop stamps"}>
+            <Button onClick={() => setAirDropIsOpen(true)}>
+              <OpacityIcon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+          <Tooltip content={stamp.paused ? "Unpause" : "Pause"}>
             <Button
-              type={"icon"}
-              disabled={stamp.balance === "0"}
-              onClick={(e) => {
-                getStampContract({
-                  web3,
-                  address: stamp.address,
-                  version: stamp.version,
-                }).then((contract) =>
-                  (contract.methods.claimEth() as ContractSendMethod)
-                .send({ from: address })
-                .on("receipt", () => {
-                  setToastMessage(
-                    `Successfully Claimed ${stamp.balance} ETH!`,
+              onClick={() => {
+                setPauseIsOpen(true);
+              }}
+            >
+              {stamp.paused ? (
+                <PlayIcon width={20} height={20} color={theme.colors.wheat} />
+              ) : (
+                <PauseIcon width={20} height={20} color={theme.colors.wheat} />
+              )}
+            </Button>
+          </Tooltip>
+        </Box>
+
+        <Box>
+          <Tooltip content={"Refresh IPFS pin"}>
+            <Button
+              onClick={() =>
+                axios.put(`/api/stamp/refresh`, {
+                  paths: [props.metadataHash, props.thumbnail],
+                })
+              }
+            >
+              <ReloadIcon width={20} height={20} color={theme.colors.wheat} />
+            </Button>
+          </Tooltip>
+        </Box>
+      </Box>
+
+      <Box css={{ padding: "$6 $4", maxWidth: 400, background: "$forest" }}>
+        <StampCardRow>
+          <SettingTitle>Balance</SettingTitle>
+
+          <StampCardValue>
+            {((Number(stamp.balance) * 39) / 40).toFixed(2)} ETH
+            <Tooltip content={"Withdraw"}>
+              <Button
+                type={"icon"}
+                disabled={stamp.balance === "0"}
+                onClick={(e) => {
+                  getStampContract({
+                    web3,
+                    address: stamp.address,
+                    version: stamp.version,
+                  }).then((contract) =>
+                    (contract.methods.claimEth() as ContractSendMethod)
+                      .send({ from: address })
+                      .on("receipt", () => {
+                        setToastMessage(
+                          `Successfully Claimed ${stamp.balance} ETH!`
+                        );
+                        setStamp({
+                          ...stamp,
+                          balance: "0",
+                        });
+                      })
                   );
-                  setStamp({
-                    ...stamp,
-                    balance: "0",
-                  });
-                }),
-                       );
-                       e.stopPropagation();
-              }}
-            >
-              <ExitIcon color={theme.colors.wheat} width={12} height={12} />
-            </Button>
-          </Tooltip>
-        </StampCardValue>
-      </StampCardRow>
+                  e.stopPropagation();
+                }}
+              >
+                <ExitIcon color={theme.colors.wheat} width={12} height={12} />
+              </Button>
+            </Tooltip>
+          </StampCardValue>
+        </StampCardRow>
 
-      <StampCardRow>
-        <span>MINTED</span>
-        <StampCardValue>
-          {stamp.mintIndex}
-          <Tooltip content={"Copy checkout link"}>
-            <Button
-              onClick={(e) => {
-                window.navigator.clipboard.writeText(
-                  `${window.location.origin}/checkout/${
-                    networkNameById[Number(networkId)]
-                  }/${stamp.address}`,
-                );
-                setToastMessage("Copied checkout link!");
-                e.stopPropagation();
-              }}
-              type="icon"
-            >
-              <Link1Icon width={12} height={12} color={theme.colors.wheat} />
-            </Button>
-          </Tooltip>
-        </StampCardValue>
-      </StampCardRow>
+        <StampCardRow>
+          <span>MINTED</span>
+          <StampCardValue>
+            {stamp.mintIndex}
+            <Tooltip content={"Copy checkout link"}>
+              <Button
+                onClick={(e) => {
+                  window.navigator.clipboard.writeText(
+                    `${window.location.origin}/checkout/${
+                      networkNameById[Number(networkId)]
+                    }/${stamp.address}`
+                  );
+                  setToastMessage("Copied checkout link!");
+                  e.stopPropagation();
+                }}
+                type="icon"
+              >
+                <Link1Icon width={12} height={12} color={theme.colors.wheat} />
+              </Button>
+            </Tooltip>
+          </StampCardValue>
+        </StampCardRow>
 
-      <EditableStampCardRow
-        field={"supply"}
-        stamp={stamp}
-        setStamp={setStamp}
-      />
+        <EditableStampCardRow
+          field={"supply"}
+          stamp={stamp}
+          setStamp={setStamp}
+        />
 
-      <EditableStampCardRow
-        field={"price"}
-        stamp={stamp}
-        setStamp={setStamp}
-        decorator={" ETH"}
-      />
+        <EditableStampCardRow
+          field={"price"}
+          stamp={stamp}
+          setStamp={setStamp}
+          decorator={" ETH"}
+        />
 
-      <EditableStampCardRow
-        field={"royalty"}
-        stamp={stamp}
-        setStamp={setStamp}
-        decorator={"%"}
-      />
+        <EditableStampCardRow
+          field={"royalty"}
+          stamp={stamp}
+          setStamp={setStamp}
+          decorator={"%"}
+        />
+      </Box>
     </Box>
-  </Box>
+  );
 };
 
 export default StampSettings;
@@ -226,8 +236,6 @@ const StampCardRow = styled("div", {
 const StampCardKey = styled("span", {
   textTransform: "uppercase",
 });
-
-
 
 const EditableStampCardRow = ({
   field,
@@ -279,12 +287,12 @@ const EditableStampCardRow = ({
                 field === "price"
                   ? web3.utils.toBN(web3.utils.toWei("0.5"))
                   : value;
-                  console.log("valueToSend: ", typeof valueToSend, valueToSend);
+              console.log("valueToSend: ", typeof valueToSend, valueToSend);
 
-                  return new Promise<void>((resolve, reject) =>
-                                           contract.methods[
-                    `set${field.slice(0, 1).toUpperCase()}${field.slice(1)}`
-                  ](valueToSend)
+              return new Promise<void>((resolve, reject) =>
+                contract.methods[
+                  `set${field.slice(0, 1).toUpperCase()}${field.slice(1)}`
+                ](valueToSend)
                   .send({ from: address })
                   .on("receipt", () => {
                     setStamp({
@@ -293,8 +301,8 @@ const EditableStampCardRow = ({
                     });
                     resolve();
                   })
-                  .on("error", reject),
-                                          );
+                  .on("error", reject)
+              );
             });
           }}
         >

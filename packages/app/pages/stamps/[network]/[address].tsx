@@ -35,8 +35,8 @@ import Layout from "@/layouts/PageLayout";
 import StampHeader from "@/components/StampHeader";
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@/components/tabs";
 import PageTitle from "@/components/PageTitle";
-import StampAPassport from "@/components/StampAPassport";
-import StampSettings from "../../../components/screens/StampSettings/";
+import StampSettings from "@/components/screens/StampSettings/";
+import StampOwnersTab from "@/components/screens/StampOwnersTab";
 
 // Utils
 import { bytes32ToIpfsHash, ipfsAdd } from "@/utils/ipfs";
@@ -52,41 +52,10 @@ import { getStampOwners } from "@/utils/firebase";
 // API methods
 import { getCustomization } from "@/api/customization";
 
-const StampCardContainer = styled("div", {
-  background: "$forest",
-  color: "$sand",
-  width: 300,
-  padding: "18px 24px 24px",
-  display: "inline-block",
-  marginRight: "8px",
-  marginBottom: "8px",
-  verticalAlign: "top",
-  border: "1px solid $sprout",
-  borderRadius: "20px",
-});
+// Misc ---
+const Container = styled("div");
 
-const StampCardRow = styled("div", {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: "10px",
-  fontSize: "14px",
-  fontFamily: "$mono",
-  alignItems: "center",
-});
-
-const StampCardKey = styled("span", {
-  textTransform: "uppercase",
-});
-
-const StampCardValue = styled("span", {
-  color: "#ffffff",
-  fontWeight: 500,
-  fontFamily: "$sans",
-  "& > button": {
-    height: "16px",
-  },
-});
-
+// Modal Stuff ----
 const ModalInput = styled(Input, {
   paddingLeft: 8,
   border: "1px solid $forest",
@@ -114,6 +83,7 @@ const ModalInputLabel = styled(`label`, {
   marginRight: 10,
 });
 
+// Row of Stamp Card ----
 const EditableStampCardRow = ({
   field,
   stamp,
@@ -189,6 +159,42 @@ const EditableStampCardRow = ({
     </StampCardRow>
   );
 };
+
+// Stamp Card
+const StampCardContainer = styled("div", {
+  background: "$forest",
+  color: "$sand",
+  width: 300,
+  padding: "18px 24px 24px",
+  display: "inline-block",
+  marginRight: "8px",
+  marginBottom: "8px",
+  verticalAlign: "top",
+  border: "1px solid $sprout",
+  borderRadius: "20px",
+});
+
+const StampCardRow = styled("div", {
+  display: "flex",
+  justifyContent: "space-between",
+  marginBottom: "10px",
+  fontSize: "14px",
+  fontFamily: "$mono",
+  alignItems: "center",
+});
+
+const StampCardKey = styled("span", {
+  textTransform: "uppercase",
+});
+
+const StampCardValue = styled("span", {
+  color: "#ffffff",
+  fontWeight: 500,
+  fontFamily: "$sans",
+  "& > button": {
+    height: "16px",
+  },
+});
 
 interface IStampProps {
   address: string;
@@ -551,55 +557,11 @@ const StampCard = (props: IStampProps) => {
   );
 };
 
-const Container = styled("div");
-
-const CreateStampContainer = styled("div", {
-  borderRadius: "48px",
-  border: "1px solid $forest",
-  background: "rgba(29, 43, 42, 0.05)",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: "72px",
-  fontWeight: 600,
-});
-
-const CreateStampHeader = styled("h1", {
-  fontSize: "24px",
-  lineHeight: "31.2px",
-  fontFamily: "$mono",
-});
-
-const OwnerTable = styled("table", {
-  textAlign: "left",
-  fontWeight: 600,
-  color: "$forest",
-  textTransform: "capitalize",
-  fontSize: "14px",
-  fontFamily: "$mono",
-  borderCollapse: "separate",
-});
-
-const OwnerTableRow = styled("tr", {
-  borderBottom: "1px solid $forest",
-});
-
-const OwnerTableCell = styled("td", {
-  padding: "4px 12px",
-});
-
-const PaginatedContainer = styled("td", {
-  display: "flex",
-  gap: "16px",
-});
-
-const OwnerTableHeaderCell = styled("td", {
-  padding: "4px 12px",
-});
+// Page Component ----
 
 const StampDetailPage = (props: IStampProps) => {
   const router = useRouter();
+
   const {
     tab = "owners",
     address,
@@ -607,14 +569,18 @@ const StampDetailPage = (props: IStampProps) => {
     offset = "0",
     size = "10",
   } = router.query;
+
+  const [pageLoading, setPageLoading] = React.useState<boolean>(false);
+
   const base = router.pathname
     .replace("[address]", address as string)
     .replace("[network]", network as string);
+
   const loadOwners = useCallback(
     () => router.push(`${base}?tab=owners`),
     [router, base]
   );
-  const [pageLoading, setPageLoading] = React.useState<boolean>(false);
+
   React.useEffect(() => {
     const handleStart = () => {
       setPageLoading(true);
@@ -664,108 +630,18 @@ const StampDetailPage = (props: IStampProps) => {
           </TabList>
           <TabPanels>
             <TabPanel active={!tab || tab === "owners"}>
-              {Object.keys(props.users || {}).length ? (
-                <OwnerTable>
-                  <thead>
-                    <OwnerTableRow>
-                      <OwnerTableHeaderCell css={{ width: "64px" }}>
-                        ID
-                      </OwnerTableHeaderCell>
-                      <OwnerTableHeaderCell>NAME</OwnerTableHeaderCell>
-                      <OwnerTableHeaderCell>ADDRESS</OwnerTableHeaderCell>
-                    </OwnerTableRow>
-                  </thead>
-                  <tbody>
-                    {Object.entries(props.users || {})
-                      .flatMap(([addr, { tokens, name }]) =>
-                        tokens.map((id) => [id, name, addr] as const)
-                      )
-                      .sort((a, b) => a[0] - b[0])
-                      .map((a) => (
-                        <OwnerTableRow key={a[0]}>
-                          <OwnerTableCell>{a[0]}</OwnerTableCell>
-                          <OwnerTableCell>{a[1]}</OwnerTableCell>
-                          <OwnerTableCell>{a[2]}</OwnerTableCell>
-                        </OwnerTableRow>
-                      ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <OwnerTableCell />
-                      <OwnerTableCell>
-                        Page {Number(offset) / Number(size) + 1} of{" "}
-                        {Math.ceil((props.userTotal || 0) / Number(size))}
-                      </OwnerTableCell>
-                      <OwnerTableCell>
-                        <PaginatedContainer>
-                          <Button
-                            disabled={pageLoading || offset === "0"}
-                            onClick={() => {
-                              const params = new URLSearchParams({
-                                offset: (
-                                  Number(offset) - Number(size)
-                                ).toString(),
-                                tab: tab as string,
-                              });
-                              router.push(`${base}?${params.toString()}`);
-                            }}
-                          >
-                            Prev
-                          </Button>
-                          <Button
-                            disabled={
-                              pageLoading ||
-                              Number(offset) + Number(size) >=
-                                (props.userTotal || 0)
-                            }
-                            onClick={() => {
-                              const params = new URLSearchParams({
-                                offset: (
-                                  Number(offset) + Number(size)
-                                ).toString(),
-                                tab: tab as string,
-                              });
-                              router.push(`${base}?${params.toString()}`);
-                            }}
-                          >
-                            Next
-                          </Button>
-                        </PaginatedContainer>
-                      </OwnerTableCell>
-                    </tr>
-                  </tfoot>
-                </OwnerTable>
-              ) : (
-                <CreateStampContainer>
-                  <CreateStampHeader>
-                    Get started using stamps
-                  </CreateStampHeader>
-                  <StampAPassport
-                    label={`${props.name} (${props.symbol})`}
-                    version={props.version}
-                    address={props.address}
-                    // TODO replace with a callback that edits UI directly
-                    onStampSuccess={loadOwners}
-                  />
-                </CreateStampContainer>
-              )}
+              <StampOwnersTab
+                {...props}
+                offset={offset}
+                size={size}
+                loading={pageLoading}
+                loadOwners={loadOwners}
+              />
             </TabPanel>
             <TabPanel active={tab === "transactions"}>
               <h2>Panel 2</h2>
             </TabPanel>
             <TabPanel active={tab === "settings"}>
-              <Box>
-                <Button
-                  type={"icon"}
-                  onClick={() =>
-                    axios.put(`/api/stamp/refresh`, {
-                      paths: [props.metadataHash, props.thumbnail],
-                    })
-                  }
-                >
-                  <ReloadIcon />
-                </Button>
-              </Box>
               <Box>
                 <StampCard {...props} />
               </Box>
