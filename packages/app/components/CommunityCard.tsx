@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody } from "./Card";
 
 import Image from "next/image";
 
+// TODO: replace with Flex component in Topo
 const CommunityThumbnail = styled("div", {
   width: "160px",
   height: "120px",
@@ -16,6 +17,7 @@ const CommunityThumbnail = styled("div", {
   margin: "0 auto",
 });
 
+// TODO: replace this with the Text component
 const Field = styled("span", {
   color: "$forest",
   fontFamily: "$mono",
@@ -24,6 +26,7 @@ const Field = styled("span", {
   marginBottom: "8px",
 });
 
+// TODO: replace this with the Text component
 const Value = styled("span", {
   color: "#8B9389",
   fontFamily: "$sans",
@@ -62,6 +65,7 @@ const CommunityCard = ({
       <Text mono weight="light" size="sm" css={{ my: "$5" }}>
         {description}
       </Text>
+      {/* TODO: replace with Flex component from Topo */}
       <Box css={{ display: "flex", justifyContent: "space-between" }}>
         <Box
           css={{

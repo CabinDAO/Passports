@@ -1,3 +1,8 @@
+// TODO: Refactor this component. If we replace all the direct calls to
+//       IPFS with nft.storage or Alchemy/Infura, we should be able to
+//       store the IPFS CID and an http-style link in the database
+//       that we can use to fetch the asset
+
 import { useEffect, useMemo, useState } from "react";
 
 import axios from "axios";

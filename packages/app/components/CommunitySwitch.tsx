@@ -1,3 +1,13 @@
+/*
+ * Community Switch
+ * This component is the sidebar on the far left of the screen
+ * that lets someone switch between communities.
+ */
+
+// TODO: come up with a better name for this component
+// TODO: migrate this to Topo?
+// TODO: migrate communities to separate subdomains (i.e. make app multi-tenant)
+//       and make this about switching between from one subdomain to another.
 import { Button, styled } from "@cabindao/topo";
 import { PlusIcon } from "@radix-ui/react-icons";
 

@@ -1,3 +1,5 @@
+// TODO: move sidebar nav into separate component
+
 import React, { useMemo, useState } from "react";
 
 import type { NextPge } from "next";
@@ -11,6 +13,7 @@ import Loading from "@/components/Loading";
 
 const DRAWER_WIDTH = 200;
 
+// TODO: replace with Heading component from Topo
 const PageHeaderH1 = styled("h1", {
   fontWeight: 600,
   fontFamily: "$mono",
@@ -19,6 +22,7 @@ const PageHeaderH1 = styled("h1", {
   textTransform: "uppercase",
 });
 
+// TODO: replace with Tab component from Topo (? - not sure this is actually a tab)
 const TabContainer = styled("div", {
   margin: "12px 0",
   cursor: "pointer",
@@ -106,6 +110,7 @@ const LinkContainer = styled("div", {
   padding: "24px",
 });
 
+// TODO: refactor what ever this is doing
 const CabinLink = styled("div", {
   fontFamily: "$sans",
   fontSize: "32px",
@@ -115,6 +120,7 @@ const CabinLink = styled("div", {
   textTransform: "unset",
 });
 
+// TODO: replace with Flex component from Topo
 const PageMain = styled("main", {
   flex: 1,
   display: "flex",

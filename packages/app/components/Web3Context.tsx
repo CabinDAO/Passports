@@ -1,3 +1,7 @@
+// TODO: migrate this out of the components/ directory. Not sure the
+//       best place to put this, but we should be using context more
+//       (i.e. with modals and auth changes).
+
 import React, {
   useCallback,
   useContext,

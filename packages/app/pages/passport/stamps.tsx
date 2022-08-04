@@ -7,6 +7,8 @@ import { styled } from "@cabindao/topo";
 
 import Layout from "@/layouts/PageLayout";
 import PageTitle from "@/components/PageTitle";
+
+// TODO: move <ProfileLayout /> to the layouts/ directory
 import { ProfileLayout } from "../passport";
 
 import { getStampsByUser } from "@/utils/firebase";
@@ -14,6 +16,7 @@ import { getStampsByUser } from "@/utils/firebase";
 import { withServerSideAuth } from "@clerk/nextjs/ssr";
 import type { User } from "@clerk/clerk-sdk-node";
 
+// TODO: replace with Topo Flex
 const StampContainer = styled("div", {
   display: "flex",
   flexDirection: "column",
@@ -22,6 +25,7 @@ const StampContainer = styled("div", {
   borderRadius: "20px",
 });
 
+// TODO: replace with Topo Heading / Text
 const StampHeader = styled("div", {
   color: "$sand",
   textTransform: "capitalize",
@@ -31,6 +35,7 @@ const StampHeader = styled("div", {
   fontWeight: 600,
 });
 
+// TODO: replace with Topo divider
 const StampDivider = styled("hr", {
   background: "$sprout",
   margin: "16px 0",
@@ -38,6 +43,7 @@ const StampDivider = styled("hr", {
   border: 0,
 });
 
+// TODO: replace with AspectRatio
 const StampThumbnail = styled("div", {
   width: "100%",
   height: "128px",
@@ -49,6 +55,7 @@ const StampThumbnail = styled("div", {
   justifyContent: "center",
 });
 
+// TODO: replace with Topo Tabs component
 const TabContainer = styled("div", {
   marginBottom: "24px",
   display: "flex",

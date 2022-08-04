@@ -1,3 +1,5 @@
+// TODO: replace this with the Heading component from Topo (should be a
+//       preset in Topo)
 import { styled } from "@cabindao/topo";
 
 const PageTitle = styled("h1", {

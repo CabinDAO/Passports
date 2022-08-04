@@ -6,12 +6,14 @@ import Image from "next/image";
 import IpfsAsset from "./IpfsAsset";
 import StampAPassport from "./StampAPassport";
 
+// TODO: Replace with the Topo Heading component
 const CardTitle = styled("h1", {
   color: "$sand",
   fontFamily: "$mono",
   fontWeight: "500",
 });
 
+// TODO: replace with the Topo divider component
 const Separator = styled("div", {
   height: "2px",
   width: "25%",
@@ -20,15 +22,18 @@ const Separator = styled("div", {
   background: "$sprout",
 });
 
+// TODO: replace with the Topo Card component
 const Card = styled("div", {
   background: "$forest",
   padding: "0.75rem 2rem",
 });
 
+// TODO: replace with the Flex component from Topo
 const Flex = styled("div", {
   display: "flex",
 });
 
+// TODO: replace with the existing Container or Box component
 const Container = styled("div");
 
 const StampHeader = ({

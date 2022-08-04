@@ -1,6 +1,7 @@
 import { styled, theme, Button } from "@cabindao/topo";
 import StampAPassport from "@/components/StampAPassport";
 
+// TODO: implement themed table in Topo
 const OwnerTable = styled("table", {
   textAlign: "left",
   fontWeight: 600,
@@ -40,6 +41,7 @@ const CreateStampContainer = styled("div", {
   fontWeight: 600,
 });
 
+// TODO: replace with heading component from Topo
 const CreateStampHeader = styled("h1", {
   fontSize: "24px",
   lineHeight: "31.2px",
@@ -117,6 +119,7 @@ const StampOwnersTab = ({ offset, size, loading, loadOwners, ...props }) => {
         </OwnerTable>
       ) : (
         <CreateStampContainer>
+          {/* TODO: This should become a view, since we use it in ~2-3 places */}
           <CreateStampHeader>Get started using stamps</CreateStampHeader>
           <StampAPassport
             label={`${props.name} (${props.symbol})`}

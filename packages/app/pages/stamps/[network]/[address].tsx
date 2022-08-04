@@ -32,7 +32,9 @@ import {
 import { useAddress, useChainId, useWeb3 } from "@/components/Web3Context";
 import Layout from "@/layouts/PageLayout";
 import StampHeader from "@/components/StampHeader";
+// TODO: migrate to Topo tabs
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@/components/tabs";
+// TODO: migrate to Topo Heading
 import PageTitle from "@/components/PageTitle";
 import StampSettings from "@/components/screens/StampSettings";
 import StampOwnersTab from "@/components/screens/StampOwnersTab";
@@ -51,7 +53,7 @@ import { getStampOwners } from "@/utils/firebase";
 // API methods
 import { getCustomization } from "@/api/customization";
 
-// Misc ---
+// TODO: replace with Topo Container or Box
 const Container = styled("div");
 
 // Page Component ----
@@ -152,6 +154,7 @@ type QueryParams = {
   network: string;
 };
 
+// REFACTOR: This feels more complicated than it needs to be
 export const getServerSideProps: GetServerSideProps<
   IStampProps,
   QueryParams

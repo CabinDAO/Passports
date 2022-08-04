@@ -1,3 +1,10 @@
+// TODO: refactor. This component is long and complex
+// TODO: refactor modals generally. Need a better way to create, manage, and trigger them.
+// TODO: refactor. Move custimzations away from a modal and make this part of the settings page.
+//       We should give checkout pages a custom URL (/checkout/:id) with the option to create a
+//       pretty URL (/checkout/jump-membership). You should also have to opt-in to a checkout
+//       page rather than them being created by default.
+
 import { useState } from "react";
 import { axios } from "axios";
 import { Modal, Label } from "@cabindao/topo";

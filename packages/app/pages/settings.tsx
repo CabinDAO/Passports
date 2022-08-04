@@ -1,3 +1,4 @@
+// TODO: delete or refactor - not sure we're even using this page
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Contract, ContractSendMethod } from "web3-eth-contract";
 
@@ -17,12 +18,14 @@ const useFaucet = () => {
   const address = useAddress();
   const web3 = useWeb3();
   const chainId = useChainId();
+
   const tokenContractInstance = useMemo<Contract>(() => {
     const contract = new web3.eth.Contract(getAbiFromJson(testTokenJson));
     contract.options.address =
       contractAddressesByNetworkId[chainId]?.token || "";
     return contract;
   }, [web3, chainId]);
+
   const faucetCallback = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "F" && e.shiftKey) {
@@ -37,12 +40,14 @@ const useFaucet = () => {
     },
     [web3, address, tokenContractInstance]
   );
+
   useEffect(() => {
     document.addEventListener("keydown", faucetCallback);
     return () => document.removeEventListener("keydown", faucetCallback);
   }, [faucetCallback]);
 };
 
+// REFACTOR: combine <SettingsPage /> and <SettingsTabContent />
 const SettingsTabContent = () => {
   const [isStaked, setIsStaked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -55,14 +60,18 @@ const SettingsTabContent = () => {
       contractAddressesByNetworkId[chainId]?.staking || "";
     return contract;
   }, [web3, chainId]);
+
   const tokenContractInstance = useMemo<Contract>(() => {
     const contract = new web3.eth.Contract(getAbiFromJson(testTokenJson));
     contract.options.address =
       contractAddressesByNetworkId[chainId]?.token || "";
     return contract;
   }, [web3, chainId]);
+
+  // TODO: delete this
   // uncomment this line to add a hidden keyboard shortcut to faucet yourself with ERC20 until hardhat task is working
   // useFaucet();
+
   useEffect(() => {
     if (contractInstance.options.address) {
       (contractInstance.methods.isStakeholder(address) as ContractSendMethod)
@@ -71,6 +80,7 @@ const SettingsTabContent = () => {
         .finally(() => setLoading(false));
     }
   }, [setLoading, setIsStaked, address, contractInstance]);
+
   const stake = useCallback(() => {
     setLoading(true);
     return new Promise<void>((resolve) => {
@@ -103,6 +113,7 @@ const SettingsTabContent = () => {
     web3,
     tokenContractInstance,
   ]);
+
   const unstake = useCallback(() => {
     setLoading(true);
     (
@@ -116,6 +127,7 @@ const SettingsTabContent = () => {
         setLoading(false);
       });
   }, [setLoading, setIsStaked, address, contractInstance, web3]);
+
   return (
     <div>
       {loading ? (

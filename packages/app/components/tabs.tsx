@@ -1,8 +1,10 @@
+// TODO: migrate and replace this with a Tabs component from Topo
+
 import React from "react";
 import { styled, Button, Text } from "@cabindao/topo";
 
 export const Tabs = styled("div", {
-  margin: "0.25rem 0"
+  margin: "0.25rem 0",
 });
 
 export const TabList = styled("div", {
@@ -19,10 +21,10 @@ export const TabPanel = styled("div", {
   variants: {
     active: {
       true: {
-        display: "block"
-      }
-    }
-  }
+        display: "block",
+      },
+    },
+  },
 });
 
 export const Tab = styled("div", {
@@ -33,24 +35,23 @@ export const Tab = styled("div", {
     active: {
       true: {
         color: "$sand",
-        backgroundColor: "$forest"
+        backgroundColor: "$forest",
       },
       false: {
         color: "$forest",
-        '&:hover': {
+        "&:hover": {
           backgroundColor: "$forest",
           color: "$sand",
-          transition: "all 300ms ease"
+          transition: "all 300ms ease",
         },
-      }
+      },
     },
     disabled: {
       true: {
         backgroundColor: "rgba(50, 72, 65, 0.1)",
         color: "rgba(50, 72, 65, 0.9)",
         cursor: "not-allowed",
-      }
-    }
-  }
+      },
+    },
+  },
 });
-

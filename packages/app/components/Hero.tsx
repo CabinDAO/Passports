@@ -1,5 +1,14 @@
+/*
+ * Page Hero
+ * This hero is the one with the pattern behind the text. The pattern is
+ * implemented below.
+ */
+
+// TODO: Move pattern to Topo
+
 import { styled, Heading } from "@cabindao/topo";
 
+// TODO: replace this with Flex component in Topo
 const Row = styled("div", {
   display: "flex",
   justifyContent: "space-between",

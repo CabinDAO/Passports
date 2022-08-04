@@ -23,11 +23,7 @@ const UserContent = styled("div", {
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
 });
 
-{
-  /*
-   * TODO: merge <Profile /> and <ProfileContent /> into a single component
-   */
-}
+// TODO: merge <Profile /> and <ProfileContent /> into a single component
 const ProfileContent = ({ communities, ...rest }: PageProps) => {
   return (
     <>
@@ -51,12 +47,7 @@ const Profile = (props: PageProps) => {
 
 type PageProps = Awaited<ReturnType<typeof getProfileProps>>;
 
-{
-  /*
-   * TODO: User will have to already be signed in in order to see this page, so
-   * we should already have the user object
-   */
-}
+// TODO: User will have to already be signed in in order to see this page, so we should already have the user object
 export const getProfileProps = (user: User) => {
   const userId = user.id!;
   return getCommunitiesByUser(userId).then((communities) => ({

@@ -2,6 +2,7 @@ import { globalCss } from "@cabindao/topo";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { AppProps } from "next/app";
 
+// TODO: migreate global styles to Topo
 const globalStyles = globalCss({
   body: {
     backgroundColor: "$sand",

@@ -1,5 +1,6 @@
 import { users } from "@clerk/clerk-sdk-node";
 import { GetServerSideProps } from "next";
+// TODO: migrate Profile to components or screens
 import Profile, { getProfileProps } from "../stamps";
 
 export const getServerSideProps: GetServerSideProps<

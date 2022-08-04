@@ -1,3 +1,5 @@
+// TODO: maybe delete this page for now? Should be the page for managing the Clerk user group
+
 import { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import { TransactionReceipt } from "web3-core";
@@ -21,6 +23,7 @@ import Layout from "@/layouts/CommunityLayout";
 import { getAllManagedStamps, getStampContract } from "@/utils/stamps";
 import { resolveAddress } from "@/utils/address";
 
+// REFACTOR: don't need these four components
 const SmallBox = styled(Box, {
   width: "25%",
   marginBottom: "15px",
@@ -39,6 +42,7 @@ const PlusButton = styled(Button, {
   marginRight: "10px",
 });
 
+// TODO: replace with Topo table components
 const Table = styled("table", {
   border: "1px solid black",
   textAlign: "center",
@@ -54,8 +58,8 @@ const TableData = styled("td", {
   padding: "10px",
 });
 
+// TODO: replace with modal components OR components from Topo
 const ModalInput = styled(Input, { paddingLeft: 8, marginBottom: 32 });
-
 const ModalInputBox = styled(Box, { marginBottom: 25, marginTop: 20 });
 
 interface StampDetail {
@@ -69,10 +73,12 @@ interface StampDetailMap {
   [key: string]: StampDetail;
 }
 
+// REFACTOR: consoldidate <ManagePage /> and <ManageTabContent />
 const ManageTabContent = () => {
   const [mAddresses, setMAddresses] = useState<
     Awaited<ReturnType<typeof getAllManagedStamps>>
   >([]);
+
   const versionByAddress = useMemo(
     () =>
       Object.fromEntries(
@@ -80,6 +86,7 @@ const ManageTabContent = () => {
       ),
     [mAddresses]
   );
+
   const [stampDetails, setStampDetails] = useState<StampDetailMap>({});
   const [showLoading, setShowLoading] = useState<boolean>(false);
   const [allowedUsers, setAllowedUsers] = useState<string[]>([]);

@@ -1,3 +1,6 @@
+// TODO: migrate this to Topo. This is maybe even something we
+//       could abstract out into a separate package?
+
 import { styled } from "@cabindao/topo";
 import { networkNameById } from "@/utils/constants";
 

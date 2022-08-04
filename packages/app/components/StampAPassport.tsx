@@ -1,3 +1,11 @@
+/*
+ * Stamp a Passport flow
+ * This is the flow for stamping a passport (i.e. distributing a stamp).
+ */
+
+// TODO: refactor - replace more of the below with Topo
+// TODO: break this up and move it into screens/
+
 import {
   createContext,
   useCallback,
@@ -47,6 +55,7 @@ const AutocompleteInput = ({
   );
 };
 
+// TODO: Migrate to Heading component
 const Title = styled("h1", {
   fontFamily: "$mono",
   fontWeight: 600,
@@ -55,6 +64,7 @@ const Title = styled("h1", {
   marginBottom: "32px",
 });
 
+// TODO: migrate to Text component
 const Body = styled("p", {
   fontFamily: "$mono",
   fontWeight: 400,
@@ -256,6 +266,7 @@ const StampAPassport = ({
   const chainId = useChainId();
   const [toastMessage, setToastMessage] = useState("");
   const [txHash, setTxHash] = useState("");
+
   const onStamp = useCallback((): Promise<void> => {
     setScreen(2);
     return getStampContract({
@@ -294,13 +305,14 @@ const StampAPassport = ({
               .on("transactionHash", (transactionHash) => {
                 setTxHash(transactionHash);
               })
-              .on("error", reject),
-          ),
+              .on("error", reject)
+          )
       )
       .catch((e) => {
         setToastMessage(`ERROR: ${e.message}`);
       });
   }, [web3, account, version, address, users, chainId, onStampSuccess]);
+
   const screens = useMemo(
     () => [
       {
@@ -325,9 +337,11 @@ const StampAPassport = ({
         hideFooter: true,
       },
     ],
-    [onStamp, setScreen],
+    [onStamp, setScreen]
   );
+
   const { Body, ...props } = screens[screen];
+
   return (
     <ScreenContext.Provider
       value={{ setUsers, setConfirmed, users, label, txHash }}

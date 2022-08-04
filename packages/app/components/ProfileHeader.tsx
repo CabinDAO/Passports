@@ -1,4 +1,4 @@
-import { Button, styled, Heading, Box} from "@cabindao/topo";
+import { Button, styled, Heading, Box } from "@cabindao/topo";
 import Image from "next/image";
 
 const UserProfileContainer = styled("div", {
@@ -17,6 +17,7 @@ const UserProfileHero = styled(Box, {
   flexShrink: 0,
 });
 
+// TODO: replace with divider in Topo
 const UserDivider = styled("hr", {
   background: "$sprout",
   margin: "16px 0",
@@ -39,11 +40,20 @@ export const ProfileHeader: React.FC<{
   return (
     <UserProfileContainer>
       <UserProfileHero>
-        <Box css={{flexGrow: 1}}>
-          <Box css={{width: "min-content", mb: "$10"}}>
-            <Heading mono as="h1" bold css={{color: "$sand"}}>{name}</Heading>
+        <Box css={{ flexGrow: 1 }}>
+          <Box css={{ width: "min-content", mb: "$10" }}>
+            <Heading mono as="h1" bold css={{ color: "$sand" }}>
+              {name}
+            </Heading>
             <UserDivider />
-            <Heading as="h2" mono uppercase css={{color: "$sand", fontSize: "$lg", whiteSpace: "nowrap"}}>Passport No: {passportNumber}</Heading>
+            <Heading
+              as="h2"
+              mono
+              uppercase
+              css={{ color: "$sand", fontSize: "$lg", whiteSpace: "nowrap" }}
+            >
+              Passport No: {passportNumber}
+            </Heading>
           </Box>
         </Box>
         <AvatarContainer>

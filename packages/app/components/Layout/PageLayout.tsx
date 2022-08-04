@@ -10,6 +10,7 @@ const PageContent = styled("div", {
   flexGrow: 1,
 });
 
+// TODO: refactor or replace, we have a component like this in multiple places
 const PageMain = styled("main", {
   flex: 1,
   display: "flex",

@@ -12,6 +12,7 @@ const Container = styled("section", {
   pt: "$12",
 });
 
+// REFACTOR: get rid of this and move these styles to somepleace more appropriate
 const Content = styled("div", {
   display: "flex",
   flexDirection: "column",
@@ -48,8 +49,6 @@ const Content = styled("div", {
 const Home: NextPage = () => {
   const user = useUser();
   const router = useRouter();
-
-  console.log(user);
 
   return (
     <BaseLayout>

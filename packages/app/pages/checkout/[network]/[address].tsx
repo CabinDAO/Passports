@@ -1,3 +1,9 @@
+// TODO: integrate with existing page layouts. Pull out layout code here into a
+//       separate layout file in /components/layouts
+// TODO: move a lot of this code out into a checkout flow in components
+// TODO: implement sign in and create account as part of checkout
+// TODO: move to a different URL pattern (:id and/or :slug)
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import type { ContractSendMethod } from "web3-eth-contract";
@@ -179,6 +185,7 @@ const CheckoutPageContent = ({
 
   const [qrFile, setQrfile] = useState("");
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
     if (account)
       getStampContract({
@@ -193,6 +200,7 @@ const CheckoutPageContent = ({
           setOwned(a);
         });
   }, [address, web3, version, account]);
+
   useEffect(() => {
     if (!Object.entries(metadata).length && metadataHash) {
       axios.get(`https://ipfs.io/ipfs/${metadataHash}`).then((r) => {
@@ -200,13 +208,16 @@ const CheckoutPageContent = ({
       });
     }
   }, [metadata, metadataHash]);
+
   const [toastMessage, setToastMessage] = useState("");
+
   useEffect(() => {
     if (qrFile)
       QRCode.toCanvas(qrCanvasRef.current, qrFile).catch((e) =>
         setToastMessage(`ERROR: ${e.message}`)
       );
   }, [qrFile, qrCanvasRef]);
+
   const onBuy = useCallback(() => {
     setLoading(true);
     return getStampContract({
@@ -286,6 +297,7 @@ const CheckoutPageContent = ({
     version,
     walletPassPlatform,
   ]);
+
   return (
     <App style={{ color: customization.text_color || "white" }}>
       <AppOverview
@@ -408,6 +420,7 @@ export const getServerSideProps: GetServerSideProps<PageProps, QueryParams> = (
 ) => {
   const { network = "", address = "" } = context.params || {};
   const web3 = getWeb3(network);
+
   return Promise.all([
     backendGetStampContract({ network, address, web3 }).then(
       ({ contract, version }) =>

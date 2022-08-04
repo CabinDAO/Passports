@@ -1,3 +1,5 @@
+// TODO: refactor. This component is long and complex
+
 import { useState } from "react";
 import Papa from "papaparse";
 

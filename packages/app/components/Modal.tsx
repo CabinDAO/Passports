@@ -1,3 +1,6 @@
+// TODO: refactor. Most of this can be migrated to Topo or at least
+//       swapped out with a Topo component.
+
 import { styled, theme, Modal, Box, Input } from "@cabindao/topo";
 export { Modal } from "@cabindao/topo";
 

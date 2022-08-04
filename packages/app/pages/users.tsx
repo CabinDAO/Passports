@@ -1,3 +1,4 @@
+// TODO: refactor and delete out duplicate or unused code. A lot of this is copied from somewhere else
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import type { ContractSendMethod } from "web3-eth-contract";
@@ -21,6 +22,7 @@ interface StampDetailMap {
   [key: string]: StampDetail;
 }
 
+// TODO: refactor and/or delete out - all of this stuff is also in manage.tsx
 const SmallBox = styled(Box, {
   width: "25%",
   marginBottom: "15px",
@@ -49,6 +51,7 @@ const TokenId = styled("span", {
   margin: "0 4px",
 });
 
+// REFACTOR: merge <UserPage /> with <UserTabContent />
 const UsersTabContent = () => {
   const [mAddresses, setMAddresses] = useState<
     Awaited<ReturnType<typeof getAllManagedStamps>>

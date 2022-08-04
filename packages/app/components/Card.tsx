@@ -1,3 +1,4 @@
+// TODO: pull this out and use the one implemented in Topo
 import { styled, Box, Heading, Text } from "@cabindao/topo";
 
 // Card
@@ -16,10 +17,10 @@ export const CardHeader = styled(Box, {
     fontFamily: "$mono",
     fontSize: "$base",
     fontWeight: "$light",
-    m: 0
+    m: 0,
   },
 });
 
-export const CardBody = styled(Box, {padding: "$5"})
+export const CardBody = styled(Box, { padding: "$5" });
 
 export default Card;

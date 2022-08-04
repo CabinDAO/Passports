@@ -32,9 +32,8 @@ const EditStampField = ({
           // in the UI, but needs to be sent in Wei.
           let valueToSend =
             field === "price"
-              ? web3.utils.toBN(web3.utils.toWei("0.5"))
+              ? web3.utils.toBN(web3.utils.toWei(value))
               : value;
-          console.log("valueToSend: ", typeof valueToSend, valueToSend);
 
           return new Promise<void>((resolve, reject) =>
             contract.methods[

@@ -1,3 +1,5 @@
+// TODO: go through and delete everything that is now in the stamp detail page
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
@@ -32,6 +34,7 @@ import { getAbiFromJson, networkNameById } from "@/utils/constants";
 import { getAdminStamps } from "@/utils/firebase";
 import { getWeb3, getStampContract } from "@/utils/backend";
 
+// REFACTOR: replace these components with TOPO or inline components
 const ViewStampContainer = styled("div", {
   display: "flex",
   flexDirection: "column",
@@ -61,6 +64,7 @@ const StampContainer = styled("div", {
   flexGrow: 1,
 });
 
+// TODO: replace with Topo Heading
 const StampName = styled("h1", {
   fontWeight: 600,
   fontFamily: "$mono",
@@ -70,6 +74,7 @@ const StampName = styled("h1", {
   margin: 0,
 });
 
+// TODO: replace with Topo Divider
 const StampCardDivider = styled("hr", {
   background: "$sprout",
   margin: "16px 0",
@@ -77,6 +82,7 @@ const StampCardDivider = styled("hr", {
   border: 0,
 });
 
+// TODO: replace with existing component
 const ModalInput = styled(Input, {
   paddingLeft: 8,
   border: "1px solid $forest",
@@ -85,6 +91,7 @@ const ModalInput = styled(Input, {
   width: "100%",
 });
 
+// TODO: replace with existing component
 const ModalContent = styled("div", {
   color: "$forest",
   marginTop: "-8px",
@@ -282,6 +289,7 @@ const ScreenDescription = styled("p", {
   margin: 0,
 });
 
+// TODO: delete all this - this should be in the settings page now
 const CreateStampModal = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -331,10 +339,10 @@ const CreateStampModal = () => {
     return ipfsAdd(
       JSON.stringify({
         ...Object.fromEntries(
-          additionalFields.map(({ key, value }) => [key, value]),
+          additionalFields.map(({ key, value }) => [key, value])
         ),
         ...(cid ? { thumbnail: cid } : {}),
-      }),
+      })
     ).then((metadataHash) => {
       const weiPrice = web3.utils.toWei(price || "0", "ether");
       const royalty = Number(royaltyPcnt || "0") * 100;
@@ -371,7 +379,7 @@ const CreateStampModal = () => {
               })
               .then(() => {
                 router.push(
-                  `/stamps/${networkNameById[chainId]}/${contractAddress}`,
+                  `/stamps/${networkNameById[chainId]}/${contractAddress}`
                 );
                 onClose();
               });
@@ -424,7 +432,7 @@ const CreateStampModal = () => {
         {children}
       </>
     ),
-    [setStage],
+    [setStage]
   );
   const stageTitles = [
     "Enter Stamp Details",
@@ -609,6 +617,7 @@ const CreateStampModal = () => {
   );
 };
 
+// REFACTOR: combine <StampsPage /> with <StampTabContent />
 const StampTabContent = ({ stamps }: { stamps: IStampProps[] }) => {
   return (
     <>
@@ -647,7 +656,7 @@ export const getServerSideProps: GetServerSideProps<
   { stamps: IStampProps[] },
   {}
 > = withServerSideAuth(
-  (context:any):any => {
+  (context: any): any => {
     const { user } = context.req;
     const userId = user?.id;
     if (!userId || !user) {
@@ -706,26 +715,26 @@ export const getServerSideProps: GetServerSideProps<
                               .then((hash) => bytes32ToIpfsHash(hash))
                               .then((hash) =>
                                 axios.get<{ thumbnail: string }>(
-                                  `https://ipfs.io/ipfs/${hash}`,
-                                ),
+                                  `https://ipfs.io/ipfs/${hash}`
+                                )
                               )
                               .then((r) => r.data.thumbnail)
                               .catch((e) => {
                                 console.log(
                                   "failed: getting contract data",
                                   chainId,
-                                  network,
+                                  network
                                 );
                                 console.log("error: ", e);
                               }),
-                          ]),
+                          ])
                         )
                         .then(([name, symbol, thumbnail]) => {
                           console.log(
                             "took",
                             new Date().valueOf() - start.valueOf(),
                             "to load",
-                            name,
+                            name
                           );
                           return {
                             name,
@@ -739,19 +748,19 @@ export const getServerSideProps: GetServerSideProps<
                           console.log(
                             "failed: getStampContract",
                             chainId,
-                            network,
+                            network
                           );
                           console.log("error: ", e);
                         });
-                    }),
-                  ),
+                    })
+                  )
                 )
                 .catch((e) => {
                   console.log("failed: getAdminStamps", chainId, network);
                   console.log("error: ", e);
-                }),
-            ),
-        ),
+                })
+            )
+        )
       )
       .then((data) => {
         return {
@@ -765,7 +774,7 @@ export const getServerSideProps: GetServerSideProps<
         console.log("error: ", e);
       });
   },
-  { loadUser: true },
+  { loadUser: true }
 );
 
 export default StampsPage;

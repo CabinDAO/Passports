@@ -1,3 +1,6 @@
+// TODO: refactor - this feels like two components in one. SignedInIndicator
+//       should be migrated to Topo or at least pulled out into it's own file.
+
 import { Button, styled } from "@cabindao/topo";
 import {
   SignedIn,
@@ -8,6 +11,7 @@ import {
 import { useDisplayAddress, useChainId, useDisconnect } from "./Web3Context";
 import NetworkIndicator from "./NetworkIndicator";
 
+// TODO: replace this with the Topo Heading component
 const Header = styled("header", {
   position: "absolute",
   top: 0,
@@ -19,6 +23,7 @@ const Header = styled("header", {
   padding: "$6 $10",
 });
 
+// TODO: migrate this to Topo. Should accept an address and truncate it.
 const AddressLabel = styled("span", {
   fontFamily: "$sans",
   color: "$forest",
