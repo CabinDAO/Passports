@@ -1,6 +1,7 @@
 {
   "name": "app",
   "private": true,
+  "version": "0.0.1",
   "scripts": {
     "dev": "next dev",
     "dev:full": "cross-env USE_LOCAL_CONTRACTS=true next dev",
