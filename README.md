@@ -4,7 +4,9 @@
 
 <br />
 
-# Passports XYZ
+# Passports XYZ [DEPRECATED]
+
+> This project is no longer actively maintained
 
 ## Quick Links
 
